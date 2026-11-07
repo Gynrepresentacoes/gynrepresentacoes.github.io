@@ -141,6 +141,12 @@ Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da t
 
 **−** e **+** mudam de 1 em 1, **+10** soma dez de uma vez, e o número pode ser digitado (toque nele e digite, por exemplo, 50). Digitar 0 tira o item do pedido.
 
+## Preço de venda, pagamento "Outro" e limpar
+
+- **Preço de venda:** no resumo do pedido (ao lado, no computador; em "Revisar pedido", no celular), cada item tem um campo com o preço, já preenchido com o da tabela. Digite o valor que vai vender. O item com preço mudado fica destacado e mostra o preço de tabela para comparar. O vendedor não pode ficar abaixo da tabela menos o "Desconto máx %" da marca; o administrador não tem limite. O preço digitado vai para o total, o PDF, o WhatsApp e a planilha (aba Itens).
+- **Pagamento "Outro…":** a última opção da lista abre um campo para digitar a forma de pagamento.
+- **Limpar pedido:** tira todos os itens de uma vez (no resumo do computador, na barra do carrinho e na revisão do celular).
+
 ## 4. Instalar no celular do André
 
 - **Android (Chrome):** abra o link, toque nos três pontinhos e em **Instalar app** (ou **Adicionar à tela inicial**).
