@@ -169,7 +169,10 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 .tabela .sub{color:var(--muted);font-size:12px}
 /* Preço de venda editável no resumo */
 .resumo li.editavel{align-items:start}
-.preco-linha{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:14px;color:var(--muted)}
+.preco-linha{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:6px;font-size:14px;color:var(--muted)}
+.preco-linha label{display:inline-flex;align-items:center;gap:6px}
+.desc-item{width:58px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;font-weight:600;color:var(--ink);text-align:right}
+.desc-item.alterado{border-color:var(--ipe);background:var(--leaf-soft)}
 .preco-item{width:104px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;font-weight:600;color:var(--ink);text-align:right}
 .preco-item.alterado{border-color:var(--ipe);background:var(--leaf-soft)}
 .dica-preco{font-size:13px;color:var(--muted);margin:-6px 0 8px}
@@ -859,21 +862,34 @@ function itensAtuais(){
 // Menor preço que o vendedor pode digitar: tabela menos o desconto máximo da marca (o administrador não tem limite).
 const precoMinimo = tabela => ehAdmin() ? 0.01 : Math.round(tabela * (1 - descontoMaxDe(st.empresa) / 100) * 100) / 100;
 const numFmt = v => Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-// Preço de venda digitado no resumo (computador ou revisão do celular).
+// Desconto do item em % (calculado do preço de venda; vazio quando o preço é o da tabela ou maior).
+const pctItem = i => i.tabela && i.preco < i.tabela ? String(Math.round((1 - i.preco / i.tabela) * 10000) / 100).replace('.', ',') : '';
+// Preço de venda ou desconto % digitado no resumo (computador ou revisão do celular). Os dois mexem no mesmo preço.
 document.addEventListener('change', e => {
-  const inp = e.target.closest('input.preco-item'); if(!inp) return;
+  const inp = e.target.closest('input.preco-item, input.desc-item'); if(!inp) return;
   const it = itensAtuais().find(i => i.id === inp.dataset.id); if(!it) return;
-  const v = numBR(inp.value);
-  if(!(v > 0)){ toast('Digite um preço válido'); inp.value = numFmt(it.preco); return; }
-  const min = precoMinimo(it.tabela);
-  if(v < min){ toast(`O menor preço permitido para este item é ${brl(min)} (tabela ${brl(it.tabela)}).`); inp.value = numFmt(it.preco); return; }
+  const voltar = () => { inp.value = inp.matches('.desc-item') ? pctItem(it) : numFmt(it.preco); };
+  let v;
+  if(inp.matches('.desc-item')){
+    const pct = inp.value.trim() === '' ? 0 : numBR(inp.value);
+    if(isNaN(pct) || pct < 0 || pct >= 100){ toast('Digite um desconto entre 0 e 99%'); voltar(); return; }
+    v = it.tabela * (1 - pct / 100);
+  } else {
+    v = numBR(inp.value);
+    if(!(v > 0)){ toast('Digite um preço válido'); voltar(); return; }
+  }
   const novo = Math.round(v * 100) / 100;
+  const min = precoMinimo(it.tabela);
+  if(novo < min - 0.004){
+    const maxPct = String(descontoMaxDe(st.empresa)).replace('.', ',');
+    toast(`Para este item o máximo é ${maxPct}% de desconto: preço mínimo ${brl(min)} (tabela ${brl(it.tabela)}).`, 5000); voltar(); return;
+  }
   if(novo === it.tabela) delete st.precos[it.id]; else st.precos[it.id] = novo;
   if(document.activeElement === inp) inp.blur();
   renderCart(); atualizarRevisao();
 });
-document.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('input.preco-item')) e.target.blur(); });
-document.addEventListener('focusin', e => { if(e.target.matches('input.preco-item')) e.target.select(); });
+document.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('input.preco-item, input.desc-item')) e.target.blur(); });
+document.addEventListener('focusin', e => { if(e.target.matches('input.preco-item, input.desc-item')) e.target.select(); });
 function renderCart(){
   const its = itensAtuais();
   const tot = its.reduce((s,i) => s + i.q*i.preco, 0), vol = its.reduce((s,i) => s + i.q, 0);
@@ -899,6 +915,11 @@ function conferirRegras(bruto, desc){
   const max = descontoMaxDe(st.empresa), min = minimoDe(st.empresa);
   if(isNaN(desc) || desc < 0) return 'Desconto inválido.';
   if(desc > max) return max ? `O desconto máximo para ${emp(st.empresa).nome} é ${String(max).replace('.', ',')}%.` : `${emp(st.empresa).nome} não permite desconto.`;
+  // Desconto no item somado ao desconto do pedido não pode passar do máximo (vendedor).
+  if(!ehAdmin() && desc > 0){
+    const passou = itensAtuais().find(i => i.tabela && i.preco * (1 - desc / 100) < i.tabela * (1 - max / 100) - 0.005);
+    if(passou) return `${passou.nome}: com o desconto do item e o do pedido juntos, passa de ${String(max).replace('.', ',')}% (mínimo ${brl(Math.round(passou.tabela * (1 - max / 100) * 100) / 100)} por unidade, já com o desconto do pedido). Diminua um dos dois.`;
+  }
   if(min && bruto < min && !ehAdmin()) return `Pedido mínimo de ${emp(st.empresa).nome}: ${brl(min)}. Faltam ${brl(min - bruto)}.`;
   return '';
 }
@@ -944,7 +965,7 @@ function renderPainel(its, tot){
   $('#painel-cli').innerHTML = c ? `<b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}${e ? '<br>'+esc(e.nome) : ''}`
     : (e ? `${esc(e.nome)}<br>Escolha o cliente.` : 'Escolha a empresa, o cliente e os produtos.');
   // Não redesenha a lista enquanto a pessoa está digitando um preço nela.
-  if(!document.activeElement?.matches('#painel-itens input.preco-item'))
+  if(!document.activeElement?.matches('#painel-itens input.preco-item, #painel-itens input.desc-item'))
     $('#painel-itens').innerHTML = its.length ? resumoHTML(its, true) : '<p class="empty" style="padding:14px 0">Nenhum produto ainda.</p>';
   const max = descontoMaxDe(st.empresa);
   $('#desc-lbl-p').textContent = ehAdmin() || !st.empresa ? 'Desconto (%)' : (max ? `Desconto (%) · até ${String(max).replace('.', ',')}%` : 'Desconto (%) · esta marca não permite');
@@ -1032,7 +1053,8 @@ $('#btn-revisar').addEventListener('click', () => {
 function resumoHTML(itens, editavel){
   return '<ul class="resumo">' + itens.map(i => editavel
     ? `<li class="editavel"><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}${i.tabela != null && i.preco !== i.tabela ? ` · tabela ${brl(i.tabela)}` : ''}</small>
-        <label class="preco-linha">R$ <input class="preco-item${i.tabela != null && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.preco)}" aria-label="Preço de venda de ${esc(i.nome)}"> cada</label></span>
+        <span class="preco-linha"><label>R$ <input class="preco-item${i.tabela != null && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.preco)}" aria-label="Preço de venda de ${esc(i.nome)}"> cada</label>
+        <label class="desc-linha">desc. <input class="desc-item${pctItem(i) ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${pctItem(i)}" aria-label="Desconto em % de ${esc(i.nome)}">%</label></span></span>
         <span class="v">${brl(i.q*i.preco)}</span></li>`
     : `<li><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}, ${brl(i.preco)}</small></span><span class="v">${brl(i.q*i.preco)}</span></li>`).join('') + '</ul>';
 }
@@ -1205,7 +1227,8 @@ function fecharLote(pag, obs, desc, lista){
 function salvarOrcamento(pag, obs, desc){
   const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
   const max = descontoMaxDe(st.empresa);
-  if(isNaN(desc) || desc < 0 || desc > max){ toast(conferirRegras(0, desc) || 'Desconto inválido.'); return; }
+  const erroDesc = isNaN(desc) || desc < 0 || desc > max ? (conferirRegras(0, desc) || 'Desconto inválido.') : conferirRegras(Number.MAX_VALUE, desc);
+  if(erroDesc){ toast(erroDesc, 6000); return; }
   const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
   const antigo = st.orcamento && orcamentos.find(o => o.id === st.orcamento);
   const o = {
@@ -1230,19 +1253,28 @@ function salvarOrcamento(pag, obs, desc){
 // Carrega itens (de um orçamento ou de um pedido anterior) no Novo pedido.
 function carregarNoPedido(origem, msgOk){
   const ativos = new Map(prodsDe(origem.empresa).map(p => [p.id, p]));
-  st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {};
-  let fora = 0;
+  st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {}; st.precos = {};
+  let fora = 0, abaixo = 0;
   (origem.itens || []).forEach(i => { if(ativos.has(i.id)) st.itens[i.id] = (st.itens[i.id] || 0) + Number(i.q); else fora++; });
-  // Orçamento volta com os preços que foram combinados; "repetir pedido" usa os preços atuais da tabela.
-  if(origem.tipo === 'orcamento') (origem.itens || []).forEach(i => { const p = ativos.get(i.id); if(p && Number(i.preco) > 0 && Number(i.preco) !== p.preco) st.precos[i.id] = Number(i.preco); });
-  if(cli(origem.cliente)) $('#cliente').value = origem.cliente;
+  if(cli(origem.cliente)){ $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = origem.cliente; }
+  // Orçamento e "repetir pedido" voltam com os preços de venda que foram usados (o que foi digitado no resumo).
+  // Preço que hoje ficaria abaixo do mínimo do vendedor (a tabela subiu) volta para o preço da tabela.
+  (origem.itens || []).forEach(i => { const p = ativos.get(i.id), v = Number(i.preco);
+    if(!p || !(v > 0) || v === p.preco) return;
+    if(v < precoMinimo(p.preco)){ abaixo++; return; }
+    st.precos[i.id] = v; });
   if(origem.pagamento) LS.set('ultPag', origem.pagamento);
   $('#obs-p').value = origem.tipo === 'orcamento' ? (origem.obs || '') : '';
-  $('#desc-p').value = origem.tipo === 'orcamento' && origem.desconto ? String(origem.desconto).replace('.', ',') : '';
+  // Desconto do pedido inteiro também volta (se ainda estiver dentro do permitido).
+  const d = Number(origem.desconto) || 0;
+  $('#desc-p').value = d && d <= descontoMaxDe(st.empresa) ? String(d).replace('.', ',') : '';
+  delete $('#desc-p').dataset.daRede;
   renderEmpresas(); renderCategorias(); renderProdutos(); renderCart();
   fecharSheet(); irPara('novo');
-  toast(msgOk + (fora ? ` ${fora} produto${fora > 1 ? 's' : ''} não está${fora > 1 ? 'ão' : ''} mais no catálogo e ficou${fora > 1 ? 'aram' : ''} de fora.`
-    : origem.tipo === 'orcamento' ? ' Os preços combinados no orçamento foram mantidos.' : ' Confira as quantidades e os preços atuais.'), 5000);
+  const mudados = Object.keys(st.precos).length;
+  toast(msgOk + (fora ? ` ${fora} produto${fora > 1 ? 's' : ''} não está${fora > 1 ? 'ão' : ''} mais no catálogo e ficou${fora > 1 ? 'aram' : ''} de fora.` : '') +
+    (mudados ? ` Os preços de venda usados ${origem.tipo === 'orcamento' ? 'no orçamento' : 'no pedido'} foram mantidos (itens destacados).` : ' Os preços são os da tabela.') +
+    (abaixo ? ` ${abaixo} item${abaixo > 1 ? 's' : ''} voltou${abaixo > 1 ? 'aram' : ''} ao preço da tabela, porque o preço antigo ficou abaixo do mínimo.` : ''), 6000);
 }
 function abrirOrcamento(id){
   const o = orcamentos.find(x => x.id === id); if(!o) return;
