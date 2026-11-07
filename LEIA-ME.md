@@ -88,6 +88,8 @@ O ícone aparece junto dos outros apps. Na primeira vez é preciso internet; dep
 
 ## Como funciona no dia a dia
 
+- **Celular ou computador:** o mesmo link serve para os dois. Em tela larga (computador, 1000px ou mais) as abas ficam no topo, o resumo do pedido fica fixo ao lado dos produtos e as janelas abrem no centro. No celular, continua o layout com abas embaixo.
+- **Número do pedido:** leva o usuário de quem fez na frente (ex.: `JOAO-1001`), então dois vendedores nunca têm o mesmo número. Se a pessoa usar outro aparelho, a contagem continua de onde parou na planilha.
 - **Mudar preço ou produto:** edita na planilha e, no app, vai em **Catálogo > Atualizar catálogo**. O app também atualiza sozinho ao abrir com internet.
 - **Sem internet:** o pedido é fechado normalmente e fica marcado como **Aguardando internet**. Quando o sinal volta, ele vai para a planilha sozinho e passa a **Na planilha**. O mesmo pedido nunca entra duas vezes.
 - **Enviar para a empresa:** no pedido, **Enviar no WhatsApp**, **Abrir ou imprimir PDF**, **Baixar ou enviar PDF** (no celular abre o menu de compartilhar, dá para mandar o PDF direto no WhatsApp) ou **Copiar pedido**.
