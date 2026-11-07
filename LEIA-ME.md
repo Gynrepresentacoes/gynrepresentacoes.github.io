@@ -94,6 +94,8 @@ O ícone aparece junto dos outros apps. Na primeira vez é preciso internet; dep
 - **Sem internet:** o pedido é fechado normalmente e fica marcado como **Aguardando internet**. Quando o sinal volta, ele vai para a planilha sozinho e passa a **Na planilha**. O mesmo pedido nunca entra duas vezes.
 - **Enviar para a empresa:** no pedido, **Enviar no WhatsApp**, **Abrir ou imprimir PDF**, **Baixar ou enviar PDF** (no celular abre o menu de compartilhar, dá para mandar o PDF direto no WhatsApp) ou **Copiar pedido**.
 - **Produto que saiu de linha:** na planilha, coloque **Não** na coluna Ativo.
+- **Categorias:** a coluna **Categoria** da aba Produtos agrupa os produtos no app (seletor de categoria no Novo pedido e seções no Catálogo). Pode criar categorias novas à vontade: basta escrever o nome.
+- **Busca:** acha o produto se todas as palavras digitadas aparecerem no nome, código ou categoria, em qualquer ordem. Sem empresa escolhida, busca nas três; ao adicionar um item, a empresa é escolhida sozinha.
 
 ## Se mudar o Code.gs depois
 
