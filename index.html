@@ -232,9 +232,10 @@ textarea{resize:vertical}
   <div class="pin-erro" id="pin-erro" role="alert"></div>
 </div></div>
 
-<div id="print"></div>
 <div id="toast" class="toast" role="status" hidden></div>
 
+<script src="jspdf.umd.min.js"></script>
+<script src="pdf.js"></script>
 <script>
 const CFG = Object.assign({API_URL:'', REPRESENTANTE:'André',
   PAGAMENTOS:['À vista','7 dias','28 dias','28/56 dias','28/56/84 dias']}, window.CONFIG || {});
@@ -449,7 +450,7 @@ function texto(p){
 function acoesHTML(p){
   return `<div class="btns">
     <a class="btn zap" href="https://wa.me/?text=${encodeURIComponent(texto(p))}" target="_blank" rel="noopener">Enviar no WhatsApp</a>
-    <button class="btn sec" id="btn-pdf">Imprimir ou salvar PDF</button>
+    <button class="btn sec" id="btn-pdf">Baixar ou enviar PDF</button>
     <button class="btn sec" id="btn-copiar">Copiar pedido</button></div>`;
 }
 function ligarAcoes(p){
@@ -462,17 +463,29 @@ function ligarAcoes(p){
       ta.remove();
     }
   });
-  $('#btn-pdf').addEventListener('click', () => imprimir(p));
+  $('#btn-pdf').addEventListener('click', () => baixarPdf(p));
 }
-function imprimir(p){
-  $('#print').innerHTML = `
-    <h1>Pedido ${p.num}</h1>
-    <p><b>Empresa:</b> ${esc(p.empresaNome)}<br><b>Cliente:</b> ${esc(p.clienteNome)}${p.clienteCidade ? ' ('+esc(p.clienteCidade)+')' : ''}<br>
-    <b>Data:</b> ${dataBR(p.data)}<br><b>Representante:</b> ${esc(CFG.REPRESENTANTE)}</p>
-    <table><thead><tr><th class="n">Qtd.</th><th>Produto</th><th>Unidade</th><th class="n">Preço</th><th class="n">Subtotal</th></tr></thead>
-    <tbody>${p.itens.map(i => `<tr><td class="n">${i.q}</td><td>${esc(i.nome)}</td><td>${esc(i.un)}</td><td class="n">${brl(i.preco)}</td><td class="n">${brl(i.q*i.preco)}</td></tr>`).join('')}</tbody></table>
-    <p><b>Total: ${brl(p.total)}</b><br>Pagamento: ${esc(p.pagamento)}${p.obs ? '<br>Obs.: '+esc(p.obs) : ''}</p>`;
-  window.print();
+async function baixarPdf(p){
+  if(!window.jspdf || !window.PedidoPDF){ toast('Não deu para gerar o PDF. Abra o app uma vez com internet.'); return; }
+  let blob, nome;
+  try{
+    const doc = PedidoPDF.gerar(window.jspdf.jsPDF, p, CFG.REPRESENTANTE);
+    nome = PedidoPDF.nomeArquivo(p); blob = doc.output('blob');
+  }catch(e){ toast('Não deu para gerar o PDF'); return; }
+  // No celular, abre o menu de compartilhar (WhatsApp, e-mail, Drive...). No computador, baixa o arquivo.
+  const toque = matchMedia('(pointer: coarse)').matches;
+  if(toque && window.File && navigator.canShare){
+    const file = new File([blob], nome, {type:'application/pdf'});
+    if(navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:'Pedido ' + p.num}); return; }
+      catch(e){ if(e.name === 'AbortError') return; }
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  toast('PDF baixado: ' + nome);
 }
 
 /* ---------- Pedidos ---------- */
