@@ -677,9 +677,18 @@ function renderCategorias(){
     cats.map(([c,n]) => `<option value="${esc(c)}"${c === st.cat ? ' selected' : ''}>${esc(c)} (${n})</option>`).join('');
 }
 const LIMITE_LISTA = 80;
-// Miniatura do produto (coluna Foto da planilha ou aba Fotos). Se a imagem não carregar, some sem deixar buraco.
-const fotoHTML = p => p.foto && /^https?:\/\//i.test(p.foto)
-  ? `<img class="thumb" loading="lazy" src="${esc(p.foto)}" alt="" data-foto="${esc(p.foto)}" data-nome="${esc(p.nome)}" onerror="this.remove()">` : '';
+// Fotos: a lista completa vem junto com o app (fotos.json, ligada pelo ID do produto).
+// A coluna Foto da planilha (ou a aba Fotos) continua valendo e tem prioridade, para trocar uma foto específica.
+let FOTOS = {};
+fetch('fotos.json').then(r => r.ok ? r.json() : {}).then(d => {
+  FOTOS = d || {};
+  renderProdutos();
+  document.querySelectorAll('#catalogo details[open] ul').forEach(ul => { ul.innerHTML = ''; preencherSecao(ul.closest('details')); });
+}).catch(() => {});
+const fotoDe = p => (p.foto && /^https?:\/\//i.test(p.foto) ? p.foto : '') || FOTOS[p.id] || '';
+// Miniatura do produto. Se a imagem não carregar, some sem deixar buraco.
+const fotoHTML = p => { const f = fotoDe(p); return f
+  ? `<img class="thumb" loading="lazy" src="${esc(f)}" alt="" data-foto="${esc(f)}" data-nome="${esc(p.nome)}" onerror="this.remove()">` : ''; };
 document.addEventListener('click', e => {
   const t = e.target.closest('img.thumb'); if(!t) return;
   e.preventDefault();
