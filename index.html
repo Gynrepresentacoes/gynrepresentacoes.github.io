@@ -145,6 +145,38 @@ textarea{resize:vertical}
 .btn.perigo{background:var(--surface);border:1.5px solid #C2412B;color:#C2412B}
 .btn.aprovar{background:var(--ipe);color:var(--ipe-ink)}
 .recusa[hidden]{display:none}
+/* Relatórios */
+input[type=date],input[type=number]{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;color:var(--ink)}
+.rel-filtros{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.rel-filtros .field:nth-child(n+3){grid-column:1 / -1}
+.rel-atalhos{grid-column:1 / -1;margin:-4px 0 16px}
+.rel-atalhos .chip{padding:7px 12px;font-size:14px}
+.rel-botoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.rel-botoes .primary{grid-column:1 / -1}
+.rel-botoes .btn:disabled{opacity:.45;cursor:not-allowed}
+.rel-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.rel-card{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px}
+.rel-card small{display:block;color:var(--muted);font-size:13px;font-weight:600}
+.rel-card strong{font-family:"Barlow Semi Condensed","Barlow",sans-serif;font-size:24px}
+.rel-sec{margin:0 0 22px}
+.rel-sec h2{margin-bottom:10px}
+.tabela-wrap{overflow-x:auto;border:1.5px solid var(--line);border-radius:12px;background:var(--surface)}
+.tabela{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.tabela th,.tabela td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tabela th{background:var(--paper);font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);position:sticky;top:0}
+.tabela td.n,.tabela th.n{text-align:right;white-space:nowrap}
+.tabela tr:last-child td{border-bottom:0}
+.tabela .sub{color:var(--muted);font-size:12px}
+/* Quantidade digitável e +10 */
+.step input.qtd{width:52px;height:40px;padding:0 4px;text-align:center;font-weight:700;font-size:17px;border-radius:10px;-moz-appearance:textfield}
+.step input.qtd::-webkit-outer-spin-button,.step input.qtd::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.step button.mais10{width:auto;padding:0 8px;font-size:14px;font-weight:700;margin-left:4px;color:var(--leaf);border-color:var(--leaf)}
+@media (max-width: 420px){
+  .prod{padding:10px 10px;gap:8px}
+  .step button{width:34px;height:38px;font-size:20px}
+  .step input.qtd{width:42px;height:38px;font-size:16px}
+  .step button.mais10{padding:0 6px;font-size:13px;margin-left:3px}
+}
 
 .cat-group{margin-bottom:24px}
 .cat-group h2{margin-bottom:10px}
@@ -225,6 +257,13 @@ textarea{resize:vertical}
   .order:hover{border-color:var(--ipe)}
   #catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:24px}
   #catalogo .cat-group{margin:0}
+  .rel-filtros{grid-template-columns:repeat(5,1fr)}
+  .rel-filtros .field:nth-child(n+3){grid-column:auto}
+  .rel-botoes{grid-template-columns:auto auto auto;justify-content:start}
+  .rel-botoes .primary{grid-column:auto}
+  .rel-botoes .btn{width:auto;padding:12px 22px}
+  .rel-cards{grid-template-columns:repeat(4,1fr)}
+  .rel-duas{display:grid;grid-template-columns:1fr 1fr;gap:24px}
   .note,#btn-atualizar{max-width:720px}
   #btn-atualizar{width:auto;padding:12px 22px}
 
@@ -288,6 +327,34 @@ textarea{resize:vertical}
     <ul id="lista-pedidos" class="orders"></ul>
   </section>
 
+  <section id="v-relatorios" class="view" hidden>
+    <h1>Relatórios</h1>
+    <div class="rel-filtros">
+      <label class="field"><span class="lbl">De</span><input type="date" id="rel-de"></label>
+      <label class="field"><span class="lbl">Até</span><input type="date" id="rel-ate"></label>
+      <label class="field"><span class="lbl">Empresa</span><select id="rel-emp"></select></label>
+      <label class="field"><span class="lbl">Vendedor</span><select id="rel-vend"></select></label>
+      <label class="field"><span class="lbl">Situação</span><select id="rel-sit">
+        <option value="aprov">Só aprovados</option>
+        <option value="ativos">Aprovados e aguardando</option>
+        <option value="todos">Todos (inclusive recusados e cancelados)</option>
+      </select></label>
+      <div class="rel-atalhos chips" id="rel-atalhos">
+        <button class="chip" data-per="hoje" type="button">Hoje</button>
+        <button class="chip" data-per="7" type="button">7 dias</button>
+        <button class="chip" data-per="mes" type="button">Este mês</button>
+        <button class="chip" data-per="mesant" type="button">Mês passado</button>
+        <button class="chip" data-per="ano" type="button">Este ano</button>
+      </div>
+    </div>
+    <div class="rel-botoes">
+      <button class="btn primary" id="rel-gerar" type="button">Gerar relatório</button>
+      <button class="btn sec" id="rel-pdf" type="button" disabled>Baixar PDF</button>
+      <button class="btn sec" id="rel-xlsx" type="button" disabled>Baixar Excel</button>
+    </div>
+    <div id="rel-resultado"><p class="empty">Escolha o período e toque em <b>Gerar relatório</b>.</p></div>
+  </section>
+
   <section id="v-aprovar" class="view" hidden>
     <h1>Aprovar</h1>
     <p class="note" id="aprovar-info">Pedidos dos vendedores aguardando a sua aprovação.</p>
@@ -314,6 +381,8 @@ textarea{resize:vertical}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg>Pedidos</button>
   <button data-view="aprovar" id="nav-aprovar" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>Aprovar<span class="conta" id="conta-aprovar" hidden></span></button>
+  <button data-view="relatorios" id="nav-relatorios" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Relatórios</button>
   <button data-view="catalogo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Catálogo</button>
 </div></nav>
@@ -474,9 +543,10 @@ function mostrarUsuario(){
   const n = nomeAtual();
   $('#rep-nome').textContent = n;
   $('#rep-ini').textContent = (n || '?').trim().charAt(0).toUpperCase();
-  // A aba Aprovar só existe para o administrador.
+  // As abas Aprovar e Relatórios só existem para o administrador.
   $('#nav-aprovar').hidden = !ehAdmin();
-  if(!ehAdmin() && !$('#v-aprovar').hidden) irPara('novo');
+  $('#nav-relatorios').hidden = !ehAdmin();
+  if(!ehAdmin() && (!$('#v-aprovar').hidden || !$('#v-relatorios').hidden)) irPara('novo');
 }
 function pedirLogin(msg){
   $('#pin').hidden = false; $('#pin-erro').textContent = msg || ''; $('#login-senha').value = '';
@@ -546,9 +616,11 @@ function renderCategorias(){
 const LIMITE_LISTA = 80;
 function linhaProduto(p){
   const n = st.itens[p.id] || 0;
+  // Quantidade: − e + mudam de 1 em 1; o número pode ser digitado; +10 soma dez de uma vez.
+  const id = esc(p.id);
   const step = n
-    ? `<button data-act="dec" data-id="${esc(p.id)}" aria-label="Tirar um">−</button><output>${n}</output><button data-act="inc" data-id="${esc(p.id)}" aria-label="Pôr mais um">+</button>`
-    : `<button class="add" data-act="inc" data-id="${esc(p.id)}" aria-label="Adicionar ${esc(p.nome)}">+</button>`;
+    ? `<button data-act="dec" data-id="${id}" aria-label="Tirar um">−</button><input class="qtd" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="${n}" data-id="${id}" aria-label="Quantidade de ${esc(p.nome)}"><button data-act="inc" data-id="${id}" aria-label="Pôr mais um">+</button><button class="mais10" data-act="inc10" data-id="${id}" aria-label="Pôr mais dez">+10</button>`
+    : `<button class="add" data-act="inc" data-id="${id}" aria-label="Adicionar ${esc(p.nome)}">+</button><button class="mais10" data-act="inc10" data-id="${id}" aria-label="Adicionar dez de ${esc(p.nome)}">+10</button>`;
   return `<li class="prod${n?' on':''}"><div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
     <div class="prod-sub">${esc(p.un)}, <strong>${brl(p.preco)}</strong></div></div><div class="step">${step}</div></li>`;
 }
@@ -648,10 +720,22 @@ $('#produtos').addEventListener('click', e => {
     const p = (DATA?.produtos || []).find(x => x.id === id); if(!p) return;
     st.empresa = p.empresa; st.cat = ''; renderEmpresas(); renderCategorias();
   }
-  const n = st.itens[id] || 0, novo = b.dataset.act === 'inc' ? n + 1 : n - 1;
+  const n = st.itens[id] || 0, novo = n + ({inc: 1, inc10: 10, dec: -1}[b.dataset.act] || 0);
   if(novo > 0) st.itens[id] = novo; else delete st.itens[id];
   renderProdutos(); renderCart();
 });
+// Quantidade digitada: vale quando sai do campo ou aperta Enter. Zero (ou vazio) tira o item do pedido.
+$('#produtos').addEventListener('change', e => {
+  const inp = e.target.closest('input.qtd'); if(!inp) return;
+  const txt = String(inp.value).trim().replace(',', '.');
+  // Texto que não é número: volta ao valor anterior em vez de tirar o item do pedido.
+  if(txt !== '' && !isFinite(Number(txt))){ inp.value = st.itens[inp.dataset.id] || 0; toast('Digite só números'); return; }
+  const v = Math.max(0, Math.min(99999, Math.floor(Number(txt) || 0)));
+  if(v > 0) st.itens[inp.dataset.id] = v; else delete st.itens[inp.dataset.id];
+  renderProdutos(); renderCart();
+});
+$('#produtos').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('input.qtd')) e.target.blur(); });
+$('#produtos').addEventListener('focusin', e => { if(e.target.matches('input.qtd')) e.target.select(); });
 $('#busca').addEventListener('input', e => { st.busca = e.target.value; renderProdutos(); });
 $('#btn-revisar').addEventListener('click', () => {
   if(!$('#cliente').value){ toast('Escolha o cliente antes de revisar'); $('#cliente').focus(); return; }
@@ -779,22 +863,178 @@ function abrirPdf(p){
 }
 async function baixarPdf(p){
   const r = gerarPdf(p); if(!r) return;
-  const { blob, nome } = r;
-  // No celular, abre o menu de compartilhar (WhatsApp, e-mail, Drive...). No computador, baixa o arquivo.
+  await entregarArquivo(r.blob, r.nome, 'application/pdf', 'Pedido ' + p.num);
+}
+// No celular, abre o menu de compartilhar (WhatsApp, e-mail, Drive...). No computador, baixa o arquivo.
+async function entregarArquivo(blob, nome, tipo, titulo){
   const toque = matchMedia('(pointer: coarse)').matches;
   if(toque && window.File && navigator.canShare){
-    const file = new File([blob], nome, {type:'application/pdf'});
+    const file = new File([blob], nome, {type: tipo});
     if(navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file], title:'Pedido ' + p.num}); return; }
+      try{ await navigator.share({files:[file], title: titulo}); return; }
       catch(e){ if(e.name === 'AbortError') return; }
     }
   }
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(new Blob([blob], {type: tipo}));
   const a = document.createElement('a'); a.href = url; a.download = nome;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
-  toast('PDF baixado: ' + nome);
+  toast('Arquivo baixado: ' + nome);
 }
+
+/* ---------- Relatórios (só administrador) ---------- */
+let REL = null;  // {de, ate, pedidos} vindos da planilha
+const isoDia = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const diaBR = s => s ? s.split('-').reverse().join('/') : '';
+function periodo(tipo){
+  const h = new Date(); let de = new Date(h), ate = new Date(h);
+  if(tipo === '7') de.setDate(h.getDate() - 6);
+  if(tipo === 'mes') de = new Date(h.getFullYear(), h.getMonth(), 1);
+  if(tipo === 'mesant'){ de = new Date(h.getFullYear(), h.getMonth() - 1, 1); ate = new Date(h.getFullYear(), h.getMonth(), 0); }
+  if(tipo === 'ano') de = new Date(h.getFullYear(), 0, 1);
+  $('#rel-de').value = isoDia(de); $('#rel-ate').value = isoDia(ate);
+}
+function opcoesVendedores(){
+  const v = new Map();
+  [...remotos, ...(REL?.pedidos || [])].forEach(p => { if(p.usuario) v.set(p.usuario, p.representante || p.usuario); });
+  const atual = $('#rel-vend').value;
+  $('#rel-vend').innerHTML = '<option value="">Todos</option>' +
+    [...v.entries()].sort((a,b) => a[1].localeCompare(b[1],'pt-BR')).map(([u,n]) => `<option value="${esc(u)}">${esc(n)}</option>`).join('');
+  $('#rel-vend').value = v.has(atual) ? atual : '';
+}
+function prepararRelatorio(){
+  if(!$('#rel-de').value) periodo('mes');
+  const atual = $('#rel-emp').value;
+  $('#rel-emp').innerHTML = '<option value="">Todas</option>' + (DATA?.empresas || []).map(e => `<option value="${esc(e.id)}">${esc(e.nome)}</option>`).join('');
+  $('#rel-emp').value = atual;
+  opcoesVendedores();
+}
+$('#rel-atalhos').addEventListener('click', e => { const b = e.target.closest('[data-per]'); if(b){ periodo(b.dataset.per); gerarRelatorio(); } });
+
+async function gerarRelatorio(){
+  const de = $('#rel-de').value, ate = $('#rel-ate').value;
+  if(!de || !ate){ toast('Escolha as datas De e Até'); return; }
+  if(de > ate){ toast('A data De precisa ser antes da data Até'); return; }
+  if(!navigator.onLine){ toast('Sem internet. O relatório vem da planilha.'); return; }
+  const b = $('#rel-gerar'); b.disabled = true; b.textContent = 'Gerando…';
+  try{
+    const j = await api({acao:'relatorio', de, ate});
+    REL = {de, ate, pedidos: j.pedidos || []};
+    opcoesVendedores(); renderRelatorio();
+  }catch(e){
+    if(e.login) sessaoCaiu(e.message);
+    else toast(e instanceof TypeError ? 'Não deu para falar com a planilha' : e.message);
+  }finally{ b.disabled = false; b.textContent = 'Gerar relatório'; }
+}
+$('#rel-gerar').addEventListener('click', gerarRelatorio);
+['#rel-emp','#rel-vend','#rel-sit'].forEach(s => $(s).addEventListener('change', () => { if(REL) renderRelatorio(); }));
+
+// Aplica os filtros e devolve as linhas de item (uma por produto de cada pedido) e os resumos.
+function dadosRelatorio(){
+  const fEmp = $('#rel-emp').value, vend = $('#rel-vend').value, sit = $('#rel-sit').value;
+  const ok = s => sit === 'todos' ? true : sit === 'aprov' ? s === APROVADO : (s === APROVADO || s === AGUARDANDO);
+  const peds = REL.pedidos.filter(p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status));
+  const linhas = [];
+  peds.forEach(p => p.itens.forEach(i => linhas.push({
+    data: p.data, num: p.num, status: p.status, loja: p.clienteNome, cidade: p.clienteCidade || '', vendedor: p.representante || p.usuario,
+    empresa: p.empresaNome, codigo: i.id, produto: i.nome, un: i.un || '', q: Number(i.q) || 0, preco: Number(i.preco) || 0,
+    total: Math.round((Number(i.q) || 0) * (Number(i.preco) || 0) * 100) / 100
+  })));
+  linhas.sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : 0);
+  const somar = (chave, rot) => { const m = new Map();
+    linhas.forEach(l => { const k = chave(l); const x = m.get(k) || Object.assign({q:0, total:0, pedidos:new Set()}, rot(l)); x.q += l.q; x.total += l.total; x.pedidos.add(l.num); m.set(k, x); });
+    return [...m.values()].map(x => Object.assign(x, {pedidos: x.pedidos.size})); };
+  const porProduto = somar(l => l.empresa + '|' + l.codigo, l => ({empresa:l.empresa, codigo:l.codigo, produto:l.produto})).sort((a,b) => b.q - a.q);
+  const porLoja = somar(l => l.loja, l => ({loja:l.loja, cidade:l.cidade})).sort((a,b) => b.total - a.total);
+  const filtros = [`Período: ${diaBR(REL.de)} a ${diaBR(REL.ate)}`,
+    `Empresa: ${fEmp ? (emp(fEmp)?.nome || fEmp) : 'todas'}`,
+    `Vendedor: ${vend ? $('#rel-vend').selectedOptions[0].textContent : 'todos'}`,
+    `Situação: ${$('#rel-sit').selectedOptions[0].textContent.toLowerCase()}`];
+  return {peds, linhas, porProduto, porLoja, filtros,
+    totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: linhas.reduce((s,l) => s + l.total, 0), lojas: new Set(peds.map(p => p.clienteNome)).size}};
+}
+function renderRelatorio(){
+  const d = dadosRelatorio();
+  $('#rel-pdf').disabled = $('#rel-xlsx').disabled = !d.linhas.length;
+  if(!d.linhas.length){ $('#rel-resultado').innerHTML = '<p class="empty">Nenhum pedido neste período com esses filtros.</p>'; return; }
+  const dt = s => new Date(s).toLocaleDateString('pt-BR');
+  $('#rel-resultado').innerHTML = `
+    <p class="meta">${d.filtros.map(esc).join(' · ')}</p>
+    <div class="rel-cards">
+      <div class="rel-card"><small>Pedidos</small><strong>${d.totais.pedidos}</strong></div>
+      <div class="rel-card"><small>Itens (unidades)</small><strong>${d.totais.itens.toLocaleString('pt-BR')}</strong></div>
+      <div class="rel-card"><small>Valor total</small><strong>${brl(d.totais.valor)}</strong></div>
+      <div class="rel-card"><small>Lojas atendidas</small><strong>${d.totais.lojas}</strong></div>
+    </div>
+    <div class="rel-duas">
+      <section class="rel-sec"><h2>Itens mais pedidos</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
+        <thead><tr><th>Produto</th><th class="n">Qtd</th><th class="n">Valor</th></tr></thead>
+        <tbody>${d.porProduto.map(x => `<tr><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)} · ${x.pedidos} pedido${x.pedidos > 1 ? 's' : ''}</div></td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+      </table></div></section>
+      <section class="rel-sec"><h2>Por loja</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
+        <thead><tr><th>Loja</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
+        <tbody>${d.porLoja.map(x => `<tr><td>${esc(x.loja)}<div class="sub">${esc(x.cidade)}</div></td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+      </table></div></section>
+    </div>
+    <section class="rel-sec"><h2>Histórico detalhado</h2><div class="tabela-wrap"><table class="tabela" style="min-width:820px">
+      <thead><tr><th>Data</th><th>Pedido</th><th>Loja</th><th>Vendedor</th><th>Produto</th><th class="n">Qtd</th><th class="n">Total</th><th>Situação</th></tr></thead>
+      <tbody>${d.linhas.map(l => `<tr><td>${dt(l.data)}</td><td>${esc(l.num)}</td><td>${esc(l.loja)}<div class="sub">${esc(l.cidade)}</div></td><td>${esc(l.vendedor)}</td>
+        <td>${esc(l.produto)}<div class="sub">${esc(l.empresa)}</div></td><td class="n">${l.q.toLocaleString('pt-BR')}</td><td class="n">${brl(l.total)}</td><td>${esc(l.status)}</td></tr>`).join('')}</tbody>
+    </table></div></section>`;
+}
+const nomeRelatorio = ext => `Relatorio-pedidos-${REL.de}-a-${REL.ate}.${ext}`;
+
+$('#rel-pdf').addEventListener('click', async () => {
+  if(!REL) return;
+  if(!window.jspdf || !window.PedidoPDF?.relatorio){ toast('Não deu para gerar o PDF'); return; }
+  try{
+    const doc = PedidoPDF.relatorio(window.jspdf.jsPDF, dadosRelatorio(), LOGO_PDF);
+    await entregarArquivo(doc.output('blob'), nomeRelatorio('pdf'), 'application/pdf', 'Relatório de pedidos');
+  }catch(e){ console.error(e); toast('Não deu para gerar o PDF'); }
+});
+
+// Excel: a biblioteca SheetJS só é carregada na primeira vez que alguém pede a planilha.
+function carregarXLSX(){
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((ok, erro) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => window.XLSX ? ok(window.XLSX) : erro(new Error('XLSX'));
+    s.onerror = () => erro(new Error('Não deu para carregar o gerador de Excel. Verifique a internet.'));
+    document.head.appendChild(s);
+  });
+}
+$('#rel-xlsx').addEventListener('click', async () => {
+  if(!REL) return;
+  const b = $('#rel-xlsx'); b.disabled = true; b.textContent = 'Gerando…';
+  try{
+    const X = await carregarXLSX();
+    const d = dadosRelatorio();
+    const moeda = '"R$" #,##0.00';
+    const folha = (cab, linhas, larg, fmt) => {
+      const ws = X.utils.aoa_to_sheet([cab, ...linhas], {cellDates: true});
+      ws['!cols'] = larg.map(w => ({wch: w}));
+      ws['!autofilter'] = {ref: X.utils.encode_range({s:{r:0,c:0}, e:{r:linhas.length, c:cab.length - 1}})};
+      Object.entries(fmt).forEach(([c, z]) => { for(let r = 1; r <= linhas.length; r++){ const cel = ws[X.utils.encode_cell({r, c:+c})]; if(cel) cel.z = z; } });
+      return ws;
+    };
+    const wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, folha(
+      ['Data','Pedido','Situação','Loja','Cidade','Vendedor','Empresa','Código','Produto','Unidade','Qtd','Preço','Total'],
+      d.linhas.map(l => [new Date(l.data), String(l.num), l.status, l.loja, l.cidade, l.vendedor, l.empresa, l.codigo, l.produto, l.un, l.q, l.preco, l.total]),
+      [16,14,20,30,16,18,20,14,50,8,8,12,14], {0:'dd/mm/yyyy hh:mm', 11:moeda, 12:moeda}), 'Histórico detalhado');
+    X.utils.book_append_sheet(wb, folha(['Empresa','Código','Produto','Qtd','Pedidos','Valor'],
+      d.porProduto.map(x => [x.empresa, x.codigo, x.produto, x.q, x.pedidos, x.total]), [20,14,55,10,10,14], {5:moeda}), 'Por produto');
+    X.utils.book_append_sheet(wb, folha(['Loja','Cidade','Pedidos','Itens','Valor'],
+      d.porLoja.map(x => [x.loja, x.cidade, x.pedidos, x.q, x.total]), [34,18,10,10,14], {4:moeda}), 'Por loja');
+    X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet([['Relatório de pedidos — GYN Representações'], [], ...d.filtros.map(f => [f]), [],
+      ['Pedidos', d.totais.pedidos], ['Itens (unidades)', d.totais.itens], ['Valor total', d.totais.valor], ['Lojas atendidas', d.totais.lojas],
+      [], ['Gerado em', new Date().toLocaleString('pt-BR')]]), 'Resumo');
+    const dados = X.write(wb, {bookType:'xlsx', type:'array'});
+    await entregarArquivo(new Blob([dados]), nomeRelatorio('xlsx'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Relatório de pedidos');
+  }catch(e){ console.error(e); toast(e.message && e.message.length > 12 ? e.message : 'Não deu para gerar o Excel'); }
+  finally{ b.disabled = false; b.textContent = 'Baixar Excel'; }
+});
 
 /* ---------- Pedidos ---------- */
 // Junta os pedidos da planilha com os que ainda só existem neste celular (sem internet ou cancelados antes de enviar).
@@ -949,6 +1189,7 @@ function irPara(view){
   renderCart(); window.scrollTo(0,0);
   // Ao abrir as listas, busca a situação mais recente (no máximo a cada 30 segundos).
   if((view === 'pedidos' || view === 'aprovar') && Date.now() - pedidosEm > 30000) carregarPedidos(false);
+  if(view === 'relatorios') prepararRelatorio();
 }
 document.querySelector('.nav').addEventListener('click', e => {
   const b = e.target.closest('[data-view]'); if(b) irPara(b.dataset.view);
