@@ -90,6 +90,53 @@ Aba **Relatórios** do app. Escolha o período (ou use os atalhos Hoje, 7 dias, 
 
 **Baixar PDF** gera o relatório em A4 deitado. **Baixar Excel** gera uma planilha com as abas Histórico detalhado, Por produto, Por loja e Resumo. O histórico é sempre o da planilha: dá para consultar qualquer período desde o primeiro pedido. Precisa de internet.
 
+## Configuração por marca, vendedor e loja (colunas da planilha)
+
+Use uma vez o menu **Pedidos > Preparar colunas novas**: ele cria as colunas que faltam. Depois preencha:
+
+| Aba | Coluna | Para quê |
+|---|---|---|
+| Empresas | **E-mail** | para onde o pedido aprovado vai (pode ter mais de um, separados por ;) |
+| Empresas | **Comissão %** | quanto a marca paga à GYN (relatório de comissão) |
+| Empresas | **Pedido mínimo** | valor mínimo do pedido para vendedores |
+| Empresas | **Desconto máx %** | desconto máximo que o vendedor pode dar (0 ou vazio = sem desconto) |
+| Empresas | **Pagamentos** | formas de pagamento da marca, separadas por ; (ex.: À vista; 28 dias; 28/56 dias) |
+| Usuarios | **E-mail** | avisos automáticos (administrador: pedidos e lojas para aprovar; vendedor: situação dos pedidos) |
+| Usuarios | **Comissão %** | quanto a GYN paga ao vendedor |
+| Clientes | CNPJ, Telefone, Contato, Endereço, Situação, Cadastrado por | preenchidas pelo app quando alguém cadastra uma loja |
+| Fotos (aba) | **ID**, **Foto** | endereço da foto de cada produto (ou a coluna Foto na aba Produtos) |
+
+## Ciclo do pedido
+
+Aguardando aprovação → **Aprovado** → **Enviado ao fornecedor** → **Faturado** (com o nº da NF) → **Entregue**.
+
+- Ao aprovar, o pedido vai sozinho por **e-mail para a marca**, com PDF anexo e cópia para os administradores, e passa a "Enviado ao fornecedor". Marca sem e-mail: o pedido fica "Aprovado" e o app avisa para enviar por WhatsApp e marcar como enviado.
+- No detalhe do pedido, o administrador registra o faturamento (NF) e a entrega.
+- O Gmail gratuito envia até cerca de 100 e-mails por dia.
+
+## Lojas
+
+- **Cadastro pelo app** (botão "+ Nova loja"): a loja entra na hora para o vendedor fazer o pedido e aparece para o administrador aprovar (aba Aprovar).
+- **Aba Lojas**: lojas paradas (sem pedido há 30, 60, 90 dias), nunca compraram, contato com botões Ligar e WhatsApp, pedidos recentes, "Novo pedido para esta loja" e "Repetir último pedido".
+
+## Orçamentos, desconto e repetir pedido
+
+- **Salvar como orçamento** (na revisão do pedido): gera PDF de orçamento e fica no filtro **Orçamentos** da aba Pedidos, neste aparelho. "Transformar em pedido" carrega tudo no Novo pedido.
+- **Desconto (%)** no fechamento, limitado pelo "Desconto máx %" da marca (o administrador não tem limite).
+- **Repetir último pedido** aparece ao escolher a loja: carrega os itens do último pedido com os preços atuais.
+
+## Comissão
+
+No relatório, as seções **Comissão por marca** (a receber) e **Comissão por vendedor** (a pagar) usam os percentuais das abas Empresas e Usuarios sobre o valor dos pedidos já com desconto. Para considerar só o que foi faturado, escolha a situação "Só faturados e entregues".
+
+## Importar preços
+
+Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da tabela da marca; se o mesmo código existir em duas marcas, informe a Empresa (coluna C). Depois use **Pedidos > Importar preços**. O código pode ser o do fornecedor (ex.: 74/J, UNF123) ou o ID do app (PMK-74/J). A coluna Resultado mostra o que foi atualizado.
+
+## Cópia de segurança
+
+**Pedidos > Ativar cópia semanal automática**: toda segunda, por volta das 7h, uma cópia da planilha vai para a pasta "Cópias de segurança" do Drive (ficam as 8 mais recentes). **Fazer cópia de segurança agora** faz uma na hora.
+
 ## Quantidade no pedido
 
 **−** e **+** mudam de 1 em 1, **+10** soma dez de uma vez, e o número pode ser digitado (toque nele e digite, por exemplo, 50). Digitar 0 tira o item do pedido.
