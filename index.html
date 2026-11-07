@@ -51,7 +51,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .brand{font-family:"Barlow Semi Condensed","Barlow",sans-serif;font-weight:700;font-size:20px}
 .net{font-size:13px;font-weight:600;background:var(--terra);color:#fff;border-radius:999px;padding:3px 10px}
 .net[hidden]{display:none}
-.rep{display:flex;align-items:center;gap:8px;font-size:14px;margin-left:auto}
+.rep{display:flex;align-items:center;gap:8px;font-size:14px;margin-left:auto;background:none;border:0;padding:0;color:inherit;cursor:pointer}
 .rep b{width:30px;height:30px;border-radius:50%;background:var(--ipe);color:var(--ipe-ink);display:grid;place-items:center;font-weight:700}
 
 main{max-width:560px;margin:0 auto;padding:18px 16px calc(var(--nav-h) + 110px)}
@@ -146,7 +146,9 @@ textarea{resize:vertical}
 .pin-box img{width:84px;height:84px;border-radius:20px;margin-bottom:14px}
 .pin-box h1{margin-bottom:6px}
 .pin-box p{margin:0 0 18px;opacity:.9}
-.pin-box input{text-align:center;font-size:24px;letter-spacing:6px;color:var(--ink)}
+.pin-box form{text-align:left}
+.pin-box label{display:block;font-size:14px;font-weight:600;margin:0 0 6px}
+.pin-box input{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink);margin-bottom:12px}
 .pin-box .btn{margin-top:12px;background:var(--ipe);color:var(--ipe-ink)}
 .pin-erro{min-height:22px;margin-top:10px;font-weight:600}
 
@@ -170,7 +172,7 @@ textarea{resize:vertical}
 <header class="top"><div class="top-in">
   <span class="brand">Pedidos</span>
   <span class="net" id="net" hidden>Sem internet</span>
-  <span class="rep"><span id="rep-nome"></span> <b aria-hidden="true" id="rep-ini"></b></span>
+  <button class="rep" id="rep" type="button" aria-label="Conta"><span id="rep-nome"></span> <b aria-hidden="true" id="rep-ini"></b></button>
 </div></header>
 
 <main>
@@ -226,9 +228,14 @@ textarea{resize:vertical}
 <div id="pin" class="pin" hidden><div class="pin-box">
   <img src="icon-192.png" alt="">
   <h1>Pedidos</h1>
-  <p>Digite o PIN para entrar.</p>
-  <input id="pin-input" type="password" inputmode="numeric" autocomplete="current-password" aria-label="PIN">
-  <button class="btn" id="pin-btn">Entrar</button>
+  <p>Entre com seu usuário e senha.</p>
+  <form id="login-form" novalidate>
+    <label for="login-usuario">Usuário</label>
+    <input id="login-usuario" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+    <label for="login-senha">Senha</label>
+    <input id="login-senha" name="password" type="password" autocomplete="current-password">
+    <button class="btn" id="pin-btn" type="submit" style="width:100%">Entrar</button>
+  </form>
   <div class="pin-erro" id="pin-erro" role="alert"></div>
 </div></div>
 
@@ -277,7 +284,9 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 
 let DATA = DEMO ? DEMO_DATA : LS.get('catalogo', null);
 let pedidos = LS.get('pedidos', []);
-let pin = LS.get('pin', '');
+let sessao = LS.get('sessao', null);   // {token, usuario, nome} de quem está conectado
+try{ localStorage.removeItem('pa-pin'); }catch(e){}
+const nomeAtual = () => DEMO ? CFG.REPRESENTANTE : (sessao?.nome || '');
 const st = {empresa:null, itens:{}, busca:''};
 
 const emp = id => (DATA?.empresas || []).find(e => e.id === id);
@@ -286,10 +295,13 @@ const prodsDe = e => (DATA?.produtos || []).filter(p => p.empresa === e);
 
 /* ---------- Comunicação com a planilha ---------- */
 async function api(payload){
-  const r = await fetch(CFG.API_URL, {method:'POST', body: JSON.stringify({...payload, pin})});
+  const r = await fetch(CFG.API_URL, {method:'POST', body: JSON.stringify({...payload, token: sessao?.token || ''})});
   const j = await r.json();
-  if(!j.ok){ const err = new Error(j.erro || 'Erro'); err.pin = /PIN/i.test(j.erro || ''); throw err; }
+  if(!j.ok){ const err = new Error(j.erro || 'Erro'); err.login = !!j.login; throw err; }
   return j;
+}
+function sessaoCaiu(msg){
+  sessao = null; LS.set('sessao', null); mostrarUsuario(); pedirLogin(msg);
 }
 async function carregarCatalogo(avisar){
   if(DEMO) return true;
@@ -297,42 +309,74 @@ async function carregarCatalogo(avisar){
     const j = await api({acao:'catalogo'});
     DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes};
     LS.set('catalogo', DATA); LS.set('catalogoEm', new Date().toISOString());
+    if(j.voce && sessao){ sessao.nome = j.voce.nome; LS.set('sessao', sessao); mostrarUsuario(); }
     renderTudo(); if(avisar) toast('Catálogo atualizado');
     return true;
   }catch(e){
-    if(e.pin){ pin=''; LS.set('pin',''); pedirPin('PIN incorreto. Digite de novo.'); }
+    if(e.login) sessaoCaiu(e.message);
     else if(avisar) toast(navigator.onLine ? 'Não deu para falar com a planilha' : 'Sem internet. Usando o catálogo salvo');
     return false;
   }
 }
 let sincronizando = false;
 async function sincronizar(){
-  if(DEMO || !pin || !navigator.onLine || sincronizando) return;
+  if(DEMO || !sessao || !navigator.onLine || sincronizando) return;
   sincronizando = true;
-  for(const p of pedidos.filter(p => p.sync === 'pendente')){
+  // Só envia os pedidos de quem está conectado; os de outra pessoa esperam ela entrar de novo.
+  for(const p of pedidos.filter(p => p.sync === 'pendente' && (!p.usuario || p.usuario === sessao.usuario))){
     try{ await api({acao:'pedido', pedido:p}); p.sync = 'ok'; LS.set('pedidos', pedidos); }
-    catch(e){ if(e.pin){ pedirPin('PIN incorreto. Digite de novo.'); } break; }
+    catch(e){ if(e.login) sessaoCaiu(e.message); break; }
   }
   sincronizando = false;
   renderPedidos();
 }
 
-/* ---------- PIN ---------- */
-function pedirPin(msg){
-  $('#pin').hidden = false; $('#pin-erro').textContent = msg || ''; $('#pin-input').value = '';
-  setTimeout(() => $('#pin-input').focus(), 50);
+/* ---------- Login ---------- */
+function mostrarUsuario(){
+  const n = nomeAtual();
+  $('#rep-nome').textContent = n;
+  $('#rep-ini').textContent = (n || '?').trim().charAt(0).toUpperCase();
 }
-async function entrar(){
-  const v = $('#pin-input').value.trim(); if(!v) return;
-  if(!navigator.onLine && !DATA){ $('#pin-erro').textContent = 'Conecte à internet no primeiro acesso.'; return; }
-  pin = v; $('#pin-btn').disabled = true; $('#pin-erro').textContent = 'Conferindo…';
-  const ok = navigator.onLine ? await carregarCatalogo(false) : true;
-  $('#pin-btn').disabled = false;
-  if(ok && pin){ LS.set('pin', pin); $('#pin').hidden = true; sincronizar(); }
-  else if(pin){ $('#pin-erro').textContent = 'Não deu para falar com a planilha. Tente de novo.'; }
+function pedirLogin(msg){
+  $('#pin').hidden = false; $('#pin-erro').textContent = msg || ''; $('#login-senha').value = '';
+  if(sessao?.usuario) $('#login-usuario').value = sessao.usuario;
+  setTimeout(() => ($('#login-usuario').value ? $('#login-senha') : $('#login-usuario')).focus(), 50);
 }
-$('#pin-btn').addEventListener('click', entrar);
-$('#pin-input').addEventListener('keydown', e => { if(e.key === 'Enter') entrar(); });
+async function entrar(ev){
+  ev.preventDefault();
+  const usuario = $('#login-usuario').value.trim(), senha = $('#login-senha').value;
+  if(!usuario || !senha){ $('#pin-erro').textContent = 'Digite usuário e senha.'; return; }
+  if(!navigator.onLine){ $('#pin-erro').textContent = 'Conecte à internet para entrar.'; return; }
+  $('#pin-btn').disabled = true; $('#pin-erro').textContent = 'Conferindo…';
+  try{
+    const j = await api({acao:'login', usuario, senha});
+    sessao = {token:j.token, usuario:j.usuario, nome:j.nome}; LS.set('sessao', sessao);
+    $('#login-senha').value = ''; $('#pin-erro').textContent = ''; $('#pin').hidden = true;
+    mostrarUsuario(); toast('Olá, ' + j.nome);
+    await carregarCatalogo(false); sincronizar();
+  }catch(e){
+    $('#pin-erro').textContent = e instanceof TypeError || e instanceof SyntaxError
+      ? 'Não deu para falar com a planilha. Tente de novo.' : e.message;
+  }finally{ $('#pin-btn').disabled = false; }
+}
+$('#login-form').addEventListener('submit', entrar);
+
+function abrirConta(){
+  if(DEMO){ toast('Modo demonstração: não há login'); return; }
+  if(!sessao) return pedirLogin();
+  const pend = pedidos.filter(p => p.sync === 'pendente' && (!p.usuario || p.usuario === sessao.usuario)).length;
+  abrirSheet(`
+    <div class="sheet-head"><h2>Sua conta</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">Conectado como <b>${esc(sessao.nome)}</b><br>Usuário: ${esc(sessao.usuario)}</p>
+    ${pend ? `<p class="note">Você tem ${pend} pedido${pend > 1 ? 's' : ''} aguardando internet. Eles serão enviados quando você entrar de novo.</p>` : ''}
+    <div class="btns"><button class="btn sec" id="btn-sair">Sair</button></div>`);
+  $('#btn-sair').addEventListener('click', () => {
+    const u = sessao.usuario;
+    sessao = null; LS.set('sessao', null);
+    fecharSheet(); mostrarUsuario(); pedirLogin(); $('#login-usuario').value = u;
+  });
+}
+$('#rep').addEventListener('click', abrirConta);
 
 /* ---------- Novo pedido ---------- */
 function renderEmpresas(){
@@ -420,6 +464,7 @@ function fecharPedido(){
     empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
     pagamento: $('#pag').value, obs: $('#obs').value.trim(), itens: its,
     total: Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100,
+    usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
     sync: DEMO ? 'demo' : 'pendente'
   };
   pedidos.unshift(p); LS.set('pedidos', pedidos);
@@ -445,7 +490,7 @@ function texto(p){
   t += p.itens.map(i => `${i.q}× ${i.nome} (${i.un}): ${brl(i.q*i.preco)}`).join('\n');
   t += `\n\n*Total: ${brl(p.total)}*\nPagamento: ${p.pagamento}`;
   if(p.obs) t += `\nObs.: ${p.obs}`;
-  return t + `\n\nRepresentante: ${CFG.REPRESENTANTE}`;
+  return t + `\n\nRepresentante: ${p.representante || CFG.REPRESENTANTE}`;
 }
 function acoesHTML(p){
   return `<div class="btns">
@@ -470,7 +515,7 @@ function ligarAcoes(p){
 function gerarPdf(p){
   if(!window.jspdf || !window.PedidoPDF){ toast('Não deu para gerar o PDF. Abra o app uma vez com internet.'); return null; }
   try{
-    const doc = PedidoPDF.gerar(window.jspdf.jsPDF, p, CFG.REPRESENTANTE);
+    const doc = PedidoPDF.gerar(window.jspdf.jsPDF, p, p.representante || CFG.REPRESENTANTE);
     return { blob: doc.output('blob'), nome: PedidoPDF.nomeArquivo(p) };
   }catch(e){ toast('Não deu para gerar o PDF'); return null; }
 }
@@ -531,7 +576,7 @@ $('#lista-pedidos').addEventListener('click', e => {
     <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
     ${resumoHTML(p.itens)}
     <div class="total-line"><span>Total</span><strong>${brl(p.total)}</strong></div>
-    <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}</p>
+    <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
     ${acoesHTML(p)}`);
   ligarAcoes(p);
 });
@@ -575,12 +620,11 @@ window.addEventListener('offline', rede);
 function renderTudo(){ renderEmpresas(); renderClientes(); renderProdutos(); renderCart(); renderPedidos(); renderCatalogo(); }
 
 /* ---------- Início ---------- */
-$('#rep-nome').textContent = CFG.REPRESENTANTE;
-$('#rep-ini').textContent = (CFG.REPRESENTANTE || '?').trim().charAt(0).toUpperCase();
+mostrarUsuario();
 $('#demo').hidden = !DEMO;
 rede(); renderTudo();
 if(!DEMO){
-  if(!pin) pedirPin();
+  if(!sessao) pedirLogin();
   else { carregarCatalogo(false); sincronizar(); }
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
