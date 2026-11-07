@@ -104,6 +104,8 @@ Use uma vez o menu **Pedidos > Preparar colunas novas**: ele cria as colunas que
 | Usuarios | **E-mail** | avisos automáticos (administrador: pedidos e lojas para aprovar; vendedor: situação dos pedidos) |
 | Usuarios | **Comissão %** | quanto a GYN paga ao vendedor |
 | Clientes | CNPJ, Telefone, Contato, Endereço, Situação, Cadastrado por | preenchidas pelo app quando alguém cadastra uma loja |
+| Clientes | **Grupo** | nome da rede, igual em todas as filiais do mesmo dono (vazio = loja única) |
+| Grupos (aba) | **Grupo**, **Desconto %**, **Pagamento**, **Observação** | condição combinada com a rede inteira (opcional) |
 | Fotos (aba) | **ID**, **Foto** | endereço da foto de cada produto (ou a coluna Foto na aba Produtos) |
 
 ## Ciclo do pedido
@@ -118,6 +120,18 @@ Aguardando aprovação → **Aprovado** → **Enviado ao fornecedor** → **Fatu
 
 - **Cadastro pelo app** (botão "+ Nova loja"): a loja entra na hora para o vendedor fazer o pedido e aparece para o administrador aprovar (aba Aprovar).
 - **Aba Lojas**: lojas paradas (sem pedido há 30, 60, 90 dias), nunca compraram, contato com botões Ligar e WhatsApp, pedidos recentes, "Novo pedido para esta loja" e "Repetir último pedido".
+
+## Redes (cliente com vários CNPJs)
+
+Cada CNPJ é uma loja própria (a nota sai para ele). As filiais de um mesmo dono ficam ligadas pela coluna **Grupo** da aba Clientes.
+
+- **Juntar lojas numa rede**: escreva o mesmo nome na coluna Grupo de cada filial, ou, no app (administrador), abra a loja e toque em **Colocar numa rede**.
+- **Cadastrar filial**: abra a loja e toque em **+ Adicionar filial (outro CNPJ)**. O app já traz rede, nome, cidade, contato e telefone; é só digitar o CNPJ e acertar o que mudar. Se a loja ainda não era de rede, ela entra junto na rede nova. No cadastro de loja nova também há o campo **Rede / grupo**.
+- **Escolher o cliente**: a lista mostra cada rede como um título com os CNPJs embaixo. O campo **Buscar cliente, rede ou CNPJ** filtra a lista (dá para digitar só um pedaço do CNPJ).
+- **Condição da rede** (opcional): na aba **Grupos** (criada pelo menu Pedidos > Preparar colunas novas), uma linha por rede com Desconto %, Pagamento e Observação. Ao escolher uma filial, o app mostra a condição, já preenche o desconto e o pagamento, e o vendedor pode dar até esse desconto, mesmo que a marca permita menos.
+- **Pedido para várias filiais**: monte o pedido e toque em **Fechar para várias filiais da rede…** (no resumo do computador ou em Revisar pedido no celular). Marque as filiais; em **Ajustar quantidades** você muda a quantidade de cada item só para aquela filial (0 tira o item). Cada filial vira um pedido com número próprio, e o pedido mínimo da marca vale para cada uma.
+- **Aba Lojas > Por rede**: um cartão por rede com o total das filiais e quantas estão paradas. Tocando nele aparecem as filiais e a condição da rede.
+- **Relatórios**: filtro **Rede / grupo**, a tabela **Por rede (soma das filiais)** e as colunas CNPJ e Rede no PDF e no Excel. O PDF do pedido mostra o CNPJ do cliente.
 
 ## Orçamentos, desconto e repetir pedido
 
