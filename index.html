@@ -167,6 +167,12 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 .tabela td.n,.tabela th.n{text-align:right;white-space:nowrap}
 .tabela tr:last-child td{border-bottom:0}
 .tabela .sub{color:var(--muted);font-size:12px}
+/* Preço de venda editável no resumo */
+.resumo li.editavel{align-items:start}
+.preco-linha{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:14px;color:var(--muted)}
+.preco-item{width:104px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;font-weight:600;color:var(--ink);text-align:right}
+.preco-item.alterado{border-color:var(--ipe);background:var(--leaf-soft)}
+.dica-preco{font-size:13px;color:var(--muted);margin:-6px 0 8px}
 /* Pagamento "Outro" e Limpar pedido */
 .pag-outro{width:100%;margin-top:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink)}
 .pag-outro[hidden],.btn.limpar[hidden]{display:none}
@@ -529,7 +535,7 @@ let filtroLojas = 'todas';
 // Pedidos vindos da planilha (do usuário conectado, ou de todos se for administrador).
 let remotos = (() => { const r = LS.get('pedidosServidor', null); return r && sessao && r.usuario === sessao.usuario ? r.lista : []; })();
 let filtro = 'todos';
-const st = {empresa:null, itens:{}, busca:'', cat:''};
+const st = {empresa:null, itens:{}, busca:'', cat:'', precos:{}};   // precos: preço de venda digitado no resumo (id -> valor)
 const catDe = p => (p.categoria || '').trim();
 // Categorias de uma empresa, em ordem alfabética, com a quantidade de produtos.
 function categoriasDe(empresa){
@@ -765,9 +771,29 @@ function renderProdutos(){
   }
   ul.innerHTML = lista.map(linhaProduto).join('');
 }
+// Itens do pedido. "preco" é o preço de venda (o digitado no resumo, ou o da tabela); "tabela" guarda o da planilha.
 function itensAtuais(){
-  return st.empresa ? prodsDe(st.empresa).filter(p => st.itens[p.id]).map(p => ({id:p.id, nome:p.nome, un:p.un, preco:p.preco, q:st.itens[p.id]})) : [];
+  return st.empresa ? prodsDe(st.empresa).filter(p => st.itens[p.id]).map(p => ({id:p.id, nome:p.nome, un:p.un,
+    preco: st.precos[p.id] ?? p.preco, tabela: p.preco, q:st.itens[p.id]})) : [];
 }
+// Menor preço que o vendedor pode digitar: tabela menos o desconto máximo da marca (o administrador não tem limite).
+const precoMinimo = tabela => ehAdmin() ? 0.01 : Math.round(tabela * (1 - descontoMaxDe(st.empresa) / 100) * 100) / 100;
+const numFmt = v => Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+// Preço de venda digitado no resumo (computador ou revisão do celular).
+document.addEventListener('change', e => {
+  const inp = e.target.closest('input.preco-item'); if(!inp) return;
+  const it = itensAtuais().find(i => i.id === inp.dataset.id); if(!it) return;
+  const v = numBR(inp.value);
+  if(!(v > 0)){ toast('Digite um preço válido'); inp.value = numFmt(it.preco); return; }
+  const min = precoMinimo(it.tabela);
+  if(v < min){ toast(`O menor preço permitido para este item é ${brl(min)} (tabela ${brl(it.tabela)}).`); inp.value = numFmt(it.preco); return; }
+  const novo = Math.round(v * 100) / 100;
+  if(novo === it.tabela) delete st.precos[it.id]; else st.precos[it.id] = novo;
+  if(document.activeElement === inp) inp.blur();
+  renderCart(); atualizarRevisao();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('input.preco-item')) e.target.blur(); });
+document.addEventListener('focusin', e => { if(e.target.matches('input.preco-item')) e.target.select(); });
 function renderCart(){
   const its = itensAtuais();
   const tot = its.reduce((s,i) => s + i.q*i.preco, 0), vol = its.reduce((s,i) => s + i.q, 0);
@@ -821,7 +847,7 @@ function pagamentoDe(sel, inp){
 function limparPedido(){
   if(!itensAtuais().length) return;
   if(!confirm('Tirar todos os itens deste pedido?')) return;
-  st.itens = {}; st.orcamento = null;
+  st.itens = {}; st.precos = {}; st.orcamento = null;
   $('#desc-p').value = ''; $('#obs-p').value = '';
   if(!$('#sheet').hidden) fecharSheet();
   renderProdutos(); renderCart();
@@ -834,7 +860,9 @@ function renderPainel(its, tot){
   const c = cli($('#cliente').value), e = emp(st.empresa);
   $('#painel-cli').innerHTML = c ? `<b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}${e ? '<br>'+esc(e.nome) : ''}`
     : (e ? `${esc(e.nome)}<br>Escolha o cliente.` : 'Escolha a empresa, o cliente e os produtos.');
-  $('#painel-itens').innerHTML = its.length ? resumoHTML(its) : '<p class="empty" style="padding:14px 0">Nenhum produto ainda.</p>';
+  // Não redesenha a lista enquanto a pessoa está digitando um preço nela.
+  if(!document.activeElement?.matches('#painel-itens input.preco-item'))
+    $('#painel-itens').innerHTML = its.length ? resumoHTML(its, true) : '<p class="empty" style="padding:14px 0">Nenhum produto ainda.</p>';
   const max = descontoMaxDe(st.empresa);
   $('#desc-lbl-p').textContent = ehAdmin() || !st.empresa ? 'Desconto (%)' : (max ? `Desconto (%) · até ${String(max).replace('.', ',')}%` : 'Desconto (%) · esta marca não permite');
   const desc = numBR($('#desc-p').value || '0');
@@ -909,22 +937,36 @@ $('#btn-revisar').addEventListener('click', () => {
   abrirRevisao();
 });
 
-function resumoHTML(itens){
-  return '<ul class="resumo">' + itens.map(i =>
-    `<li><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}, ${brl(i.preco)}</small></span><span class="v">${brl(i.q*i.preco)}</span></li>`).join('') + '</ul>';
+// Lista de itens do resumo. Com "editavel", cada item tem o campo do preço de venda.
+function resumoHTML(itens, editavel){
+  return '<ul class="resumo">' + itens.map(i => editavel
+    ? `<li class="editavel"><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}${i.tabela != null && i.preco !== i.tabela ? ` · tabela ${brl(i.tabela)}` : ''}</small>
+        <label class="preco-linha">R$ <input class="preco-item${i.tabela != null && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.preco)}" aria-label="Preço de venda de ${esc(i.nome)}"> cada</label></span>
+        <span class="v">${brl(i.q*i.preco)}</span></li>`
+    : `<li><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}, ${brl(i.preco)}</small></span><span class="v">${brl(i.q*i.preco)}</span></li>`).join('') + '</ul>';
+}
+// Atualiza itens, totais e aviso de mínimo da janela de revisão (celular) depois de mudar um preço.
+function atualizarRevisao(){
+  if(!$('#rev-itens')) return;
+  const its = itensAtuais(), tot = its.reduce((s,i) => s + i.q*i.preco, 0), e = emp(st.empresa), min = minimoDe(st.empresa);
+  $('#rev-itens').innerHTML = resumoHTML(its, true);
+  const d = $('#desc') ? numBR($('#desc').value || '0') : 0;
+  $('#rev-totais').innerHTML = totaisHTML(contas(tot, isNaN(d) ? 0 : d));
+  $('#rev-min').innerHTML = min && tot < min ? `<p class="aviso-min">Pedido mínimo de ${esc(e.nome)}: ${brl(min)}. Faltam ${brl(min - tot)}.${ehAdmin() ? ' (Você pode fechar mesmo assim.)' : ''}</p>` : '';
 }
 function abrirRevisao(){
-  const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
-  const tot = its.reduce((s,i) => s + i.q*i.preco, 0);
-  const max = descontoMaxDe(st.empresa), min = minimoDe(st.empresa);
+  const c = cli($('#cliente').value), e = emp(st.empresa);
+  const max = descontoMaxDe(st.empresa);
+  const totAtual = () => itensAtuais().reduce((s,i) => s + i.q*i.preco, 0);
   abrirSheet(`
     <div class="sheet-head"><h2>Revisar pedido</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <p class="meta"><b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}<br>${esc(e.nome)}</p>
-    ${resumoHTML(its)}
+    <p class="dica-preco">Toque no preço de um item para mudar o valor de venda.</p>
+    <div id="rev-itens"></div>
     ${max ? `<label class="field" style="margin-top:14px"><span class="lbl">Desconto (%)${ehAdmin() ? '' : ' · até ' + String(max).replace('.', ',') + '%'}</span>
       <input type="text" inputmode="decimal" id="desc" placeholder="0" autocomplete="off"></label>` : ''}
-    <div id="rev-totais">${totaisHTML(contas(tot, 0))}</div>
-    ${min && tot < min ? `<p class="aviso-min">Pedido mínimo de ${esc(e.nome)}: ${brl(min)}. Faltam ${brl(min - tot)}.${ehAdmin() ? ' (Você pode fechar mesmo assim.)' : ''}</p>` : ''}
+    <div id="rev-totais"></div>
+    <div id="rev-min"></div>
     <label class="field"><span class="lbl">Pagamento</span><select id="pag">${opcoesPagamento()}</select>
       <input type="text" id="pag-outro" class="pag-outro" placeholder="Digite a forma de pagamento" autocomplete="off" hidden></label>
     <label class="field"><span class="lbl">Observação</span>
@@ -933,10 +975,11 @@ function abrirRevisao(){
     <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>
     <button class="btn ghost limpar" id="btn-limpar-rev">Limpar pedido</button>`);
   ligarOutro($('#pag'), $('#pag-outro'));
+  atualizarRevisao();
   const descDe = () => $('#desc') ? numBR($('#desc').value || '0') : 0;
-  if($('#desc')) $('#desc').addEventListener('input', () => { const d = descDe(); $('#rev-totais').innerHTML = totaisHTML(contas(tot, isNaN(d) ? 0 : d)); });
+  if($('#desc')) $('#desc').addEventListener('input', atualizarRevisao);
   $('#btn-fechar').addEventListener('click', () => {
-    const erro = conferirRegras(tot, descDe()); if(erro){ toast(erro); return; }
+    const erro = conferirRegras(totAtual(), descDe()); if(erro){ toast(erro); return; }
     const pag = pagamentoDe($('#pag'), $('#pag-outro')); if(pag === null) return;
     fecharPedido(pag, $('#obs').value, descDe());
   });
@@ -979,7 +1022,7 @@ function fecharPedido(pag, obs, desc, deOrcamento){
   pedidos.unshift(p); LS.set('pedidos', pedidos);
   // Orçamento que virou pedido sai da lista de orçamentos.
   if(deOrcamento){ orcamentos = orcamentos.filter(o => o.id !== deOrcamento); LS.set('orcamentos', orcamentos); }
-  st.itens = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   // No celular a janela de revisão já está aberta; no computador ela abre agora com a confirmação.
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
@@ -1007,7 +1050,7 @@ function salvarOrcamento(pag, obs, desc){
   };
   if(!antigo) LS.set('ultimoOrc', LS.get('ultimoOrc', 100) + 1);
   orcamentos = [o, ...orcamentos.filter(x => x.id !== o.id)]; LS.set('orcamentos', orcamentos);
-  st.itens = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Orçamento ${esc(o.num)} salvo</h2>
@@ -1022,13 +1065,16 @@ function carregarNoPedido(origem, msgOk){
   st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {};
   let fora = 0;
   (origem.itens || []).forEach(i => { if(ativos.has(i.id)) st.itens[i.id] = (st.itens[i.id] || 0) + Number(i.q); else fora++; });
+  // Orçamento volta com os preços que foram combinados; "repetir pedido" usa os preços atuais da tabela.
+  if(origem.tipo === 'orcamento') (origem.itens || []).forEach(i => { const p = ativos.get(i.id); if(p && Number(i.preco) > 0 && Number(i.preco) !== p.preco) st.precos[i.id] = Number(i.preco); });
   if(cli(origem.cliente)) $('#cliente').value = origem.cliente;
   if(origem.pagamento) LS.set('ultPag', origem.pagamento);
   $('#obs-p').value = origem.tipo === 'orcamento' ? (origem.obs || '') : '';
   $('#desc-p').value = origem.tipo === 'orcamento' && origem.desconto ? String(origem.desconto).replace('.', ',') : '';
   renderEmpresas(); renderCategorias(); renderProdutos(); renderCart();
   fecharSheet(); irPara('novo');
-  toast(msgOk + (fora ? ` ${fora} produto${fora > 1 ? 's' : ''} não está${fora > 1 ? 'ão' : ''} mais no catálogo e ficou${fora > 1 ? 'aram' : ''} de fora.` : ' Confira as quantidades e os preços atuais.'), 5000);
+  toast(msgOk + (fora ? ` ${fora} produto${fora > 1 ? 's' : ''} não está${fora > 1 ? 'ão' : ''} mais no catálogo e ficou${fora > 1 ? 'aram' : ''} de fora.`
+    : origem.tipo === 'orcamento' ? ' Os preços combinados no orçamento foram mantidos.' : ' Confira as quantidades e os preços atuais.'), 5000);
 }
 function abrirOrcamento(id){
   const o = orcamentos.find(x => x.id === id); if(!o) return;
