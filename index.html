@@ -167,11 +167,40 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 .tabela td.n,.tabela th.n{text-align:right;white-space:nowrap}
 .tabela tr:last-child td{border-bottom:0}
 .tabela .sub{color:var(--muted);font-size:12px}
+/* Lojas, orçamentos, desconto, fotos, etapas */
+.cli-linha{display:flex;gap:8px}
+.cli-linha select{flex:1;min-width:0}
+.cli-linha .mini{flex:none;white-space:nowrap}
+.mini.repetir{margin-top:8px;border-color:var(--ipe);color:var(--ipe);background:var(--surface)}
+.mini[hidden],.sub-h[hidden]{display:none}
+.sub-h{font-size:18px;margin:6px 0 10px}
+.aviso-min{background:#FFF1C9;color:#6E4B00;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600;margin:0 0 14px}
+.aviso-min[hidden]{display:none}
+.tot-linha{display:flex;justify-content:space-between;font-size:15px;color:var(--muted);margin:2px 0}
+.badge.env{background:#DCEBFF;color:#1F56B8}
+.badge.fat{background:#EADFFF;color:#5B2DB0}
+.badge.ent{background:#C9F0D8;color:#0F5530}
+.badge.orc{background:var(--leaf-soft);color:var(--leaf)}
+.situacao.env{background:#DCEBFF;color:#1F56B8}
+.situacao.fat{background:#EADFFF;color:#5B2DB0}
+.situacao.ent{background:#C9F0D8;color:#0F5530}
+.thumb{width:46px;height:46px;border-radius:8px;object-fit:contain;background:#fff;border:1px solid var(--line);flex:none;cursor:zoom-in}
+.foto-grande{display:block;max-width:100%;max-height:60vh;margin:0 auto 12px;border-radius:12px;background:#fff}
+.loja .num{display:flex;gap:8px;align-items:center}
+.contato-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.form-loja .field{margin-bottom:12px}
+.form-loja input{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink)}
+.acoes-admin{display:grid;gap:10px;margin:0 0 6px}
+.acoes-admin .linha{display:flex;gap:8px}
+.acoes-admin .linha input{flex:1;min-width:0;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink)}
+.acoes-admin .linha .btn{width:auto;flex:none}
 /* Quantidade digitável e +10 */
 .step input.qtd{width:52px;height:40px;padding:0 4px;text-align:center;font-weight:700;font-size:17px;border-radius:10px;-moz-appearance:textfield}
 .step input.qtd::-webkit-outer-spin-button,.step input.qtd::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .step button.mais10{width:auto;padding:0 8px;font-size:14px;font-weight:700;margin-left:4px;color:var(--leaf);border-color:var(--leaf)}
 @media (max-width: 420px){
+  .nav button{font-size:11.5px}
+  .thumb{width:38px;height:38px}
   .prod{padding:10px 10px;gap:8px}
   .step button{width:34px;height:38px;font-size:20px}
   .step input.qtd{width:42px;height:38px;font-size:16px}
@@ -292,10 +321,11 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
       <span class="lbl">Empresa</span>
       <div id="empresas" class="chips"></div>
     </div>
-    <label class="field">
-      <span class="lbl">Cliente</span>
-      <select id="cliente"></select>
-    </label>
+    <div class="field">
+      <label class="lbl" for="cliente">Cliente (loja)</label>
+      <div class="cli-linha"><select id="cliente"></select><button class="mini" id="btn-nova-loja" type="button">+ Nova loja</button></div>
+      <button class="mini repetir" id="btn-repetir" type="button" hidden></button>
+    </div>
     <label class="field" id="campo-cat" hidden>
       <span class="lbl">Categoria</span>
       <select id="categoria"></select>
@@ -310,11 +340,15 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
       <h2>Resumo do pedido</h2>
       <p class="meta" id="painel-cli"></p>
       <div id="painel-itens"></div>
-      <div class="total-line"><span>Total</span><strong id="painel-total">R$ 0,00</strong></div>
+      <label class="field desc-campo"><span class="lbl" id="desc-lbl-p">Desconto (%)</span>
+        <input type="text" inputmode="decimal" id="desc-p" placeholder="0" autocomplete="off"></label>
+      <div id="painel-totais"></div>
+      <p class="aviso-min" id="aviso-min-p" hidden></p>
       <label class="field"><span class="lbl">Pagamento</span><select id="pag-p"></select></label>
       <label class="field"><span class="lbl">Observação</span>
         <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
       <button class="btn primary" id="btn-fechar-p" type="button">Fechar pedido</button>
+      <button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
     </aside>
   </section>
 
@@ -327,6 +361,17 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
     <ul id="lista-pedidos" class="orders"></ul>
   </section>
 
+  <section id="v-lojas" class="view" hidden>
+    <h1>Lojas</h1>
+    <div class="lista-topo">
+      <div class="chips" id="lojas-filtros"></div>
+      <button class="mini" id="btn-nova-loja2" type="button">+ Nova loja</button>
+    </div>
+    <div class="field"><input id="lojas-busca" type="search" placeholder="Buscar loja pelo nome, cidade ou CNPJ" aria-label="Buscar loja"></div>
+    <p class="meta" id="lojas-info"></p>
+    <ul id="lista-lojas" class="orders"></ul>
+  </section>
+
   <section id="v-relatorios" class="view" hidden>
     <h1>Relatórios</h1>
     <div class="rel-filtros">
@@ -335,7 +380,8 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
       <label class="field"><span class="lbl">Empresa</span><select id="rel-emp"></select></label>
       <label class="field"><span class="lbl">Vendedor</span><select id="rel-vend"></select></label>
       <label class="field"><span class="lbl">Situação</span><select id="rel-sit">
-        <option value="aprov">Só aprovados</option>
+        <option value="aprov">Aprovados (inclui enviados, faturados e entregues)</option>
+        <option value="faturados">Só faturados e entregues</option>
         <option value="ativos">Aprovados e aguardando</option>
         <option value="todos">Todos (inclusive recusados e cancelados)</option>
       </select></label>
@@ -357,7 +403,10 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 
   <section id="v-aprovar" class="view" hidden>
     <h1>Aprovar</h1>
-    <p class="note" id="aprovar-info">Pedidos dos vendedores aguardando a sua aprovação.</p>
+    <p class="note" id="aprovar-info">Pedidos e lojas novas aguardando a sua aprovação. Ao aprovar um pedido, ele vai por e-mail para a marca.</p>
+    <h2 class="sub-h" id="aprovar-lojas-h" hidden>Lojas novas</h2>
+    <ul id="lista-aprovar-lojas" class="orders"></ul>
+    <h2 class="sub-h">Pedidos</h2>
     <ul id="lista-aprovar" class="orders"></ul>
   </section>
 
@@ -379,6 +428,8 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Novo pedido</button>
   <button data-view="pedidos">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg>Pedidos</button>
+  <button data-view="lojas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>Lojas</button>
   <button data-view="aprovar" id="nav-aprovar" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>Aprovar<span class="conta" id="conta-aprovar" hidden></span></button>
   <button data-view="relatorios" id="nav-relatorios" hidden>
@@ -456,6 +507,17 @@ try{ localStorage.removeItem('pa-pin'); }catch(e){}
 const nomeAtual = () => DEMO ? CFG.REPRESENTANTE : (sessao?.nome || '');
 const ehAdmin = () => !DEMO && sessao?.perfil === 'admin';
 const AGUARDANDO = 'Aguardando aprovação', APROVADO = 'Aprovado', RECUSADO = 'Recusado', CANCELADO = 'Cancelado';
+const ENVIADO = 'Enviado ao fornecedor', FATURADO = 'Faturado', ENTREGUE = 'Entregue';
+// Depois de aprovado, o pedido segue: enviado à marca -> faturado (NF) -> entregue. Tudo isso conta como "aprovado".
+const POS_APROVACAO = [APROVADO, ENVIADO, FATURADO, ENTREGUE];
+// Regras de cada marca (vêm da aba Empresas).
+const pagamentosDe = e => (emp(e)?.pagamentos?.length ? emp(e).pagamentos : CFG.PAGAMENTOS);
+const descontoMaxDe = e => ehAdmin() ? 100 : (Number(emp(e)?.descontoMax) || 0);
+const minimoDe = e => Number(emp(e)?.pedidoMinimo) || 0;
+const numBR = s => { const t = String(s ?? '').trim().replace(/\./g, '').replace(',', '.'); const n = Number(t); return isFinite(n) ? n : NaN; };
+let orcamentos = LS.get('orcamentos', []);
+let resumoLojas = LS.get('resumoLojas', {});
+let filtroLojas = 'todas';
 // Pedidos vindos da planilha (do usuário conectado, ou de todos se for administrador).
 let remotos = (() => { const r = LS.get('pedidosServidor', null); return r && sessao && r.usuario === sessao.usuario ? r.lista : []; })();
 let filtro = 'todos';
@@ -507,6 +569,7 @@ async function sincronizar(){
     try{
       const j = await api({acao:'pedido', pedido:p});
       p.sync = 'ok'; if(j.status) p.status = j.status; LS.set('pedidos', pedidos); enviou = true;
+      if(j.aviso) toast(j.aviso, 5000);
     }
     catch(e){ if(e.login) sessaoCaiu(e.message); break; }
   }
@@ -566,7 +629,7 @@ async function entrar(ev){
     if(outro){ remotos = []; LS.set('pedidosServidor', null); }
     $('#login-senha').value = ''; $('#pin-erro').textContent = ''; $('#pin').hidden = true;
     mostrarUsuario(); toast('Olá, ' + j.nome);
-    await carregarCatalogo(false); await sincronizar(); carregarPedidos(false);
+    await carregarCatalogo(false); await sincronizar(); await carregarPedidos(false); carregarLojas();
   }catch(e){
     $('#pin-erro').textContent = e instanceof TypeError || e instanceof SyntaxError
       ? 'Não deu para falar com a planilha. Tente de novo.' : e.message;
@@ -601,7 +664,7 @@ function renderClientes(){
   const atual = $('#cliente').value;
   $('#cliente').innerHTML = '<option value="">Escolha o cliente</option>' +
     [...(DATA?.clientes || [])].sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'))
-      .map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.cidade ? ' ('+esc(c.cidade)+')' : ''}</option>`).join('');
+      .map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.cidade ? ' ('+esc(c.cidade)+')' : ''}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</option>`).join('');
   $('#cliente').value = atual;
 }
 function renderCategorias(){
@@ -614,6 +677,15 @@ function renderCategorias(){
     cats.map(([c,n]) => `<option value="${esc(c)}"${c === st.cat ? ' selected' : ''}>${esc(c)} (${n})</option>`).join('');
 }
 const LIMITE_LISTA = 80;
+// Miniatura do produto (coluna Foto da planilha ou aba Fotos). Se a imagem não carregar, some sem deixar buraco.
+const fotoHTML = p => p.foto && /^https?:\/\//i.test(p.foto)
+  ? `<img class="thumb" loading="lazy" src="${esc(p.foto)}" alt="" data-foto="${esc(p.foto)}" data-nome="${esc(p.nome)}" onerror="this.remove()">` : '';
+document.addEventListener('click', e => {
+  const t = e.target.closest('img.thumb'); if(!t) return;
+  e.preventDefault();
+  abrirSheet(`<div class="sheet-head"><h2 style="font-size:18px">${esc(t.dataset.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <img class="foto-grande" src="${esc(t.dataset.foto)}" alt="${esc(t.dataset.nome)}">`);
+});
 function linhaProduto(p){
   const n = st.itens[p.id] || 0;
   // Quantidade: − e + mudam de 1 em 1; o número pode ser digitado; +10 soma dez de uma vez.
@@ -621,7 +693,7 @@ function linhaProduto(p){
   const step = n
     ? `<button data-act="dec" data-id="${id}" aria-label="Tirar um">−</button><input class="qtd" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="${n}" data-id="${id}" aria-label="Quantidade de ${esc(p.nome)}"><button data-act="inc" data-id="${id}" aria-label="Pôr mais um">+</button><button class="mais10" data-act="inc10" data-id="${id}" aria-label="Pôr mais dez">+10</button>`
     : `<button class="add" data-act="inc" data-id="${id}" aria-label="Adicionar ${esc(p.nome)}">+</button><button class="mais10" data-act="inc10" data-id="${id}" aria-label="Adicionar dez de ${esc(p.nome)}">+10</button>`;
-  return `<li class="prod${n?' on':''}"><div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
+  return `<li class="prod${n?' on':''}">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
     <div class="prod-sub">${esc(p.un)}, <strong>${brl(p.preco)}</strong></div></div><div class="step">${step}</div></li>`;
 }
 // Busca: todas as palavras digitadas precisam aparecer no nome, código ou categoria (qualquer ordem, sem ligar para acento).
@@ -686,6 +758,29 @@ function renderCart(){
   $('#cart-qtd').textContent = `${its.length} ${its.length===1?'produto':'produtos'}, ${vol} ${vol===1?'volume':'volumes'}`;
   $('#cart-total').textContent = brl(tot);
   renderPainel(its, tot);
+  renderRepetir();
+}
+// Totais com desconto: bruto, desconto e líquido.
+function contas(bruto, desc){
+  const d = Math.max(0, Math.min(100, Number(desc) || 0));
+  return {bruto, desc: d, total: Math.round(bruto * (1 - d/100) * 100) / 100};
+}
+function totaisHTML(c){
+  return (c.desc ? `<div class="tot-linha"><span>Subtotal</span><span>${brl(c.bruto)}</span></div>
+    <div class="tot-linha"><span>Desconto ${String(c.desc).replace('.', ',')}%</span><span>− ${brl(c.bruto - c.total)}</span></div>` : '') +
+    `<div class="total-line"><span>Total</span><strong>${brl(c.total)}</strong></div>`;
+}
+// Confere desconto e pedido mínimo. Devolve a mensagem de erro (vazia se estiver tudo certo).
+function conferirRegras(bruto, desc){
+  const max = descontoMaxDe(st.empresa), min = minimoDe(st.empresa);
+  if(isNaN(desc) || desc < 0) return 'Desconto inválido.';
+  if(desc > max) return max ? `O desconto máximo para ${emp(st.empresa).nome} é ${String(max).replace('.', ',')}%.` : `${emp(st.empresa).nome} não permite desconto.`;
+  if(min && bruto < min && !ehAdmin()) return `Pedido mínimo de ${emp(st.empresa).nome}: ${brl(min)}. Faltam ${brl(min - bruto)}.`;
+  return '';
+}
+function opcoesPagamento(){
+  const ult = LS.get('ultPag','28 dias');
+  return pagamentosDe(st.empresa).map(p => `<option${p===ult?' selected':''}>${esc(p)}</option>`).join('');
 }
 // Resumo lateral do computador: mesmo conteúdo da janela "Revisar pedido" do celular.
 function renderPainel(its, tot){
@@ -693,16 +788,37 @@ function renderPainel(its, tot){
   $('#painel-cli').innerHTML = c ? `<b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}${e ? '<br>'+esc(e.nome) : ''}`
     : (e ? `${esc(e.nome)}<br>Escolha o cliente.` : 'Escolha a empresa, o cliente e os produtos.');
   $('#painel-itens').innerHTML = its.length ? resumoHTML(its) : '<p class="empty" style="padding:14px 0">Nenhum produto ainda.</p>';
-  $('#painel-total').textContent = brl(tot);
+  const max = descontoMaxDe(st.empresa);
+  $('#desc-lbl-p').textContent = ehAdmin() || !st.empresa ? 'Desconto (%)' : (max ? `Desconto (%) · até ${String(max).replace('.', ',')}%` : 'Desconto (%) · esta marca não permite');
+  const desc = numBR($('#desc-p').value || '0');
+  const cc = contas(tot, isNaN(desc) ? 0 : desc);
+  $('#painel-totais').innerHTML = totaisHTML(cc);
+  const min = minimoDe(st.empresa);
+  const av = $('#aviso-min-p');
+  av.hidden = !(its.length && min && tot < min);
+  if(!av.hidden) av.textContent = `Pedido mínimo de ${e.nome}: ${brl(min)}. Faltam ${brl(min - tot)}.` + (ehAdmin() ? ' (Você pode fechar mesmo assim.)' : '');
   $('#btn-fechar-p').disabled = !its.length;
-  const sel = $('#pag-p');
-  if(!sel.options.length) sel.innerHTML = CFG.PAGAMENTOS.map(p => `<option${p===LS.get('ultPag','28 dias')?' selected':''}>${esc(p)}</option>`).join('');
+  $('#btn-orc-p').disabled = !its.length;
+  const sel = $('#pag-p'), atual = sel.value;
+  sel.innerHTML = opcoesPagamento();
+  if([...sel.options].some(o => o.value === atual)) sel.value = atual;
 }
+$('#desc-p').addEventListener('input', () => renderCart());
 $('#cliente').addEventListener('change', () => renderCart());
+function validarFechamento(){
+  if(!itensAtuais().length){ toast('Adicione pelo menos um produto'); return false; }
+  if(!$('#cliente').value){ toast('Escolha o cliente antes de fechar'); $('#cliente').focus(); return false; }
+  return true;
+}
 $('#btn-fechar-p').addEventListener('click', () => {
-  if(!itensAtuais().length){ toast('Adicione pelo menos um produto'); return; }
-  if(!$('#cliente').value){ toast('Escolha o cliente antes de fechar'); $('#cliente').focus(); return; }
-  fecharPedido($('#pag-p').value, $('#obs-p').value);
+  if(!validarFechamento()) return;
+  const bruto = itensAtuais().reduce((s,i) => s + i.q*i.preco, 0), desc = numBR($('#desc-p').value || '0');
+  const erro = conferirRegras(bruto, desc); if(erro){ toast(erro); return; }
+  fecharPedido($('#pag-p').value, $('#obs-p').value, desc);
+});
+$('#btn-orc-p').addEventListener('click', () => {
+  if(!validarFechamento()) return;
+  salvarOrcamento($('#pag-p').value, $('#obs-p').value, numBR($('#desc-p').value || '0'));
 });
 $('#empresas').addEventListener('click', e => {
   const b = e.target.closest('[data-emp]'); if(!b || st.empresa === b.dataset.emp) return;
@@ -747,19 +863,29 @@ function resumoHTML(itens){
     `<li><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}, ${brl(i.preco)}</small></span><span class="v">${brl(i.q*i.preco)}</span></li>`).join('') + '</ul>';
 }
 function abrirRevisao(){
-  const its = itensAtuais(), c = cli($('#cliente').value);
+  const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
   const tot = its.reduce((s,i) => s + i.q*i.preco, 0);
+  const max = descontoMaxDe(st.empresa), min = minimoDe(st.empresa);
   abrirSheet(`
     <div class="sheet-head"><h2>Revisar pedido</h2><button class="x" data-close aria-label="Fechar">×</button></div>
-    <p class="meta"><b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}<br>${esc(emp(st.empresa).nome)}</p>
+    <p class="meta"><b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}<br>${esc(e.nome)}</p>
     ${resumoHTML(its)}
-    <div class="total-line"><span>Total</span><strong>${brl(tot)}</strong></div>
-    <label class="field"><span class="lbl">Pagamento</span>
-      <select id="pag">${CFG.PAGAMENTOS.map(p => `<option${p===LS.get('ultPag','28 dias')?' selected':''}>${esc(p)}</option>`).join('')}</select></label>
+    ${max ? `<label class="field" style="margin-top:14px"><span class="lbl">Desconto (%)${ehAdmin() ? '' : ' · até ' + String(max).replace('.', ',') + '%'}</span>
+      <input type="text" inputmode="decimal" id="desc" placeholder="0" autocomplete="off"></label>` : ''}
+    <div id="rev-totais">${totaisHTML(contas(tot, 0))}</div>
+    ${min && tot < min ? `<p class="aviso-min">Pedido mínimo de ${esc(e.nome)}: ${brl(min)}. Faltam ${brl(min - tot)}.${ehAdmin() ? ' (Você pode fechar mesmo assim.)' : ''}</p>` : ''}
+    <label class="field"><span class="lbl">Pagamento</span><select id="pag">${opcoesPagamento()}</select></label>
     <label class="field"><span class="lbl">Observação</span>
       <textarea id="obs" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
-    <button class="btn primary" id="btn-fechar">Fechar pedido</button>`);
-  $('#btn-fechar').addEventListener('click', () => fecharPedido($('#pag').value, $('#obs').value));
+    <button class="btn primary" id="btn-fechar">Fechar pedido</button>
+    <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>`);
+  const descDe = () => $('#desc') ? numBR($('#desc').value || '0') : 0;
+  if($('#desc')) $('#desc').addEventListener('input', () => { const d = descDe(); $('#rev-totais').innerHTML = totaisHTML(contas(tot, isNaN(d) ? 0 : d)); });
+  $('#btn-fechar').addEventListener('click', () => {
+    const erro = conferirRegras(tot, descDe()); if(erro){ toast(erro); return; }
+    fecharPedido($('#pag').value, $('#obs').value, descDe());
+  });
+  $('#btn-orc').addEventListener('click', () => salvarOrcamento($('#pag').value, $('#obs').value, descDe()));
 }
 // Número do pedido: o usuário entra como prefixo (JOAO-1001), assim dois vendedores nunca repetem número.
 const prefixoNum = () => DEMO || !sessao?.usuario ? '' : sessao.usuario.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -775,22 +901,26 @@ function acertarContador(){
   const maior = remotos.reduce((m, p) => { const x = re.exec(String(p.num)); return x ? Math.max(m, +x[1]) : m; }, 0);
   if(maior > LS.get(chaveNum(), 1000)) LS.set(chaveNum(), maior);
 }
-function fecharPedido(pag, obs){
+function fecharPedido(pag, obs, desc, deOrcamento){
   const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
+  deOrcamento = deOrcamento || st.orcamento;
   const num = proximoNumero();
   LS.set('ultPag', pag);
+  const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
   const p = {
     id: 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     num, data: new Date().toISOString(),
     empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
     pagamento: pag, obs: (obs || '').trim(), itens: its,
-    total: Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100,
+    bruto: cc.bruto, desconto: cc.desc, total: cc.total,
     usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
     status: DEMO ? '' : (ehAdmin() ? APROVADO : AGUARDANDO),
     sync: DEMO ? 'demo' : 'pendente'
   };
   pedidos.unshift(p); LS.set('pedidos', pedidos);
-  st.itens = {}; $('#obs-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  // Orçamento que virou pedido sai da lista de orçamentos.
+  if(deOrcamento){ orcamentos = orcamentos.filter(o => o.id !== deOrcamento); LS.set('orcamentos', orcamentos); }
+  st.itens = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   // No celular a janela de revisão já está aberta; no computador ela abre agora com a confirmação.
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
@@ -802,6 +932,190 @@ function fecharPedido(pag, obs){
   sincronizar();
 }
 
+/* ---------- Orçamentos (ficam neste aparelho) ---------- */
+function salvarOrcamento(pag, obs, desc){
+  const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
+  const max = descontoMaxDe(st.empresa);
+  if(isNaN(desc) || desc < 0 || desc > max){ toast(conferirRegras(0, desc) || 'Desconto inválido.'); return; }
+  const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
+  const antigo = st.orcamento && orcamentos.find(o => o.id === st.orcamento);
+  const o = {
+    tipo: 'orcamento', id: antigo ? antigo.id : 'O' + Date.now().toString(36),
+    num: antigo ? antigo.num : 'ORC-' + (LS.get('ultimoOrc', 100) + 1),
+    data: new Date().toISOString(), empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
+    pagamento: pag, obs: (obs || '').trim(), itens: its, bruto: cc.bruto, desconto: cc.desc, total: cc.total,
+    usuario: sessao?.usuario || '', representante: nomeAtual()
+  };
+  if(!antigo) LS.set('ultimoOrc', LS.get('ultimoOrc', 100) + 1);
+  orcamentos = [o, ...orcamentos.filter(x => x.id !== o.id)]; LS.set('orcamentos', orcamentos);
+  st.itens = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  abrirSheet(`
+    <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
+      <h2>Orçamento ${esc(o.num)} salvo</h2>
+      <p class="meta"><b>${esc(o.clienteNome)}</b><br>${brl(o.total)}, ${esc(o.pagamento)}<br>Ele fica na aba Pedidos, filtro <b>Orçamentos</b>.</p></div>
+    ${acoesHTML(o)}
+    <button class="btn ghost" data-close style="margin-top:8px">Fechar</button>`);
+  ligarAcoes(o);
+}
+// Carrega itens (de um orçamento ou de um pedido anterior) no Novo pedido.
+function carregarNoPedido(origem, msgOk){
+  const ativos = new Map(prodsDe(origem.empresa).map(p => [p.id, p]));
+  st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {};
+  let fora = 0;
+  (origem.itens || []).forEach(i => { if(ativos.has(i.id)) st.itens[i.id] = (st.itens[i.id] || 0) + Number(i.q); else fora++; });
+  if(cli(origem.cliente)) $('#cliente').value = origem.cliente;
+  if(origem.pagamento) LS.set('ultPag', origem.pagamento);
+  $('#obs-p').value = origem.tipo === 'orcamento' ? (origem.obs || '') : '';
+  $('#desc-p').value = origem.tipo === 'orcamento' && origem.desconto ? String(origem.desconto).replace('.', ',') : '';
+  renderEmpresas(); renderCategorias(); renderProdutos(); renderCart();
+  fecharSheet(); irPara('novo');
+  toast(msgOk + (fora ? ` ${fora} produto${fora > 1 ? 's' : ''} não está${fora > 1 ? 'ão' : ''} mais no catálogo e ficou${fora > 1 ? 'aram' : ''} de fora.` : ' Confira as quantidades e os preços atuais.'), 5000);
+}
+function abrirOrcamento(id){
+  const o = orcamentos.find(x => x.id === id); if(!o) return;
+  abrirSheet(`
+    <div class="sheet-head"><h2>Orçamento ${esc(o.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta"><b>${esc(o.clienteNome)}</b>${o.clienteCidade ? ', '+esc(o.clienteCidade) : ''}<br>${esc(o.empresaNome)}<br>${dataBR(o.data)}</p>
+    ${resumoHTML(o.itens)}
+    ${totaisHTML({bruto:o.bruto ?? o.total, desc:o.desconto || 0, total:o.total})}
+    <p class="meta">Pagamento: <b>${esc(o.pagamento)}</b>${o.obs ? `<br>Obs.: ${esc(o.obs)}` : ''}</p>
+    <div class="btns"><button class="btn primary" id="btn-orc-virar">Transformar em pedido</button></div>
+    ${acoesHTML(o)}
+    <div class="btns"><button class="btn perigo" id="btn-orc-excluir">Excluir orçamento</button></div>`);
+  ligarAcoes(o);
+  $('#btn-orc-virar').addEventListener('click', () => { carregarNoPedido(o, `Orçamento ${o.num} carregado no Novo pedido.`); st.orcamento = o.id; });
+  $('#btn-orc-excluir').addEventListener('click', () => {
+    if(!confirm(`Excluir o orçamento ${o.num}?`)) return;
+    orcamentos = orcamentos.filter(x => x.id !== id); LS.set('orcamentos', orcamentos); fecharSheet(); renderPedidos(); toast('Orçamento excluído');
+  });
+}
+
+/* ---------- Repetir último pedido da loja ---------- */
+function ultimoLocal(cliente, empresa){
+  return listaPedidos().filter(p => p.cliente === cliente && (!empresa || p.empresa === empresa) &&
+    ![CANCELADO, RECUSADO].includes(situacaoDe(p)) && p.tipo !== 'orcamento')[0] || null;
+}
+function renderRepetir(){
+  const b = $('#btn-repetir'), c = $('#cliente').value;
+  const u = c && !itensAtuais().length ? ultimoLocal(c, st.empresa) : null;
+  b.hidden = !c || !!itensAtuais().length || (!u && DEMO);
+  b.textContent = u ? `↻ Repetir último pedido (${new Date(u.data).toLocaleDateString('pt-BR')}${st.empresa ? '' : ', ' + u.empresaNome})` : '↻ Repetir último pedido desta loja';
+}
+async function repetirUltimo(cliente, empresa){
+  let u = ultimoLocal(cliente, empresa);
+  if(!u && !DEMO && navigator.onLine){
+    try{ u = (await api({acao:'ultimo', cliente, empresa: empresa || ''})).pedido; }
+    catch(e){ if(e.login) return sessaoCaiu(e.message); }
+  }
+  if(!u){ toast(empresa ? 'Essa loja ainda não tem pedido desta marca.' : 'Essa loja ainda não tem pedido.'); return; }
+  carregarNoPedido(u, `Itens do pedido ${u.num} (${new Date(u.data).toLocaleDateString('pt-BR')}) carregados.`);
+}
+$('#btn-repetir').addEventListener('click', () => repetirUltimo($('#cliente').value, st.empresa));
+
+/* ---------- Lojas: cadastro, contato e lojas paradas ---------- */
+function abrirNovaLoja(depois){
+  if(DEMO){ toast('No modo demonstração não dá para cadastrar lojas.'); return; }
+  abrirSheet(`
+    <div class="sheet-head"><h2>Nova loja</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    ${ehAdmin() ? '' : '<p class="note">A loja entra na hora para você fazer o pedido; o administrador confere o cadastro.</p>'}
+    <form class="form-loja" id="form-loja" novalidate>
+      <label class="field"><span class="lbl">Nome da loja *</span><input id="nl-nome" autocomplete="organization" required></label>
+      <label class="field"><span class="lbl">Cidade</span><input id="nl-cidade" autocomplete="address-level2"></label>
+      <label class="field"><span class="lbl">CNPJ ou CPF</span><input id="nl-cnpj" inputmode="numeric" placeholder="só números"></label>
+      <label class="field"><span class="lbl">Telefone / WhatsApp</span><input id="nl-tel" type="tel" inputmode="tel" placeholder="(62) 99999-9999"></label>
+      <label class="field"><span class="lbl">Contato (quem compra)</span><input id="nl-contato"></label>
+      <label class="field"><span class="lbl">Endereço</span><input id="nl-end" autocomplete="street-address"></label>
+      <button class="btn primary" id="nl-salvar" type="submit">Cadastrar loja</button>
+    </form>`);
+  setTimeout(() => $('#nl-nome').focus(), 80);
+  $('#form-loja').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const dados = {nome:$('#nl-nome').value, cidade:$('#nl-cidade').value, cnpj:$('#nl-cnpj').value, telefone:$('#nl-tel').value, contato:$('#nl-contato').value, endereco:$('#nl-end').value};
+    if(dados.nome.trim().length < 2){ toast('Digite o nome da loja'); return; }
+    if(!navigator.onLine){ toast('Sem internet. O cadastro de loja precisa de conexão.'); return; }
+    const b = $('#nl-salvar'); b.disabled = true; b.textContent = 'Cadastrando…';
+    try{
+      const j = await api({acao:'cliente', cliente: dados});
+      DATA.clientes = [...(DATA.clientes || []), j.cliente]; LS.set('catalogo', DATA);
+      renderClientes(); renderLojas(); renderAprovar();
+      fecharSheet();
+      toast(j.cliente.situacao === AGUARDANDO ? 'Loja cadastrada. O administrador vai conferir o cadastro.' : 'Loja cadastrada.');
+      if(depois) depois(j.cliente);
+    }catch(e){
+      b.disabled = false; b.textContent = 'Cadastrar loja';
+      if(e.login) sessaoCaiu(e.message); else toast(e instanceof TypeError ? 'Não deu para falar com a planilha' : e.message);
+    }
+  });
+}
+$('#btn-nova-loja').addEventListener('click', () => abrirNovaLoja(c => { $('#cliente').value = c.id; renderCart(); }));
+$('#btn-nova-loja2').addEventListener('click', () => abrirNovaLoja());
+
+const diasDesde = iso => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
+async function carregarLojas(){
+  if(DEMO || !sessao || !navigator.onLine) return;
+  try{ const j = await api({acao:'lojas'}); resumoLojas = j.lojas || {}; LS.set('resumoLojas', resumoLojas); renderLojas(); }
+  catch(e){ if(e.login) sessaoCaiu(e.message); }
+}
+const FILTROS_LOJAS = [['todas','Todas'],['30','Sem pedido há 30+ dias'],['60','60+ dias'],['90','90+ dias'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
+function renderLojas(){
+  $('#lojas-filtros').innerHTML = FILTROS_LOJAS.map(([v,t]) => `<button class="chip" data-fl="${v}" aria-pressed="${filtroLojas===v}">${t}</button>`).join('');
+  const q = norm($('#lojas-busca').value || '');
+  const todas = (DATA?.clientes || []).map(c => { const r = resumoLojas[c.id] || {}; return Object.assign({}, c, {pedidos: r.pedidos || 0, total: r.total || 0, ultimo: r.ultimo || '', ultimoNum: r.ultimoNum || '', dias: diasDesde(r.ultimo)}); });
+  let lista = todas.filter(c => !q || norm(`${c.nome} ${c.cidade} ${c.cnpj || ''} ${c.contato || ''}`).includes(q));
+  if(filtroLojas === 'nunca') lista = lista.filter(c => !c.pedidos);
+  else if(filtroLojas === 'aguard') lista = lista.filter(c => c.situacao === AGUARDANDO);
+  else if(filtroLojas !== 'todas') lista = lista.filter(c => c.pedidos && c.dias >= Number(filtroLojas));
+  // Quem está há mais tempo sem comprar aparece primeiro; quem nunca comprou fica no fim.
+  lista.sort((a,b) => (b.dias ?? -1) - (a.dias ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR'));
+  const paradas = todas.filter(c => c.pedidos && c.dias >= 30).length;
+  $('#lojas-info').textContent = `${todas.length} loja${todas.length === 1 ? '' : 's'}` + (paradas ? ` · ${paradas} sem pedido há mais de 30 dias` : '') +
+    (ehAdmin() ? '' : ' · contando os seus pedidos');
+  $('#lista-lojas').innerHTML = lista.length ? lista.map(c => `<li><button class="order loja" data-loja="${esc(c.id)}">
+      <span class="num">${c.pedidos ? (c.dias === 0 ? 'Último pedido hoje' : `Último pedido há ${c.dias} dia${c.dias === 1 ? '' : 's'}`) : 'Nunca comprou'}</span>
+      <span class="cli">${esc(c.nome)}</span>
+      <span class="emp">${esc(c.cidade || '')}${c.contato ? ' · ' + esc(c.contato) : ''}</span>
+      ${c.situacao === AGUARDANDO ? '<span class="badge espera">Aguardando aprovação</span>' : c.pedidos && c.dias >= 60 ? '<span class="badge rec">Parada</span>' : c.pedidos && c.dias >= 30 ? '<span class="badge espera">Atenção</span>' : ''}
+      <span class="tot">${c.pedidos ? brl(c.total) : ''}</span></button></li>`).join('')
+    : '<li class="empty">Nenhuma loja com esse filtro.</li>';
+}
+$('#lojas-filtros').addEventListener('click', e => { const b = e.target.closest('[data-fl]'); if(b){ filtroLojas = b.dataset.fl; renderLojas(); } });
+$('#lojas-busca').addEventListener('input', renderLojas);
+const soDigitos = s => String(s || '').replace(/\D/g, '');
+function abrirLoja(id){
+  const c = cli(id); if(!c) return;
+  const r = resumoLojas[id] || {}, tel = soDigitos(c.telefone);
+  const zap = tel ? (tel.length <= 11 ? '55' + tel : tel) : '';
+  const recentes = listaPedidos().filter(p => p.cliente === id).slice(0, 5);
+  abrirSheet(`
+    <div class="sheet-head"><h2>${esc(c.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
+    <p class="meta">${[c.cidade, c.cnpj && 'CNPJ/CPF ' + c.cnpj, c.endereco, c.contato && 'Contato: ' + c.contato, c.telefone && 'Tel. ' + c.telefone].filter(Boolean).map(esc).join('<br>') || 'Sem dados de contato.'}</p>
+    ${tel ? `<div class="contato-btns"><a class="btn sec" href="tel:${tel}">Ligar</a><a class="btn zap" href="https://wa.me/${zap}" target="_blank" rel="noopener">WhatsApp</a></div>` : ''}
+    <p class="meta">${r.pedidos ? `<b>${r.pedidos}</b> pedido${r.pedidos > 1 ? 's' : ''}, <b>${brl(r.total)}</b> no total. Último: ${new Date(r.ultimo).toLocaleDateString('pt-BR')} (${esc(r.ultimoNum)}).` : 'Ainda não tem pedido.'}</p>
+    ${recentes.length ? '<h2 class="sub-h">Pedidos recentes</h2><ul class="orders">' + recentes.map(cartaoPedido).join('') + '</ul>' : ''}
+    <div class="btns">
+      <button class="btn primary" id="lj-novo">Novo pedido para esta loja</button>
+      ${r.pedidos || recentes.length ? '<button class="btn sec" id="lj-repetir">Repetir último pedido</button>' : ''}
+      ${ehAdmin() && c.situacao === AGUARDANDO ? '<button class="btn aprovar" id="lj-aprovar">Aprovar cadastro</button><button class="btn perigo" id="lj-recusar">Recusar cadastro</button>' : ''}
+    </div>`);
+  $('#lj-novo').addEventListener('click', () => { $('#cliente').value = id; fecharSheet(); irPara('novo'); renderCart(); });
+  $('#lj-repetir')?.addEventListener('click', () => repetirUltimo(id, ''));
+  $('#lj-aprovar')?.addEventListener('click', () => mudarSituacaoLoja(id, 'Ativo'));
+  $('#lj-recusar')?.addEventListener('click', () => { const m = prompt('Motivo da recusa (opcional):'); if(m !== null) mudarSituacaoLoja(id, RECUSADO, m); });
+  document.querySelectorAll('#sheet-body [data-id]').forEach(b => b.addEventListener('click', () => abrirPedido(b.dataset.id)));
+}
+$('#lista-lojas').addEventListener('click', e => { const b = e.target.closest('[data-loja]'); if(b) abrirLoja(b.dataset.loja); });
+async function mudarSituacaoLoja(id, nova, motivo){
+  if(!navigator.onLine){ toast('Sem internet.'); return; }
+  try{
+    await api({acao:'clienteSituacao', id, nova, motivo: motivo || ''});
+    const c = cli(id);
+    if(nova === 'Ativo') c.situacao = 'Ativo'; else DATA.clientes = DATA.clientes.filter(x => x.id !== id);
+    LS.set('catalogo', DATA); fecharSheet(); renderClientes(); renderLojas(); renderAprovar();
+    toast(nova === 'Ativo' ? 'Loja aprovada' : 'Loja recusada');
+  }catch(e){ if(e.login) sessaoCaiu(e.message); else toast(e.message); }
+}
+
 /* ---------- Compartilhar, PDF ---------- */
 function dataBR(iso){
   const d = new Date(iso);
@@ -809,8 +1123,9 @@ function dataBR(iso){
          d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 function texto(p){
-  let t = `*Pedido ${p.num}*\nEmpresa: ${p.empresaNome}\nCliente: ${p.clienteNome}${p.clienteCidade ? ' ('+p.clienteCidade+')' : ''}\nData: ${dataBR(p.data)}\n\n`;
+  let t = `*${p.tipo === 'orcamento' ? 'Orçamento' : 'Pedido'} ${p.num}*\nEmpresa: ${p.empresaNome}\nCliente: ${p.clienteNome}${p.clienteCidade ? ' ('+p.clienteCidade+')' : ''}\nData: ${dataBR(p.data)}\n\n`;
   t += p.itens.map(i => `${i.q}× ${i.nome} (${i.un}): ${brl(i.q*i.preco)}`).join('\n');
+  if(p.desconto) t += `\n\nSubtotal: ${brl(p.bruto)}\nDesconto: ${String(p.desconto).replace('.', ',')}%`;
   t += `\n\n*Total: ${brl(p.total)}*\nPagamento: ${p.pagamento}`;
   if(p.obs) t += `\nObs.: ${p.obs}`;
   return t + `\n\nRepresentante: ${p.representante || CFG.REPRESENTANTE}`;
@@ -919,7 +1234,7 @@ async function gerarRelatorio(){
   const b = $('#rel-gerar'); b.disabled = true; b.textContent = 'Gerando…';
   try{
     const j = await api({acao:'relatorio', de, ate});
-    REL = {de, ate, pedidos: j.pedidos || []};
+    REL = {de, ate, pedidos: j.pedidos || [], comissoes: j.comissoes};
     opcoesVendedores(); renderRelatorio();
   }catch(e){
     if(e.login) sessaoCaiu(e.message);
@@ -932,14 +1247,25 @@ $('#rel-gerar').addEventListener('click', gerarRelatorio);
 // Aplica os filtros e devolve as linhas de item (uma por produto de cada pedido) e os resumos.
 function dadosRelatorio(){
   const fEmp = $('#rel-emp').value, vend = $('#rel-vend').value, sit = $('#rel-sit').value;
-  const ok = s => sit === 'todos' ? true : sit === 'aprov' ? s === APROVADO : (s === APROVADO || s === AGUARDANDO);
+  const ok = s => sit === 'todos' ? true : sit === 'aprov' ? POS_APROVACAO.includes(s)
+    : sit === 'faturados' ? (s === FATURADO || s === ENTREGUE) : (POS_APROVACAO.includes(s) || s === AGUARDANDO);
   const peds = REL.pedidos.filter(p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status));
   const linhas = [];
-  peds.forEach(p => p.itens.forEach(i => linhas.push({
+  // Valor de cada item já com o desconto do pedido.
+  peds.forEach(p => { const f = 1 - (Number(p.desconto) || 0) / 100; p.itens.forEach(i => linhas.push({
     data: p.data, num: p.num, status: p.status, loja: p.clienteNome, cidade: p.clienteCidade || '', vendedor: p.representante || p.usuario,
     empresa: p.empresaNome, codigo: i.id, produto: i.nome, un: i.un || '', q: Number(i.q) || 0, preco: Number(i.preco) || 0,
-    total: Math.round((Number(i.q) || 0) * (Number(i.preco) || 0) * 100) / 100
-  })));
+    total: Math.round((Number(i.q) || 0) * (Number(i.preco) || 0) * f * 100) / 100, nf: p.nf || ''
+  })); });
+  // Comissão: % da marca (o que a GYN recebe) e % do vendedor (o que a GYN paga), sobre o valor dos pedidos.
+  const cm = REL.comissoes || {empresas:{}, vendedores:{}};
+  const somaPor = (chave, nome, pct) => { const m = new Map();
+    peds.forEach(p => { const k = chave(p); const x = m.get(k) || {nome: nome(p), pct: Number(pct(p)) || 0, pedidos: 0, vendas: 0}; x.pedidos++; x.vendas += Number(p.total) || 0; m.set(k, x); });
+    return [...m.values()].map(x => Object.assign(x, {comissao: Math.round(x.vendas * x.pct) / 100})).sort((a,b) => b.vendas - a.vendas); };
+  const comissao = {
+    marcas: somaPor(p => p.empresa, p => p.empresaNome, p => cm.empresas[p.empresa]),
+    vendedores: somaPor(p => p.usuario, p => p.representante || p.usuario, p => cm.vendedores[p.usuario])
+  };
   linhas.sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : 0);
   const somar = (chave, rot) => { const m = new Map();
     linhas.forEach(l => { const k = chave(l); const x = m.get(k) || Object.assign({q:0, total:0, pedidos:new Set()}, rot(l)); x.q += l.q; x.total += l.total; x.pedidos.add(l.num); m.set(k, x); });
@@ -950,8 +1276,9 @@ function dadosRelatorio(){
     `Empresa: ${fEmp ? (emp(fEmp)?.nome || fEmp) : 'todas'}`,
     `Vendedor: ${vend ? $('#rel-vend').selectedOptions[0].textContent : 'todos'}`,
     `Situação: ${$('#rel-sit').selectedOptions[0].textContent.toLowerCase()}`];
-  return {peds, linhas, porProduto, porLoja, filtros,
-    totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: linhas.reduce((s,l) => s + l.total, 0), lojas: new Set(peds.map(p => p.clienteNome)).size}};
+  return {peds, linhas, porProduto, porLoja, filtros, comissao,
+    totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: peds.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(peds.map(p => p.clienteNome)).size,
+      comissaoMarcas: comissao.marcas.reduce((s,x) => s + x.comissao, 0), comissaoVendedores: comissao.vendedores.reduce((s,x) => s + x.comissao, 0)}};
 }
 function renderRelatorio(){
   const d = dadosRelatorio();
@@ -965,7 +1292,20 @@ function renderRelatorio(){
       <div class="rel-card"><small>Itens (unidades)</small><strong>${d.totais.itens.toLocaleString('pt-BR')}</strong></div>
       <div class="rel-card"><small>Valor total</small><strong>${brl(d.totais.valor)}</strong></div>
       <div class="rel-card"><small>Lojas atendidas</small><strong>${d.totais.lojas}</strong></div>
+      <div class="rel-card"><small>Comissão a receber (marcas)</small><strong>${brl(d.totais.comissaoMarcas)}</strong></div>
+      <div class="rel-card"><small>Comissão a pagar (vendedores)</small><strong>${brl(d.totais.comissaoVendedores)}</strong></div>
     </div>
+    <div class="rel-duas">
+      <section class="rel-sec"><h2>Comissão por marca</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
+        <thead><tr><th>Marca</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
+        <tbody>${d.comissao.marcas.map(x => `<tr><td>${esc(x.nome)}</td><td class="n">${x.pedidos}</td><td class="n">${brl(x.vendas)}</td><td class="n">${x.pct ? String(x.pct).replace('.', ',') + '%' : '<span class="sub">definir</span>'}</td><td class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
+      </table></div></section>
+      <section class="rel-sec"><h2>Comissão por vendedor</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
+        <thead><tr><th>Vendedor</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
+        <tbody>${d.comissao.vendedores.map(x => `<tr><td>${esc(x.nome)}</td><td class="n">${x.pedidos}</td><td class="n">${brl(x.vendas)}</td><td class="n">${x.pct ? String(x.pct).replace('.', ',') + '%' : '<span class="sub">definir</span>'}</td><td class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
+      </table></div></section>
+    </div>
+    ${d.comissao.marcas.some(x => !x.pct) || d.comissao.vendedores.some(x => !x.pct) ? '<p class="note">Onde aparece "definir", falta o percentual na planilha: coluna <b>Comissão %</b> da aba Empresas (marcas) ou da aba Usuarios (vendedores).</p>' : ''}
     <div class="rel-duas">
       <section class="rel-sec"><h2>Itens mais pedidos</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
         <thead><tr><th>Produto</th><th class="n">Qtd</th><th class="n">Valor</th></tr></thead>
@@ -1020,15 +1360,20 @@ $('#rel-xlsx').addEventListener('click', async () => {
     };
     const wb = X.utils.book_new();
     X.utils.book_append_sheet(wb, folha(
-      ['Data','Pedido','Situação','Loja','Cidade','Vendedor','Empresa','Código','Produto','Unidade','Qtd','Preço','Total'],
-      d.linhas.map(l => [new Date(l.data), String(l.num), l.status, l.loja, l.cidade, l.vendedor, l.empresa, l.codigo, l.produto, l.un, l.q, l.preco, l.total]),
-      [16,14,20,30,16,18,20,14,50,8,8,12,14], {0:'dd/mm/yyyy hh:mm', 11:moeda, 12:moeda}), 'Histórico detalhado');
+      ['Data','Pedido','Situação','NF','Loja','Cidade','Vendedor','Empresa','Código','Produto','Unidade','Qtd','Preço','Total (c/ desconto)'],
+      d.linhas.map(l => [new Date(l.data), String(l.num), l.status, l.nf, l.loja, l.cidade, l.vendedor, l.empresa, l.codigo, l.produto, l.un, l.q, l.preco, l.total]),
+      [16,14,20,10,30,16,18,20,14,50,8,8,12,16], {0:'dd/mm/yyyy hh:mm', 12:moeda, 13:moeda}), 'Histórico detalhado');
     X.utils.book_append_sheet(wb, folha(['Empresa','Código','Produto','Qtd','Pedidos','Valor'],
       d.porProduto.map(x => [x.empresa, x.codigo, x.produto, x.q, x.pedidos, x.total]), [20,14,55,10,10,14], {5:moeda}), 'Por produto');
     X.utils.book_append_sheet(wb, folha(['Loja','Cidade','Pedidos','Itens','Valor'],
       d.porLoja.map(x => [x.loja, x.cidade, x.pedidos, x.q, x.total]), [34,18,10,10,14], {4:moeda}), 'Por loja');
+    X.utils.book_append_sheet(wb, folha(['Tipo','Nome','Pedidos','Vendas','Comissão %','Comissão'],
+      [...d.comissao.marcas.map(x => ['Marca (a receber)', x.nome, x.pedidos, x.vendas, x.pct, x.comissao]),
+       ...d.comissao.vendedores.map(x => ['Vendedor (a pagar)', x.nome, x.pedidos, x.vendas, x.pct, x.comissao])],
+      [20,30,10,16,12,16], {3:moeda, 5:moeda}), 'Comissão');
     X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet([['Relatório de pedidos — GYN Representações'], [], ...d.filtros.map(f => [f]), [],
       ['Pedidos', d.totais.pedidos], ['Itens (unidades)', d.totais.itens], ['Valor total', d.totais.valor], ['Lojas atendidas', d.totais.lojas],
+      ['Comissão a receber (marcas)', d.totais.comissaoMarcas], ['Comissão a pagar (vendedores)', d.totais.comissaoVendedores],
       [], ['Gerado em', new Date().toLocaleString('pt-BR')]]), 'Resumo');
     const dados = X.write(wb, {bookType:'xlsx', type:'array'});
     await entregarArquivo(new Blob([dados]), nomeRelatorio('xlsx'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Relatório de pedidos');
@@ -1046,8 +1391,9 @@ function listaPedidos(){
   return [...remotos, ...locais].sort((a,b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
 }
 const situacaoDe = p => p.sync === 'cancelado' ? CANCELADO : (p.status || '');
-const CLASSE = {[AGUARDANDO]:'espera', [APROVADO]:'aprov', [RECUSADO]:'rec', [CANCELADO]:'canc'};
+const CLASSE = {[AGUARDANDO]:'espera', [APROVADO]:'aprov', [ENVIADO]:'env', [FATURADO]:'fat', [ENTREGUE]:'ent', [RECUSADO]:'rec', [CANCELADO]:'canc'};
 function badge(p){
+  if(p.tipo === 'orcamento') return '<span class="badge orc">Orçamento</span>';
   if(p.sync === 'demo') return '<span class="badge demo">Só neste aparelho</span>';
   if(p.sync === 'pendente') return '<span class="badge pend">Aguardando internet</span>';
   const s = situacaoDe(p);
@@ -1057,34 +1403,49 @@ function badge(p){
 function cartaoPedido(p){
   const d = new Date(p.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
   const quem = ehAdmin() && p.representante ? ' · ' + esc(p.representante) : '';
-  return `<li><button class="order${situacaoDe(p) === CANCELADO ? ' cancelado' : ''}" data-id="${esc(p.id)}">
-    <span class="num">Pedido ${esc(p.num)}, ${d}</span>
+  return `<li><button class="order${situacaoDe(p) === CANCELADO ? ' cancelado' : ''}" ${p.tipo === 'orcamento' ? 'data-orc' : 'data-id'}="${esc(p.id)}">
+    <span class="num">${p.tipo === 'orcamento' ? 'Orçamento' : 'Pedido'} ${esc(p.num)}, ${d}${p.nf ? ' · NF ' + esc(p.nf) : ''}</span>
     <span class="cli">${esc(p.clienteNome)}</span>
     <span class="emp">${esc(p.empresaNome)}${quem}</span>
     ${badge(p)}
     <span class="tot">${brl(p.total)}</span></button></li>`;
 }
-const FILTROS = [['todos','Todos'],[AGUARDANDO,'Aguardando'],[APROVADO,'Aprovados'],[RECUSADO,'Recusados'],[CANCELADO,'Cancelados']];
+const FILTROS = [['todos','Todos'],[AGUARDANDO,'Aguardando'],['andamento','Aprovados / a enviar'],[ENVIADO,'Enviados'],[FATURADO,'Faturados'],
+  [ENTREGUE,'Entregues'],[RECUSADO,'Recusados'],[CANCELADO,'Cancelados'],['orc','Orçamentos']];
 function renderPedidos(){
   const todos = listaPedidos();
-  $('#pedidos-topo').hidden = DEMO;
-  $('#filtros').innerHTML = FILTROS.map(([v,t]) => `<button class="chip" data-filtro="${esc(v)}" aria-pressed="${filtro===v}">${t}</button>`).join('');
-  const lista = filtro === 'todos' ? todos : todos.filter(p => situacaoDe(p) === filtro && p.sync !== 'pendente');
+  $('#pedidos-topo').hidden = false;
+  $('#btn-atualizar-pedidos').hidden = DEMO;
+  const meusOrc = orcamentos.filter(o => DEMO || !o.usuario || o.usuario === sessao?.usuario);
+  $('#filtros').innerHTML = FILTROS.filter(([v]) => !DEMO || v === 'todos' || v === 'orc')
+    .map(([v,t]) => `<button class="chip" data-filtro="${esc(v)}" aria-pressed="${filtro===v}">${t}${v === 'orc' && meusOrc.length ? ' (' + meusOrc.length + ')' : ''}</button>`).join('');
+  let lista;
+  if(filtro === 'orc') lista = meusOrc;
+  else if(filtro === 'todos') lista = todos;
+  else if(filtro === 'andamento') lista = todos.filter(p => situacaoDe(p) === APROVADO && p.sync !== 'pendente');
+  else lista = todos.filter(p => situacaoDe(p) === filtro && p.sync !== 'pendente');
   const ul = $('#lista-pedidos');
   ul.innerHTML = lista.length ? lista.map(cartaoPedido).join('')
-    : `<li class="empty">${todos.length ? 'Nenhum pedido nesta situação.' : 'Nenhum pedido ainda. Os pedidos fechados aparecem aqui.'}</li>`;
+    : `<li class="empty">${filtro === 'orc' ? 'Nenhum orçamento salvo. No Novo pedido, use "Salvar como orçamento".' : todos.length ? 'Nenhum pedido nesta situação.' : 'Nenhum pedido ainda. Os pedidos fechados aparecem aqui.'}</li>`;
   renderAprovar(todos);
 }
 function renderAprovar(todos){
   const fila = ehAdmin() ? (todos || listaPedidos()).filter(p => situacaoDe(p) === AGUARDANDO && p.sync !== 'pendente') : [];
-  const c = $('#conta-aprovar'); c.hidden = !fila.length; c.textContent = fila.length;
+  const lojas = ehAdmin() ? (DATA?.clientes || []).filter(c => c.situacao === AGUARDANDO) : [];
+  const c = $('#conta-aprovar'); c.hidden = !(fila.length + lojas.length); c.textContent = fila.length + lojas.length;
   $('#lista-aprovar').innerHTML = fila.length ? fila.map(cartaoPedido).join('')
     : '<li class="empty">Nenhum pedido aguardando aprovação.</li>';
+  $('#aprovar-lojas-h').hidden = !lojas.length;
+  $('#lista-aprovar-lojas').innerHTML = lojas.map(l => `<li><button class="order loja" data-loja="${esc(l.id)}">
+    <span class="num">Cadastrada por ${esc(l.cadastradoPor || '?')}</span><span class="cli">${esc(l.nome)}</span>
+    <span class="emp">${esc([l.cidade, l.cnpj].filter(Boolean).join(' · '))}</span><span class="badge espera">Loja nova</span><span class="tot"></span></button></li>`).join('');
 }
+$('#lista-aprovar-lojas').addEventListener('click', e => { const b = e.target.closest('[data-loja]'); if(b) abrirLoja(b.dataset.loja); });
 $('#filtros').addEventListener('click', e => {
   const b = e.target.closest('[data-filtro]'); if(!b) return;
   filtro = b.dataset.filtro; renderPedidos();
 });
+$('#lista-pedidos').addEventListener('click', e => { const b = e.target.closest('[data-orc]'); if(b) abrirOrcamento(b.dataset.orc); });
 $('#btn-atualizar-pedidos').addEventListener('click', () => carregarPedidos(true));
 
 function abrirPedido(id){
@@ -1092,18 +1453,30 @@ function abrirPedido(id){
   const s = situacaoDe(p), pendente = p.sync === 'pendente';
   const dono = !p.usuario || (sessao && p.usuario === sessao.usuario);
   const podeAprovar = ehAdmin() && s === AGUARDANDO && !pendente;
-  const podeCancelar = !DEMO && s !== CANCELADO && s !== RECUSADO && (pendente ? dono : (ehAdmin() || (dono && s === AGUARDANDO)));
+  const podeCancelar = !DEMO && ![CANCELADO, RECUSADO, ENTREGUE].includes(s) && (pendente ? dono : (ehAdmin() || (dono && s === AGUARDANDO)));
   const quando = p.atualizadoEm ? ' em ' + dataBR(p.atualizadoEm) : '';
   const caixa = !DEMO && CLASSE[s] && !pendente ? `<div class="situacao ${CLASSE[s]}"><b>${esc(s)}</b>${
       p.atualizadoPor && s !== AGUARDANDO ? ` por ${esc(p.atualizadoPor)}${quando}` : ''}${
+      p.nf ? `<br>Nota fiscal: <b>${esc(p.nf)}</b>` : ''}${
       p.motivo ? `<br>Motivo: ${esc(p.motivo)}` : ''}</div>` : '';
+  // Etapas depois da aprovação (só administrador): enviar à marca, faturar (com NF), entregar.
+  const temEmail = !!emp(p.empresa)?.temEmail;
+  const etapas = !ehAdmin() || pendente ? '' : `<div class="acoes-admin">
+    ${s === APROVADO && temEmail ? '<button class="btn aprovar" id="ad-email">Enviar à marca por e-mail</button>' : ''}
+    ${s === APROVADO ? `<button class="btn sec" id="ad-enviado">Marcar como enviado${temEmail ? ' (sem e-mail)' : ''}</button>` : ''}
+    ${s === ENVIADO && temEmail ? '<button class="btn sec" id="ad-reenviar">Reenviar e-mail à marca</button>' : ''}
+    ${[APROVADO, ENVIADO].includes(s) ? `<div class="linha"><input id="ad-nf" placeholder="Nº da nota fiscal" inputmode="numeric" autocomplete="off"><button class="btn sec" id="ad-faturar">Faturado</button></div>` : ''}
+    ${[ENVIADO, FATURADO].includes(s) ? '<button class="btn sec" id="ad-entregue">Marcar como entregue</button>' : ''}
+    ${s === APROVADO && !temEmail ? `<p class="meta" style="margin:0">A marca ${esc(p.empresaNome)} está sem e-mail na aba Empresas: envie o PDF pelo WhatsApp e marque como enviado.</p>` : ''}
+  </div>`;
   abrirSheet(`
     <div class="sheet-head"><h2>Pedido ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${caixa}
     <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
     ${resumoHTML(p.itens)}
-    <div class="total-line"><span>Total</span><strong>${brl(p.total)}</strong></div>
+    ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
     <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
+    ${etapas}
     ${podeAprovar ? `<div class="btns">
         <button class="btn aprovar" id="btn-aprovar">Aprovar pedido</button>
         <button class="btn sec" id="btn-recusar">Recusar</button></div>
@@ -1122,12 +1495,21 @@ function abrirPedido(id){
   if(podeCancelar) $('#btn-cancelar').addEventListener('click', () => {
     if(confirm(`Cancelar o pedido ${p.num} de ${p.clienteNome}? Ele continua na planilha, marcado como cancelado.`)) mudarSituacao(p, CANCELADO);
   });
+  $('#ad-email')?.addEventListener('click', () => mudarSituacao(p, ENVIADO, '', {email: true}));
+  $('#ad-enviado')?.addEventListener('click', () => mudarSituacao(p, ENVIADO));
+  $('#ad-reenviar')?.addEventListener('click', () => mudarSituacao(p, 'reenviar'));
+  $('#ad-entregue')?.addEventListener('click', () => mudarSituacao(p, ENTREGUE));
+  $('#ad-faturar')?.addEventListener('click', () => {
+    const nf = $('#ad-nf').value.trim();
+    if(!nf){ toast('Digite o número da nota fiscal'); $('#ad-nf').focus(); return; }
+    mudarSituacao(p, FATURADO, '', {nf});
+  });
 }
 ['#lista-pedidos','#lista-aprovar'].forEach(sel => $(sel).addEventListener('click', e => {
   const b = e.target.closest('[data-id]'); if(b) abrirPedido(b.dataset.id);
 }));
 
-async function mudarSituacao(p, nova, motivo){
+async function mudarSituacao(p, nova, motivo, extra){
   // Pedido que nem chegou à planilha: cancela só aqui e não envia mais.
   if(p.sync === 'pendente'){
     const local = pedidos.find(x => x.id === p.id);
@@ -1138,14 +1520,16 @@ async function mudarSituacao(p, nova, motivo){
   if(!navigator.onLine){ toast('Sem internet. Tente de novo quando tiver sinal.'); return; }
   document.querySelectorAll('#sheet-body .btn').forEach(b => b.disabled = true);
   try{
-    const j = await api({acao:'situacao', id:p.id, nova, motivo: motivo || ''});
+    const j = await api(Object.assign({acao:'situacao', id:p.id, nova, motivo: motivo || ''}, extra || {}));
     const r = remotos.find(x => x.id === p.id);
-    if(r) Object.assign(r, {status:j.status, atualizadoPor:j.atualizadoPor, atualizadoEm:j.atualizadoEm, motivo:j.motivo});
+    if(r) Object.assign(r, {status:j.status, atualizadoPor:j.atualizadoPor, atualizadoEm:j.atualizadoEm, motivo:j.motivo}, j.nf ? {nf:j.nf} : {});
     LS.set('pedidosServidor', {usuario: sessao.usuario, lista: remotos});
     const local = pedidos.find(x => x.id === p.id);
     if(local){ local.status = j.status; LS.set('pedidos', pedidos); }
     fecharSheet(); renderPedidos();
-    toast({[APROVADO]:'Pedido aprovado', [RECUSADO]:'Pedido recusado', [CANCELADO]:'Pedido cancelado'}[j.status] || 'Pedido atualizado');
+    // O aviso do servidor (ex.: "enviado por e-mail para ...", "marca sem e-mail") vale mais que a mensagem padrão.
+    toast(j.aviso || ({[APROVADO]:'Pedido aprovado', [RECUSADO]:'Pedido recusado', [CANCELADO]:'Pedido cancelado', [ENVIADO]:'Pedido marcado como enviado',
+      [FATURADO]:'Faturamento registrado', [ENTREGUE]:'Pedido marcado como entregue'}[j.status] || 'Pedido atualizado'), j.aviso ? 6000 : 0);
     carregarPedidos(false);
   }catch(e){
     document.querySelectorAll('#sheet-body .btn').forEach(b => b.disabled = false);
@@ -1176,7 +1560,7 @@ function renderCatalogo(){
 }
 function preencherSecao(d){
   const ul = d.querySelector('ul'); if(ul.childElementCount) return;
-  ul.innerHTML = prodsDe(d.dataset.emp).filter(p => catDe(p) === d.dataset.cat).map(p => `<li class="prod"><div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
+  ul.innerHTML = prodsDe(d.dataset.emp).filter(p => catDe(p) === d.dataset.cat).map(p => `<li class="prod">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
     <div class="prod-sub">${esc(p.un)}</div></div><strong>${brl(p.preco)}</strong></li>`).join('');
 }
 $('#catalogo').addEventListener('toggle', e => { if(e.target.open) preencherSecao(e.target); }, true);
@@ -1190,6 +1574,7 @@ function irPara(view){
   // Ao abrir as listas, busca a situação mais recente (no máximo a cada 30 segundos).
   if((view === 'pedidos' || view === 'aprovar') && Date.now() - pedidosEm > 30000) carregarPedidos(false);
   if(view === 'relatorios') prepararRelatorio();
+  if(view === 'lojas'){ renderLojas(); carregarLojas(); }
 }
 document.querySelector('.nav').addEventListener('click', e => {
   const b = e.target.closest('[data-view]'); if(b) irPara(b.dataset.view);
@@ -1208,12 +1593,12 @@ function fecharSheet(){
 $('#sheet').addEventListener('click', e => { if(e.target.closest('[data-close]')) fecharSheet(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#sheet').hidden) fecharSheet(); });
 let tt;
-function toast(m){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2400); }
+function toast(m, ms){ const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, ms || Math.max(2400, Math.min(7000, String(m).length * 60))); }
 function rede(){ $('#net').hidden = navigator.onLine; }
 window.addEventListener('online', () => { rede(); sincronizar(); });
 window.addEventListener('offline', rede);
 
-function renderTudo(){ renderEmpresas(); renderClientes(); renderCategorias(); renderProdutos(); renderCart(); renderPedidos(); renderCatalogo(); }
+function renderTudo(){ renderEmpresas(); renderClientes(); renderCategorias(); renderProdutos(); renderCart(); renderPedidos(); renderCatalogo(); renderLojas(); }
 
 /* ---------- Início ---------- */
 mostrarUsuario();
@@ -1221,7 +1606,7 @@ $('#demo').hidden = !DEMO;
 rede(); renderTudo();
 if(!DEMO){
   if(!sessao) pedirLogin();
-  else { carregarCatalogo(false); sincronizar().then(() => carregarPedidos(false)); }
+  else { carregarCatalogo(false); sincronizar().then(() => carregarPedidos(false)).then(carregarLojas); }
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
