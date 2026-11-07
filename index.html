@@ -450,6 +450,7 @@ function texto(p){
 function acoesHTML(p){
   return `<div class="btns">
     <a class="btn zap" href="https://wa.me/?text=${encodeURIComponent(texto(p))}" target="_blank" rel="noopener">Enviar no WhatsApp</a>
+    <button class="btn sec" id="btn-pdf-abrir">Abrir ou imprimir PDF</button>
     <button class="btn sec" id="btn-pdf">Baixar ou enviar PDF</button>
     <button class="btn sec" id="btn-copiar">Copiar pedido</button></div>`;
 }
@@ -463,15 +464,30 @@ function ligarAcoes(p){
       ta.remove();
     }
   });
+  $('#btn-pdf-abrir').addEventListener('click', () => abrirPdf(p));
   $('#btn-pdf').addEventListener('click', () => baixarPdf(p));
 }
-async function baixarPdf(p){
-  if(!window.jspdf || !window.PedidoPDF){ toast('Não deu para gerar o PDF. Abra o app uma vez com internet.'); return; }
-  let blob, nome;
+function gerarPdf(p){
+  if(!window.jspdf || !window.PedidoPDF){ toast('Não deu para gerar o PDF. Abra o app uma vez com internet.'); return null; }
   try{
     const doc = PedidoPDF.gerar(window.jspdf.jsPDF, p, CFG.REPRESENTANTE);
-    nome = PedidoPDF.nomeArquivo(p); blob = doc.output('blob');
-  }catch(e){ toast('Não deu para gerar o PDF'); return; }
+    return { blob: doc.output('blob'), nome: PedidoPDF.nomeArquivo(p) };
+  }catch(e){ toast('Não deu para gerar o PDF'); return null; }
+}
+// Abre o PDF no visualizador do aparelho, de onde dá para ver, imprimir ou salvar.
+function abrirPdf(p){
+  const r = gerarPdf(p); if(!r) return;
+  const url = URL.createObjectURL(new Blob([r.blob], {type:'application/pdf'}));
+  const w = window.open(url, '_blank');
+  if(!w){
+    // Pop-up bloqueado ou app instalado sem abas: abre o PDF nesta mesma tela.
+    location.href = url;
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 5 * 60000);
+}
+async function baixarPdf(p){
+  const r = gerarPdf(p); if(!r) return;
+  const { blob, nome } = r;
   // No celular, abre o menu de compartilhar (WhatsApp, e-mail, Drive...). No computador, baixa o arquivo.
   const toque = matchMedia('(pointer: coarse)').matches;
   if(toque && window.File && navigator.canShare){
