@@ -189,6 +189,44 @@ textarea{resize:vertical}
   #print td.n,#print th.n{text-align:right}
 }
 @media (prefers-reduced-motion: reduce){.sheet-bg,.sheet-panel{transition:none}}
+
+/* ---------- Computador (tela com 1000px ou mais). No celular nada disto vale. ---------- */
+.painel{display:none}
+@media (min-width: 1000px){
+  :root{--nav-h:0px}
+  .top{height:64px;padding:0 28px;display:flex;align-items:center}
+  .top-in{max-width:1240px;width:100%}
+  /* As abas sobem para o cabeçalho, no centro. */
+  .nav{top:env(safe-area-inset-top,0px);bottom:auto;height:64px;background:none;border:0;padding:0;pointer-events:none}
+  .nav-in{max-width:none;height:64px;justify-content:center;align-items:center;gap:6px}
+  .nav button{flex:none;flex-direction:row;gap:8px;height:42px;padding:0 16px;border-radius:10px;font-size:15px;color:rgba(255,255,255,.72);pointer-events:auto}
+  .nav button:hover{color:#fff;background:rgba(255,255,255,.08)}
+  .nav button svg{width:20px;height:20px}
+  .nav button[aria-current="page"]{color:#fff;background:rgba(255,255,255,.14)}
+  .nav .conta{position:static;margin-left:2px}
+
+  main{max-width:1240px;padding:30px 28px 48px}
+  /* Novo pedido: produtos à esquerda, resumo fixo à direita. */
+  #v-novo:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:32px;align-items:start}
+  .painel{display:block;position:sticky;top:94px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:20px;max-height:calc(100vh - 120px);overflow:auto}
+  .painel h2{margin-bottom:12px}
+  .painel .btn:disabled{opacity:.45;cursor:not-allowed}
+  .cart{display:none!important}
+
+  /* Listas em grade, aproveitando a largura. */
+  .orders{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  .order:hover{border-color:var(--ipe)}
+  #catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:24px}
+  #catalogo .cat-group{margin:0}
+  .note,#btn-atualizar{max-width:720px}
+  #btn-atualizar{width:auto;padding:12px 22px}
+
+  /* Janelas no centro da tela, em vez de subirem de baixo. */
+  .sheet-panel{left:50%;right:auto;top:50%;bottom:auto;width:min(620px,92vw);max-height:88vh;border-radius:20px;padding:22px 24px;
+    transform:translate(-50%,-46%);opacity:0;transition:transform .2s ease,opacity .2s ease}
+  .sheet.open .sheet-panel{transform:translate(-50%,-50%);opacity:1}
+  .toast{bottom:32px}
+}
 </style>
 </head>
 <body>
@@ -201,6 +239,7 @@ textarea{resize:vertical}
 
 <main>
   <section id="v-novo" class="view">
+   <div class="novo-col">
     <h1>Novo pedido</h1>
     <p class="demo" id="demo" hidden>Modo demonstração: produtos de exemplo. Ligue a planilha no arquivo config.js.</p>
     <div class="field">
@@ -215,6 +254,18 @@ textarea{resize:vertical}
       <input id="busca" type="search" placeholder="Buscar produto" aria-label="Buscar produto">
     </div>
     <ul id="produtos" class="prod-list"></ul>
+   </div>
+    <!-- Resumo fixo ao lado: só aparece no computador (tela com 1000px ou mais). -->
+    <aside class="painel" id="painel" aria-label="Resumo do pedido">
+      <h2>Resumo do pedido</h2>
+      <p class="meta" id="painel-cli"></p>
+      <div id="painel-itens"></div>
+      <div class="total-line"><span>Total</span><strong id="painel-total">R$ 0,00</strong></div>
+      <label class="field"><span class="lbl">Pagamento</span><select id="pag-p"></select></label>
+      <label class="field"><span class="lbl">Observação</span>
+        <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
+      <button class="btn primary" id="btn-fechar-p" type="button">Fechar pedido</button>
+    </aside>
   </section>
 
   <section id="v-pedidos" class="view" hidden>
@@ -389,6 +440,7 @@ async function carregarPedidos(avisar){
     const porId = new Map(remotos.map(r => [r.id, r]));
     pedidos.forEach(p => { const r = porId.get(p.id); if(r){ p.status = r.status; p.sync = 'ok'; } });
     LS.set('pedidos', pedidos);
+    acertarContador();
     if(avisar) toast('Lista atualizada');
   }catch(e){
     if(e.login) sessaoCaiu(e.message);
@@ -489,7 +541,25 @@ function renderCart(){
   $('#cart').hidden = !its.length || $('#v-novo').hidden;
   $('#cart-qtd').textContent = `${its.length} ${its.length===1?'produto':'produtos'}, ${vol} ${vol===1?'volume':'volumes'}`;
   $('#cart-total').textContent = brl(tot);
+  renderPainel(its, tot);
 }
+// Resumo lateral do computador: mesmo conteúdo da janela "Revisar pedido" do celular.
+function renderPainel(its, tot){
+  const c = cli($('#cliente').value), e = emp(st.empresa);
+  $('#painel-cli').innerHTML = c ? `<b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}${e ? '<br>'+esc(e.nome) : ''}`
+    : (e ? `${esc(e.nome)}<br>Escolha o cliente.` : 'Escolha a empresa, o cliente e os produtos.');
+  $('#painel-itens').innerHTML = its.length ? resumoHTML(its) : '<p class="empty" style="padding:14px 0">Nenhum produto ainda.</p>';
+  $('#painel-total').textContent = brl(tot);
+  $('#btn-fechar-p').disabled = !its.length;
+  const sel = $('#pag-p');
+  if(!sel.options.length) sel.innerHTML = CFG.PAGAMENTOS.map(p => `<option${p===LS.get('ultPag','28 dias')?' selected':''}>${esc(p)}</option>`).join('');
+}
+$('#cliente').addEventListener('change', () => renderCart());
+$('#btn-fechar-p').addEventListener('click', () => {
+  if(!itensAtuais().length){ toast('Adicione pelo menos um produto'); return; }
+  if(!$('#cliente').value){ toast('Escolha o cliente antes de fechar'); $('#cliente').focus(); return; }
+  fecharPedido($('#pag-p').value, $('#obs-p').value);
+});
 $('#empresas').addEventListener('click', e => {
   const b = e.target.closest('[data-emp]'); if(!b || st.empresa === b.dataset.emp) return;
   const tinha = itensAtuais().length;
@@ -526,30 +596,45 @@ function abrirRevisao(){
     <label class="field"><span class="lbl">Observação</span>
       <textarea id="obs" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
     <button class="btn primary" id="btn-fechar">Fechar pedido</button>`);
-  $('#btn-fechar').addEventListener('click', fecharPedido);
+  $('#btn-fechar').addEventListener('click', () => fecharPedido($('#pag').value, $('#obs').value));
 }
-function fecharPedido(){
+// Número do pedido: o usuário entra como prefixo (JOAO-1001), assim dois vendedores nunca repetem número.
+const prefixoNum = () => DEMO || !sessao?.usuario ? '' : sessao.usuario.toUpperCase().replace(/[^A-Z0-9]/g, '');
+const chaveNum = () => 'ultimoNum' + (prefixoNum() ? '-' + prefixoNum() : '');
+function proximoNumero(){
+  const n = LS.get(chaveNum(), 1000) + 1; LS.set(chaveNum(), n);
+  return prefixoNum() ? `${prefixoNum()}-${n}` : n;
+}
+// Se o vendedor usa mais de um aparelho, continua depois do maior número que já está na planilha.
+function acertarContador(){
+  const pre = prefixoNum(); if(!pre) return;
+  const re = new RegExp('^' + pre + '-(\\d+)$');
+  const maior = remotos.reduce((m, p) => { const x = re.exec(String(p.num)); return x ? Math.max(m, +x[1]) : m; }, 0);
+  if(maior > LS.get(chaveNum(), 1000)) LS.set(chaveNum(), maior);
+}
+function fecharPedido(pag, obs){
   const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
-  const num = LS.get('ultimoNum', 1000) + 1; LS.set('ultimoNum', num);
-  LS.set('ultPag', $('#pag').value);
+  const num = proximoNumero();
+  LS.set('ultPag', pag);
   const p = {
     id: 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     num, data: new Date().toISOString(),
     empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
-    pagamento: $('#pag').value, obs: $('#obs').value.trim(), itens: its,
+    pagamento: pag, obs: (obs || '').trim(), itens: its,
     total: Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100,
     usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
     status: DEMO ? '' : (ehAdmin() ? APROVADO : AGUARDANDO),
     sync: DEMO ? 'demo' : 'pendente'
   };
   pedidos.unshift(p); LS.set('pedidos', pedidos);
-  st.itens = {}; renderProdutos(); renderCart(); renderPedidos();
-  $('#sheet-body').innerHTML = `
+  st.itens = {}; $('#obs-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  // No celular a janela de revisão já está aberta; no computador ela abre agora com a confirmação.
+  abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
-      <h2>Pedido ${p.num} fechado</h2>
+      <h2>Pedido ${esc(p.num)} fechado</h2>
       <p class="meta"><b>${esc(p.clienteNome)}</b><br>${brl(p.total)}, ${esc(p.pagamento)}</p></div>
     ${acoesHTML(p)}
-    <button class="btn ghost" data-close style="margin-top:8px">Começar outro pedido</button>`;
+    <button class="btn ghost" data-close style="margin-top:8px">Começar outro pedido</button>`);
   ligarAcoes(p);
   sincronizar();
 }
