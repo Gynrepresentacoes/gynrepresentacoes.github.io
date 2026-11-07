@@ -173,6 +173,7 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 .preco-linha label{display:inline-flex;align-items:center;gap:6px}
 .desc-item{width:58px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;font-weight:600;color:var(--ink);text-align:right}
 .sem-tabela{font-size:12.5px;color:var(--terra)}
+.com-desc{font-size:13px;color:var(--ink)}
 .desc-item.alterado{border-color:var(--ipe);background:var(--leaf-soft)}
 .preco-item{width:104px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;font-weight:600;color:var(--ink);text-align:right}
 .preco-item.alterado{border-color:var(--ipe);background:var(--leaf-soft)}
@@ -584,7 +585,9 @@ let filtroLojas = 'todas';
 // Pedidos vindos da planilha (do usuário conectado, ou de todos se for administrador).
 let remotos = (() => { const r = LS.get('pedidosServidor', null); return r && sessao && r.usuario === sessao.usuario ? r.lista : []; })();
 let filtro = 'todos';
-const st = {empresa:null, itens:{}, busca:'', cat:'', precos:{}};   // precos: preço de venda digitado no resumo (id -> valor)
+// precos: preço de venda digitado no resumo (id -> valor).
+// base: "preço cheio" digitado para produto sem preço na planilha (o desconto % do item é calculado sobre ele).
+const st = {empresa:null, itens:{}, busca:'', cat:'', precos:{}, base:{}};
 const catDe = p => (p.categoria || '').trim();
 // Categorias de uma empresa, em ordem alfabética, com a quantidade de produtos.
 function categoriasDe(empresa){
@@ -857,8 +860,10 @@ function renderProdutos(){
 }
 // Itens do pedido. "preco" é o preço de venda (o digitado no resumo, ou o da tabela); "tabela" guarda o da planilha.
 function itensAtuais(){
-  return st.empresa ? prodsDe(st.empresa).filter(p => st.itens[p.id]).map(p => ({id:p.id, nome:p.nome, un:p.un,
-    preco: st.precos[p.id] ?? p.preco, tabela: p.preco, q:st.itens[p.id]})) : [];
+  return st.empresa ? prodsDe(st.empresa).filter(p => st.itens[p.id]).map(p => {
+    const semTabela = !(p.preco > 0), tab = semTabela ? (st.base[p.id] || 0) : p.preco;
+    return {id:p.id, nome:p.nome, un:p.un, preco: st.precos[p.id] ?? tab, tabela: tab, semTabela, q:st.itens[p.id]};
+  }) : [];
 }
 // Menor preço que o vendedor pode digitar: tabela menos o desconto máximo da marca (o administrador não tem limite).
 const precoMinimo = tabela => ehAdmin() ? 0.01 : Math.round(tabela * (1 - descontoMaxDe(st.empresa) / 100) * 100) / 100;
@@ -869,11 +874,20 @@ const pctItem = i => i.tabela && i.preco < i.tabela ? String(Math.round((1 - i.p
 document.addEventListener('change', e => {
   const inp = e.target.closest('input.preco-item, input.desc-item'); if(!inp) return;
   const it = itensAtuais().find(i => i.id === inp.dataset.id); if(!it) return;
-  const voltar = () => { inp.value = inp.matches('.desc-item') ? pctItem(it) : numFmt(it.preco); };
+  const voltar = () => { inp.value = inp.matches('.desc-item') ? pctItem(it) : numFmt(it.semTabela ? it.tabela : it.preco); };
+  // Produto sem preço na planilha: o campo R$ é o "preço cheio" e o desconto % do item é calculado sobre ele.
+  if(it.semTabela && inp.matches('.preco-item')){
+    const v = numBR(inp.value);
+    if(!(v > 0)){ toast('Digite um preço válido'); voltar(); return; }
+    const pctAntes = it.tabela > 0 && it.preco < it.tabela ? 1 - it.preco / it.tabela : 0;
+    st.base[it.id] = Math.round(v * 100) / 100;
+    if(pctAntes > 0) st.precos[it.id] = Math.round(st.base[it.id] * (1 - pctAntes) * 100) / 100; else delete st.precos[it.id];
+    if(document.activeElement === inp) inp.blur();
+    renderCart(); atualizarRevisao(); return;
+  }
   let v;
   if(inp.matches('.desc-item')){
-    // Produto sem preço na planilha: não há sobre o que calcular o %.
-    if(!(it.tabela > 0)){ toast('Este produto está sem preço de tabela na planilha. Digite o preço de venda no campo R$.', 5000); voltar(); return; }
+    if(!(it.tabela > 0)){ toast('Digite primeiro o preço do item no campo R$; o desconto é calculado sobre ele.', 5000); voltar(); return; }
     const pct = inp.value.trim() === '' ? 0 : numBR(inp.value);
     if(isNaN(pct) || pct < 0 || pct >= 100){ toast('Digite um desconto entre 0 e 99%'); voltar(); return; }
     v = it.tabela * (1 - pct / 100);
@@ -883,10 +897,10 @@ document.addEventListener('change', e => {
   }
   const novo = Math.round(v * 100) / 100;
   const min = precoMinimo(it.tabela);
-  if(novo < min - 0.004){
-    if(!(it.tabela > 0) || ehAdmin()){ toast('Digite um preço maior que zero.'); voltar(); return; }
+  if(novo < min - 0.004 || !(novo > 0)){
+    if(!(novo > 0) || ehAdmin()){ toast('O preço com desconto precisa ser maior que zero.'); voltar(); return; }
     const maxPct = String(descontoMaxDe(st.empresa)).replace('.', ',');
-    toast(`Para este item o máximo é ${maxPct}% de desconto: preço mínimo ${brl(min)} (tabela ${brl(it.tabela)}).`, 5000); voltar(); return;
+    toast(`Para este item o máximo é ${maxPct}% de desconto: preço mínimo ${brl(min)} (${it.semTabela ? 'preço cheio' : 'tabela'} ${brl(it.tabela)}).`, 5000); voltar(); return;
   }
   if(novo === it.tabela) delete st.precos[it.id]; else st.precos[it.id] = novo;
   if(document.activeElement === inp) inp.blur();
@@ -955,7 +969,7 @@ function pagamentoDe(sel, inp){
 function limparPedido(){
   if(!itensAtuais().length) return;
   if(!confirm('Tirar todos os itens deste pedido?')) return;
-  st.itens = {}; st.precos = {}; st.orcamento = null;
+  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null;
   $('#desc-p').value = ''; $('#obs-p').value = '';
   if(!$('#sheet').hidden) fecharSheet();
   renderProdutos(); renderCart();
@@ -1056,10 +1070,12 @@ $('#btn-revisar').addEventListener('click', () => {
 // Lista de itens do resumo. Com "editavel", cada item tem o campo do preço de venda.
 function resumoHTML(itens, editavel){
   return '<ul class="resumo">' + itens.map(i => editavel
-    ? `<li class="editavel"><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}${i.tabela > 0 && i.preco !== i.tabela ? ` · tabela ${brl(i.tabela)}` : ''}</small>
-        <span class="preco-linha"><label>R$ <input class="preco-item${i.tabela != null && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.preco)}" aria-label="Preço de venda de ${esc(i.nome)}"> cada</label>
-        ${i.tabela > 0 ? `<label class="desc-linha">desc. <input class="desc-item${pctItem(i) ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${pctItem(i)}" aria-label="Desconto em % de ${esc(i.nome)}">%</label>`
-          : `<span class="sem-tabela">sem preço de tabela: digite o preço</span>`}</span></span>
+    // Produto sem preço na planilha: o campo R$ mostra o preço cheio digitado; o desconto do item sai dele.
+    ? `<li class="editavel"><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}${!i.semTabela && i.preco !== i.tabela ? ` · tabela ${brl(i.tabela)}` : ''}</small>
+        <span class="preco-linha"><label>R$ <input class="preco-item${!i.semTabela && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.semTabela ? i.tabela : i.preco)}" aria-label="${i.semTabela ? 'Preço cheio' : 'Preço de venda'} de ${esc(i.nome)}"> cada</label>
+        <label class="desc-linha">desc. <input class="desc-item${pctItem(i) ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${pctItem(i)}" aria-label="Desconto em % de ${esc(i.nome)}">%</label>
+        ${i.semTabela && !(i.tabela > 0) ? '<span class="sem-tabela">sem preço na planilha: digite o preço</span>'
+          : i.semTabela && pctItem(i) ? `<span class="com-desc">com desconto: <b>${brl(i.preco)}</b> cada</span>` : ''}</span></span>
         <span class="v">${brl(i.q*i.preco)}</span></li>`
     : `<li><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}, ${brl(i.preco)}</small></span><span class="v">${brl(i.q*i.preco)}</span></li>`).join('') + '</ul>';
 }
@@ -1151,7 +1167,7 @@ function fecharPedido(pag, obs, desc, deOrcamento){
   pedidos.unshift(p); LS.set('pedidos', pedidos);
   // Orçamento que virou pedido sai da lista de orçamentos.
   if(deOrcamento){ orcamentos = orcamentos.filter(o => o.id !== deOrcamento); LS.set('orcamentos', orcamentos); }
-  st.itens = {}; st.precos = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   // No celular a janela de revisão já está aberta; no computador ela abre agora com a confirmação.
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
@@ -1216,7 +1232,7 @@ function fecharLote(pag, obs, desc, lista){
   const feitos = lista.map(x => montarPedido(x.c, x.itens, pag, obs, desc));
   pedidos.unshift(...feitos.slice().reverse()); LS.set('pedidos', pedidos);
   if(st.orcamento){ orcamentos = orcamentos.filter(o => o.id !== st.orcamento); LS.set('orcamentos', orcamentos); }
-  st.itens = {}; st.precos = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>${feitos.length} pedido${feitos.length > 1 ? 's' : ''} fechado${feitos.length > 1 ? 's' : ''}</h2>
@@ -1246,7 +1262,7 @@ function salvarOrcamento(pag, obs, desc){
   };
   if(!antigo) LS.set('ultimoOrc', LS.get('ultimoOrc', 100) + 1);
   orcamentos = [o, ...orcamentos.filter(x => x.id !== o.id)]; LS.set('orcamentos', orcamentos);
-  st.itens = {}; st.precos = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Orçamento ${esc(o.num)} salvo</h2>
@@ -1258,7 +1274,7 @@ function salvarOrcamento(pag, obs, desc){
 // Carrega itens (de um orçamento ou de um pedido anterior) no Novo pedido.
 function carregarNoPedido(origem, msgOk){
   const ativos = new Map(prodsDe(origem.empresa).map(p => [p.id, p]));
-  st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {}; st.precos = {};
+  st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {}; st.precos = {}; st.base = {};
   let fora = 0, abaixo = 0;
   (origem.itens || []).forEach(i => { if(ativos.has(i.id)) st.itens[i.id] = (st.itens[i.id] || 0) + Number(i.q); else fora++; });
   if(cli(origem.cliente)){ $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = origem.cliente; }
@@ -1266,6 +1282,10 @@ function carregarNoPedido(origem, msgOk){
   // Preço que hoje ficaria abaixo do mínimo do vendedor (a tabela subiu) volta para o preço da tabela.
   (origem.itens || []).forEach(i => { const p = ativos.get(i.id), v = Number(i.preco);
     if(!p || !(v > 0) || v === p.preco) return;
+    // Produto sem preço na planilha: volta o preço cheio (se ficou guardado) e o preço com desconto.
+    // (a cópia da planilha não guarda o preço cheio; a cópia deste aparelho guarda)
+    const loc = (pedidos.find(x => x.id === origem.id)?.itens || []).find(x => x.id === i.id);
+    if(!(p.preco > 0)){ const t = Number(i.tabela) || Number(loc?.tabela) || 0, b = t > 0 ? t : v; st.base[i.id] = b; if(v < b) st.precos[i.id] = v; return; }
     if(v < precoMinimo(p.preco)){ abaixo++; return; }
     st.precos[i.id] = v; });
   if(origem.pagamento) LS.set('ultPag', origem.pagamento);
