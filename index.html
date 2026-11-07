@@ -116,6 +116,28 @@ textarea{resize:vertical}
 .badge{justify-self:start;margin-top:6px;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--leaf-soft);color:var(--leaf)}
 .badge.pend{background:var(--terra);color:#fff}
 .badge.demo{background:var(--line);color:var(--muted)}
+.badge.espera{background:#FFF1C9;color:#6E4B00}
+.badge.aprov{background:#DDF5E6;color:#14653A}
+.badge.rec{background:#FDE2DD;color:#9A2A14}
+.badge.canc{background:var(--line);color:var(--muted)}
+.order.cancelado .cli,.order.cancelado .tot{text-decoration:line-through;opacity:.7}
+.lista-topo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-6px 0 14px}
+.lista-topo[hidden]{display:none}
+.lista-topo .chips{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.lista-topo .chips::-webkit-scrollbar{display:none}
+.lista-topo .chip{flex:none}
+.mini{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-weight:600;font-size:14px;cursor:pointer}
+.nav button{position:relative}
+.nav .conta{position:absolute;top:6px;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--terra);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.nav .conta[hidden],.nav button[hidden]{display:none}
+.situacao{border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:15px}
+.situacao.espera{background:#FFF1C9;color:#6E4B00}
+.situacao.aprov{background:#DDF5E6;color:#14653A}
+.situacao.rec{background:#FDE2DD;color:#9A2A14}
+.situacao.canc{background:var(--line);color:var(--ink)}
+.btn.perigo{background:var(--surface);border:1.5px solid #C2412B;color:#C2412B}
+.btn.aprovar{background:var(--ipe);color:var(--ipe-ink)}
+.recusa[hidden]{display:none}
 
 .cat-group{margin-bottom:24px}
 .cat-group h2{margin-bottom:10px}
@@ -197,7 +219,17 @@ textarea{resize:vertical}
 
   <section id="v-pedidos" class="view" hidden>
     <h1>Pedidos</h1>
+    <div class="lista-topo" id="pedidos-topo" hidden>
+      <div class="chips" id="filtros"></div>
+      <button class="mini" id="btn-atualizar-pedidos" type="button">Atualizar</button>
+    </div>
     <ul id="lista-pedidos" class="orders"></ul>
+  </section>
+
+  <section id="v-aprovar" class="view" hidden>
+    <h1>Aprovar</h1>
+    <p class="note" id="aprovar-info">Pedidos dos vendedores aguardando a sua aprovação.</p>
+    <ul id="lista-aprovar" class="orders"></ul>
   </section>
 
   <section id="v-catalogo" class="view" hidden>
@@ -218,6 +250,8 @@ textarea{resize:vertical}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Novo pedido</button>
   <button data-view="pedidos">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg>Pedidos</button>
+  <button data-view="aprovar" id="nav-aprovar" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>Aprovar<span class="conta" id="conta-aprovar" hidden></span></button>
   <button data-view="catalogo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Catálogo</button>
 </div></nav>
@@ -286,9 +320,14 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 
 let DATA = DEMO ? DEMO_DATA : LS.get('catalogo', null);
 let pedidos = LS.get('pedidos', []);
-let sessao = LS.get('sessao', null);   // {token, usuario, nome} de quem está conectado
+let sessao = LS.get('sessao', null);   // {token, usuario, nome, perfil} de quem está conectado
 try{ localStorage.removeItem('pa-pin'); }catch(e){}
 const nomeAtual = () => DEMO ? CFG.REPRESENTANTE : (sessao?.nome || '');
+const ehAdmin = () => !DEMO && sessao?.perfil === 'admin';
+const AGUARDANDO = 'Aguardando aprovação', APROVADO = 'Aprovado', RECUSADO = 'Recusado', CANCELADO = 'Cancelado';
+// Pedidos vindos da planilha (do usuário conectado, ou de todos se for administrador).
+let remotos = (() => { const r = LS.get('pedidosServidor', null); return r && sessao && r.usuario === sessao.usuario ? r.lista : []; })();
+let filtro = 'todos';
 const st = {empresa:null, itens:{}, busca:''};
 
 const emp = id => (DATA?.empresas || []).find(e => e.id === id);
@@ -311,7 +350,7 @@ async function carregarCatalogo(avisar){
     const j = await api({acao:'catalogo'});
     DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes};
     LS.set('catalogo', DATA); LS.set('catalogoEm', new Date().toISOString());
-    if(j.voce && sessao){ sessao.nome = j.voce.nome; LS.set('sessao', sessao); mostrarUsuario(); }
+    if(j.voce && sessao){ sessao.nome = j.voce.nome; sessao.perfil = j.voce.perfil || 'vendedor'; LS.set('sessao', sessao); mostrarUsuario(); }
     renderTudo(); if(avisar) toast('Catálogo atualizado');
     return true;
   }catch(e){
@@ -324,13 +363,40 @@ let sincronizando = false;
 async function sincronizar(){
   if(DEMO || !sessao || !navigator.onLine || sincronizando) return;
   sincronizando = true;
+  let enviou = false;
   // Só envia os pedidos de quem está conectado; os de outra pessoa esperam ela entrar de novo.
   for(const p of pedidos.filter(p => p.sync === 'pendente' && (!p.usuario || p.usuario === sessao.usuario))){
-    try{ await api({acao:'pedido', pedido:p}); p.sync = 'ok'; LS.set('pedidos', pedidos); }
+    try{
+      const j = await api({acao:'pedido', pedido:p});
+      p.sync = 'ok'; if(j.status) p.status = j.status; LS.set('pedidos', pedidos); enviou = true;
+    }
     catch(e){ if(e.login) sessaoCaiu(e.message); break; }
   }
   sincronizando = false;
-  renderPedidos();
+  if(enviou) await carregarPedidos(false); else renderPedidos();
+}
+
+// Busca na planilha a situação atual dos pedidos.
+let carregandoPedidos = false, pedidosEm = 0;
+async function carregarPedidos(avisar){
+  if(DEMO || !sessao || !navigator.onLine || carregandoPedidos){ renderPedidos(); return; }
+  carregandoPedidos = true;
+  try{
+    const j = await api({acao:'pedidos'});
+    remotos = j.pedidos || []; pedidosEm = Date.now();
+    LS.set('pedidosServidor', {usuario: sessao.usuario, lista: remotos});
+    // Leva a situação da planilha para as cópias guardadas no celular.
+    const porId = new Map(remotos.map(r => [r.id, r]));
+    pedidos.forEach(p => { const r = porId.get(p.id); if(r){ p.status = r.status; p.sync = 'ok'; } });
+    LS.set('pedidos', pedidos);
+    if(avisar) toast('Lista atualizada');
+  }catch(e){
+    if(e.login) sessaoCaiu(e.message);
+    else if(avisar) toast(navigator.onLine ? 'Não deu para falar com a planilha' : 'Sem internet');
+  }finally{
+    carregandoPedidos = false;
+    renderPedidos();
+  }
 }
 
 /* ---------- Login ---------- */
@@ -338,6 +404,9 @@ function mostrarUsuario(){
   const n = nomeAtual();
   $('#rep-nome').textContent = n;
   $('#rep-ini').textContent = (n || '?').trim().charAt(0).toUpperCase();
+  // A aba Aprovar só existe para o administrador.
+  $('#nav-aprovar').hidden = !ehAdmin();
+  if(!ehAdmin() && !$('#v-aprovar').hidden) irPara('novo');
 }
 function pedirLogin(msg){
   $('#pin').hidden = false; $('#pin-erro').textContent = msg || ''; $('#login-senha').value = '';
@@ -352,10 +421,12 @@ async function entrar(ev){
   $('#pin-btn').disabled = true; $('#pin-erro').textContent = 'Conferindo…';
   try{
     const j = await api({acao:'login', usuario, senha});
-    sessao = {token:j.token, usuario:j.usuario, nome:j.nome}; LS.set('sessao', sessao);
+    const outro = !sessao || sessao.usuario !== j.usuario;
+    sessao = {token:j.token, usuario:j.usuario, nome:j.nome, perfil:j.perfil || 'vendedor'}; LS.set('sessao', sessao);
+    if(outro){ remotos = []; LS.set('pedidosServidor', null); }
     $('#login-senha').value = ''; $('#pin-erro').textContent = ''; $('#pin').hidden = true;
     mostrarUsuario(); toast('Olá, ' + j.nome);
-    await carregarCatalogo(false); sincronizar();
+    await carregarCatalogo(false); await sincronizar(); carregarPedidos(false);
   }catch(e){
     $('#pin-erro').textContent = e instanceof TypeError || e instanceof SyntaxError
       ? 'Não deu para falar com a planilha. Tente de novo.' : e.message;
@@ -369,12 +440,13 @@ function abrirConta(){
   const pend = pedidos.filter(p => p.sync === 'pendente' && (!p.usuario || p.usuario === sessao.usuario)).length;
   abrirSheet(`
     <div class="sheet-head"><h2>Sua conta</h2><button class="x" data-close aria-label="Fechar">×</button></div>
-    <p class="meta">Conectado como <b>${esc(sessao.nome)}</b><br>Usuário: ${esc(sessao.usuario)}</p>
+    <p class="meta">Conectado como <b>${esc(sessao.nome)}</b><br>Usuário: ${esc(sessao.usuario)}<br>Perfil: ${ehAdmin() ? 'Administrador' : 'Vendedor'}</p>
     ${pend ? `<p class="note">Você tem ${pend} pedido${pend > 1 ? 's' : ''} aguardando internet. Eles serão enviados quando você entrar de novo.</p>` : ''}
     <div class="btns"><button class="btn sec" id="btn-sair">Sair</button></div>`);
   $('#btn-sair').addEventListener('click', () => {
     const u = sessao.usuario;
     sessao = null; LS.set('sessao', null);
+    remotos = []; LS.set('pedidosServidor', null); renderPedidos();
     fecharSheet(); mostrarUsuario(); pedirLogin(); $('#login-usuario').value = u;
   });
 }
@@ -467,6 +539,7 @@ function fecharPedido(){
     pagamento: $('#pag').value, obs: $('#obs').value.trim(), itens: its,
     total: Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100,
     usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
+    status: DEMO ? '' : (ehAdmin() ? APROVADO : AGUARDANDO),
     sync: DEMO ? 'demo' : 'pendente'
   };
   pedidos.unshift(p); LS.set('pedidos', pedidos);
@@ -560,36 +633,122 @@ async function baixarPdf(p){
 }
 
 /* ---------- Pedidos ---------- */
+// Junta os pedidos da planilha com os que ainda só existem neste celular (sem internet ou cancelados antes de enviar).
+function listaPedidos(){
+  if(DEMO) return pedidos;
+  const meus = p => !sessao || !p.usuario || p.usuario === sessao.usuario;
+  const porId = new Map(remotos.map(r => [r.id, r]));
+  const locais = pedidos.filter(p => meus(p) && !porId.has(p.id) && (p.sync === 'pendente' || p.sync === 'cancelado' || !remotos.length));
+  return [...remotos, ...locais].sort((a,b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+}
+const situacaoDe = p => p.sync === 'cancelado' ? CANCELADO : (p.status || '');
+const CLASSE = {[AGUARDANDO]:'espera', [APROVADO]:'aprov', [RECUSADO]:'rec', [CANCELADO]:'canc'};
 function badge(p){
-  if(p.sync === 'ok') return '<span class="badge">Na planilha</span>';
+  if(p.sync === 'demo') return '<span class="badge demo">Só neste aparelho</span>';
   if(p.sync === 'pendente') return '<span class="badge pend">Aguardando internet</span>';
-  return '<span class="badge demo">Só neste aparelho</span>';
+  const s = situacaoDe(p);
+  if(CLASSE[s]) return `<span class="badge ${CLASSE[s]}">${esc(s)}</span>`;
+  return '<span class="badge">Na planilha</span>';
 }
+function cartaoPedido(p){
+  const d = new Date(p.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  const quem = ehAdmin() && p.representante ? ' · ' + esc(p.representante) : '';
+  return `<li><button class="order${situacaoDe(p) === CANCELADO ? ' cancelado' : ''}" data-id="${esc(p.id)}">
+    <span class="num">Pedido ${esc(p.num)}, ${d}</span>
+    <span class="cli">${esc(p.clienteNome)}</span>
+    <span class="emp">${esc(p.empresaNome)}${quem}</span>
+    ${badge(p)}
+    <span class="tot">${brl(p.total)}</span></button></li>`;
+}
+const FILTROS = [['todos','Todos'],[AGUARDANDO,'Aguardando'],[APROVADO,'Aprovados'],[RECUSADO,'Recusados'],[CANCELADO,'Cancelados']];
 function renderPedidos(){
+  const todos = listaPedidos();
+  $('#pedidos-topo').hidden = DEMO;
+  $('#filtros').innerHTML = FILTROS.map(([v,t]) => `<button class="chip" data-filtro="${esc(v)}" aria-pressed="${filtro===v}">${t}</button>`).join('');
+  const lista = filtro === 'todos' ? todos : todos.filter(p => situacaoDe(p) === filtro && p.sync !== 'pendente');
   const ul = $('#lista-pedidos');
-  if(!pedidos.length){ ul.innerHTML = '<li class="empty">Nenhum pedido ainda. Os pedidos fechados aparecem aqui.</li>'; return; }
-  ul.innerHTML = pedidos.map(p => {
-    const d = new Date(p.data).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-    return `<li><button class="order" data-id="${esc(p.id)}">
-      <span class="num">Pedido ${p.num}, ${d}</span>
-      <span class="cli">${esc(p.clienteNome)}</span>
-      <span class="emp">${esc(p.empresaNome)}</span>
-      ${badge(p)}
-      <span class="tot">${brl(p.total)}</span></button></li>`;
-  }).join('');
+  ul.innerHTML = lista.length ? lista.map(cartaoPedido).join('')
+    : `<li class="empty">${todos.length ? 'Nenhum pedido nesta situação.' : 'Nenhum pedido ainda. Os pedidos fechados aparecem aqui.'}</li>`;
+  renderAprovar(todos);
 }
-$('#lista-pedidos').addEventListener('click', e => {
-  const b = e.target.closest('[data-id]'); if(!b) return;
-  const p = pedidos.find(x => x.id === b.dataset.id);
+function renderAprovar(todos){
+  const fila = ehAdmin() ? (todos || listaPedidos()).filter(p => situacaoDe(p) === AGUARDANDO && p.sync !== 'pendente') : [];
+  const c = $('#conta-aprovar'); c.hidden = !fila.length; c.textContent = fila.length;
+  $('#lista-aprovar').innerHTML = fila.length ? fila.map(cartaoPedido).join('')
+    : '<li class="empty">Nenhum pedido aguardando aprovação.</li>';
+}
+$('#filtros').addEventListener('click', e => {
+  const b = e.target.closest('[data-filtro]'); if(!b) return;
+  filtro = b.dataset.filtro; renderPedidos();
+});
+$('#btn-atualizar-pedidos').addEventListener('click', () => carregarPedidos(true));
+
+function abrirPedido(id){
+  const p = listaPedidos().find(x => x.id === id); if(!p) return;
+  const s = situacaoDe(p), pendente = p.sync === 'pendente';
+  const dono = !p.usuario || (sessao && p.usuario === sessao.usuario);
+  const podeAprovar = ehAdmin() && s === AGUARDANDO && !pendente;
+  const podeCancelar = !DEMO && s !== CANCELADO && s !== RECUSADO && (pendente ? dono : (ehAdmin() || (dono && s === AGUARDANDO)));
+  const quando = p.atualizadoEm ? ' em ' + dataBR(p.atualizadoEm) : '';
+  const caixa = !DEMO && CLASSE[s] && !pendente ? `<div class="situacao ${CLASSE[s]}"><b>${esc(s)}</b>${
+      p.atualizadoPor && s !== AGUARDANDO ? ` por ${esc(p.atualizadoPor)}${quando}` : ''}${
+      p.motivo ? `<br>Motivo: ${esc(p.motivo)}` : ''}</div>` : '';
   abrirSheet(`
-    <div class="sheet-head"><h2>Pedido ${p.num}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="sheet-head"><h2>Pedido ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    ${caixa}
     <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
     ${resumoHTML(p.itens)}
     <div class="total-line"><span>Total</span><strong>${brl(p.total)}</strong></div>
     <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
-    ${acoesHTML(p)}`);
+    ${podeAprovar ? `<div class="btns">
+        <button class="btn aprovar" id="btn-aprovar">Aprovar pedido</button>
+        <button class="btn sec" id="btn-recusar">Recusar</button></div>
+      <div class="recusa" id="recusa" hidden>
+        <label class="field" style="margin-top:14px"><span class="lbl">Motivo da recusa (opcional)</span>
+          <textarea id="motivo" rows="2" placeholder="Ex.: cliente com pagamento em atraso"></textarea></label>
+        <button class="btn perigo" id="btn-confirma-recusa">Confirmar recusa</button></div>` : ''}
+    ${acoesHTML(p)}
+    ${podeCancelar ? `<div class="btns"><button class="btn perigo" id="btn-cancelar">Cancelar pedido</button></div>` : ''}`);
   ligarAcoes(p);
-});
+  if(podeAprovar){
+    $('#btn-aprovar').addEventListener('click', () => mudarSituacao(p, APROVADO));
+    $('#btn-recusar').addEventListener('click', () => { $('#recusa').hidden = false; $('#motivo').focus(); });
+    $('#btn-confirma-recusa').addEventListener('click', () => mudarSituacao(p, RECUSADO, $('#motivo').value));
+  }
+  if(podeCancelar) $('#btn-cancelar').addEventListener('click', () => {
+    if(confirm(`Cancelar o pedido ${p.num} de ${p.clienteNome}? Ele continua na planilha, marcado como cancelado.`)) mudarSituacao(p, CANCELADO);
+  });
+}
+['#lista-pedidos','#lista-aprovar'].forEach(sel => $(sel).addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if(b) abrirPedido(b.dataset.id);
+}));
+
+async function mudarSituacao(p, nova, motivo){
+  // Pedido que nem chegou à planilha: cancela só aqui e não envia mais.
+  if(p.sync === 'pendente'){
+    const local = pedidos.find(x => x.id === p.id);
+    if(local){ local.sync = 'cancelado'; local.status = CANCELADO; LS.set('pedidos', pedidos); }
+    fecharSheet(); renderPedidos(); toast('Pedido cancelado. Ele não será enviado.');
+    return;
+  }
+  if(!navigator.onLine){ toast('Sem internet. Tente de novo quando tiver sinal.'); return; }
+  document.querySelectorAll('#sheet-body .btn').forEach(b => b.disabled = true);
+  try{
+    const j = await api({acao:'situacao', id:p.id, nova, motivo: motivo || ''});
+    const r = remotos.find(x => x.id === p.id);
+    if(r) Object.assign(r, {status:j.status, atualizadoPor:j.atualizadoPor, atualizadoEm:j.atualizadoEm, motivo:j.motivo});
+    LS.set('pedidosServidor', {usuario: sessao.usuario, lista: remotos});
+    const local = pedidos.find(x => x.id === p.id);
+    if(local){ local.status = j.status; LS.set('pedidos', pedidos); }
+    fecharSheet(); renderPedidos();
+    toast({[APROVADO]:'Pedido aprovado', [RECUSADO]:'Pedido recusado', [CANCELADO]:'Pedido cancelado'}[j.status] || 'Pedido atualizado');
+    carregarPedidos(false);
+  }catch(e){
+    document.querySelectorAll('#sheet-body .btn').forEach(b => b.disabled = false);
+    if(e.login) sessaoCaiu(e.message);
+    else toast(e instanceof TypeError ? 'Não deu para falar com a planilha' : e.message);
+  }
+}
 
 /* ---------- Catálogo ---------- */
 function renderCatalogo(){
@@ -605,11 +764,18 @@ function renderCatalogo(){
 $('#btn-atualizar').addEventListener('click', () => carregarCatalogo(true));
 
 /* ---------- Navegação, sheet, toast, rede ---------- */
-document.querySelector('.nav').addEventListener('click', e => {
-  const b = e.target.closest('[data-view]'); if(!b) return;
-  document.querySelectorAll('.nav button').forEach(x => x === b ? x.setAttribute('aria-current','page') : x.removeAttribute('aria-current'));
-  document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'v-' + b.dataset.view);
+function irPara(view){
+  document.querySelectorAll('.nav button').forEach(x => x.dataset.view === view ? x.setAttribute('aria-current','page') : x.removeAttribute('aria-current'));
+  document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'v-' + view);
   renderCart(); window.scrollTo(0,0);
+  // Ao abrir as listas, busca a situação mais recente (no máximo a cada 30 segundos).
+  if((view === 'pedidos' || view === 'aprovar') && Date.now() - pedidosEm > 30000) carregarPedidos(false);
+}
+document.querySelector('.nav').addEventListener('click', e => {
+  const b = e.target.closest('[data-view]'); if(b) irPara(b.dataset.view);
+});
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && Date.now() - pedidosEm > 30000) carregarPedidos(false);
 });
 function abrirSheet(html){
   const s = $('#sheet'); $('#sheet-body').innerHTML = html; s.hidden = false;
@@ -635,7 +801,7 @@ $('#demo').hidden = !DEMO;
 rede(); renderTudo();
 if(!DEMO){
   if(!sessao) pedirLogin();
-  else { carregarCatalogo(false); sincronizar(); }
+  else { carregarCatalogo(false); sincronizar().then(() => carregarPedidos(false)); }
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
