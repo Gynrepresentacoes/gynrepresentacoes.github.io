@@ -137,7 +137,8 @@ Cada CNPJ é uma loja própria (a nota sai para ele). As filiais de um mesmo don
 
 - **Salvar como orçamento** (na revisão do pedido): gera PDF de orçamento e fica no filtro **Orçamentos** da aba Pedidos, neste aparelho. "Transformar em pedido" carrega tudo no Novo pedido.
 - **Desconto (%)** no fechamento, limitado pelo "Desconto máx %" da marca (o administrador não tem limite).
-- **Repetir último pedido** aparece ao escolher a loja: carrega os itens do último pedido com os preços atuais.
+- **Repetir último pedido** aparece ao escolher a loja: carrega os itens do último pedido com os mesmos preços de venda e o mesmo desconto do pedido. Se um preço antigo ficou abaixo do mínimo permitido hoje (a tabela subiu), esse item volta ao preço da tabela e o app avisa.
+- **Copiar pedido**: só copia o texto do pedido (para colar no WhatsApp, e-mail etc.). Não muda nem reenvia nada.
 
 ## Comissão
 
@@ -158,6 +159,7 @@ Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da t
 ## Preço de venda, pagamento "Outro" e limpar
 
 - **Preço de venda:** no resumo do pedido (ao lado, no computador; em "Revisar pedido", no celular), cada item tem um campo com o preço, já preenchido com o da tabela. Digite o valor que vai vender. O item com preço mudado fica destacado e mostra o preço de tabela para comparar. O vendedor não pode ficar abaixo da tabela menos o "Desconto máx %" da marca; o administrador não tem limite. O preço digitado vai para o total, o PDF, o WhatsApp e a planilha (aba Itens).
+- **Desconto em um item só:** ao lado do preço, o campo **desc. %** dá desconto só naquele item (ex.: 10 = 10% a menos que a tabela). Preço e % andam juntos: mudando um, o outro se ajusta. O desconto do pedido (campo Desconto %) continua valendo para o pedido todo. Para o vendedor, o desconto do item somado ao do pedido não pode passar do "Desconto máx %" da marca (ou da rede); o app avisa antes de fechar.
 - **Pagamento "Outro…":** a última opção da lista abre um campo para digitar a forma de pagamento.
 - **Limpar pedido:** tira todos os itens de uma vez (no resumo do computador, na barra do carrinho e na revisão do celular).
 
