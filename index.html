@@ -167,6 +167,11 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 .tabela td.n,.tabela th.n{text-align:right;white-space:nowrap}
 .tabela tr:last-child td{border-bottom:0}
 .tabela .sub{color:var(--muted);font-size:12px}
+/* Pagamento "Outro" e Limpar pedido */
+.pag-outro{width:100%;margin-top:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink)}
+.pag-outro[hidden],.btn.limpar[hidden]{display:none}
+.btn.limpar{color:#C2412B;margin-top:2px}
+.cart-limpar{background:none;border:0;color:var(--ipe-ink);font-weight:700;font-size:14px;text-decoration:underline;cursor:pointer;padding:8px 4px;opacity:.9}
 /* Lojas, orçamentos, desconto, fotos, etapas */
 .cli-linha{display:flex;gap:8px}
 .cli-linha select{flex:1;min-width:0}
@@ -344,11 +349,13 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
         <input type="text" inputmode="decimal" id="desc-p" placeholder="0" autocomplete="off"></label>
       <div id="painel-totais"></div>
       <p class="aviso-min" id="aviso-min-p" hidden></p>
-      <label class="field"><span class="lbl">Pagamento</span><select id="pag-p"></select></label>
+      <label class="field"><span class="lbl">Pagamento</span><select id="pag-p"></select>
+        <input type="text" id="pag-outro-p" class="pag-outro" placeholder="Digite a forma de pagamento" autocomplete="off" hidden></label>
       <label class="field"><span class="lbl">Observação</span>
         <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
       <button class="btn primary" id="btn-fechar-p" type="button">Fechar pedido</button>
       <button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
+      <button class="btn ghost limpar" id="btn-limpar-p" type="button" hidden>Limpar pedido</button>
     </aside>
   </section>
 
@@ -420,6 +427,7 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 
 <div id="cart" class="cart" hidden><div class="cart-in">
   <div class="cart-info"><small id="cart-qtd"></small><strong id="cart-total"></strong></div>
+  <button class="cart-limpar" id="btn-limpar" type="button" aria-label="Limpar pedido">Limpar</button>
   <button class="btn" id="btn-revisar">Revisar pedido</button>
 </div></div>
 
@@ -787,10 +795,40 @@ function conferirRegras(bruto, desc){
   if(min && bruto < min && !ehAdmin()) return `Pedido mínimo de ${emp(st.empresa).nome}: ${brl(min)}. Faltam ${brl(min - bruto)}.`;
   return '';
 }
+// Pagamento: as opções da marca + "Outro…", que abre um campo para digitar a forma de pagamento.
+const OUTRO = '__outro';
 function opcoesPagamento(){
-  const ult = LS.get('ultPag','28 dias');
-  return pagamentosDe(st.empresa).map(p => `<option${p===ult?' selected':''}>${esc(p)}</option>`).join('');
+  const ult = LS.get('ultPag','28 dias'), lista = pagamentosDe(st.empresa);
+  const custom = ult && !lista.includes(ult);
+  return lista.map(p => `<option${p===ult?' selected':''}>${esc(p)}</option>`).join('') +
+    `<option value="${OUTRO}"${custom ? ' selected' : ''}>Outro…</option>`;
 }
+// Mostra o campo de texto quando "Outro…" está escolhido. Na primeira vez, traz a última forma digitada.
+function ligarOutro(sel, inp){
+  const ult = LS.get('ultPag','28 dias');
+  const mostrar = () => { inp.hidden = sel.value !== OUTRO; };
+  if(sel.value === OUTRO && !inp.value && !pagamentosDe(st.empresa).includes(ult)) inp.value = ult;
+  mostrar();
+  if(!sel.dataset.ligado){ sel.dataset.ligado = '1'; sel.addEventListener('change', () => { mostrar(); if(!inp.hidden) inp.focus(); }); }
+}
+function pagamentoDe(sel, inp){
+  if(sel.value !== OUTRO) return sel.value;
+  const t = inp.value.trim();
+  if(!t){ toast('Digite a forma de pagamento'); inp.hidden = false; inp.focus(); return null; }
+  return t.slice(0, 80);
+}
+// Limpar: tira todos os itens de uma vez (com confirmação).
+function limparPedido(){
+  if(!itensAtuais().length) return;
+  if(!confirm('Tirar todos os itens deste pedido?')) return;
+  st.itens = {}; st.orcamento = null;
+  $('#desc-p').value = ''; $('#obs-p').value = '';
+  if(!$('#sheet').hidden) fecharSheet();
+  renderProdutos(); renderCart();
+  toast('Pedido limpo');
+}
+$('#btn-limpar-p').addEventListener('click', limparPedido);
+$('#btn-limpar').addEventListener('click', limparPedido);
 // Resumo lateral do computador: mesmo conteúdo da janela "Revisar pedido" do celular.
 function renderPainel(its, tot){
   const c = cli($('#cliente').value), e = emp(st.empresa);
@@ -808,9 +846,11 @@ function renderPainel(its, tot){
   if(!av.hidden) av.textContent = `Pedido mínimo de ${e.nome}: ${brl(min)}. Faltam ${brl(min - tot)}.` + (ehAdmin() ? ' (Você pode fechar mesmo assim.)' : '');
   $('#btn-fechar-p').disabled = !its.length;
   $('#btn-orc-p').disabled = !its.length;
+  $('#btn-limpar-p').hidden = !its.length;
   const sel = $('#pag-p'), atual = sel.value;
   sel.innerHTML = opcoesPagamento();
   if([...sel.options].some(o => o.value === atual)) sel.value = atual;
+  ligarOutro(sel, $('#pag-outro-p'));
 }
 $('#desc-p').addEventListener('input', () => renderCart());
 $('#cliente').addEventListener('change', () => renderCart());
@@ -823,11 +863,13 @@ $('#btn-fechar-p').addEventListener('click', () => {
   if(!validarFechamento()) return;
   const bruto = itensAtuais().reduce((s,i) => s + i.q*i.preco, 0), desc = numBR($('#desc-p').value || '0');
   const erro = conferirRegras(bruto, desc); if(erro){ toast(erro); return; }
-  fecharPedido($('#pag-p').value, $('#obs-p').value, desc);
+  const pag = pagamentoDe($('#pag-p'), $('#pag-outro-p')); if(pag === null) return;
+  fecharPedido(pag, $('#obs-p').value, desc);
 });
 $('#btn-orc-p').addEventListener('click', () => {
   if(!validarFechamento()) return;
-  salvarOrcamento($('#pag-p').value, $('#obs-p').value, numBR($('#desc-p').value || '0'));
+  const pag = pagamentoDe($('#pag-p'), $('#pag-outro-p')); if(pag === null) return;
+  salvarOrcamento(pag, $('#obs-p').value, numBR($('#desc-p').value || '0'));
 });
 $('#empresas').addEventListener('click', e => {
   const b = e.target.closest('[data-emp]'); if(!b || st.empresa === b.dataset.emp) return;
@@ -883,18 +925,26 @@ function abrirRevisao(){
       <input type="text" inputmode="decimal" id="desc" placeholder="0" autocomplete="off"></label>` : ''}
     <div id="rev-totais">${totaisHTML(contas(tot, 0))}</div>
     ${min && tot < min ? `<p class="aviso-min">Pedido mínimo de ${esc(e.nome)}: ${brl(min)}. Faltam ${brl(min - tot)}.${ehAdmin() ? ' (Você pode fechar mesmo assim.)' : ''}</p>` : ''}
-    <label class="field"><span class="lbl">Pagamento</span><select id="pag">${opcoesPagamento()}</select></label>
+    <label class="field"><span class="lbl">Pagamento</span><select id="pag">${opcoesPagamento()}</select>
+      <input type="text" id="pag-outro" class="pag-outro" placeholder="Digite a forma de pagamento" autocomplete="off" hidden></label>
     <label class="field"><span class="lbl">Observação</span>
       <textarea id="obs" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
     <button class="btn primary" id="btn-fechar">Fechar pedido</button>
-    <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>`);
+    <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>
+    <button class="btn ghost limpar" id="btn-limpar-rev">Limpar pedido</button>`);
+  ligarOutro($('#pag'), $('#pag-outro'));
   const descDe = () => $('#desc') ? numBR($('#desc').value || '0') : 0;
   if($('#desc')) $('#desc').addEventListener('input', () => { const d = descDe(); $('#rev-totais').innerHTML = totaisHTML(contas(tot, isNaN(d) ? 0 : d)); });
   $('#btn-fechar').addEventListener('click', () => {
     const erro = conferirRegras(tot, descDe()); if(erro){ toast(erro); return; }
-    fecharPedido($('#pag').value, $('#obs').value, descDe());
+    const pag = pagamentoDe($('#pag'), $('#pag-outro')); if(pag === null) return;
+    fecharPedido(pag, $('#obs').value, descDe());
   });
-  $('#btn-orc').addEventListener('click', () => salvarOrcamento($('#pag').value, $('#obs').value, descDe()));
+  $('#btn-orc').addEventListener('click', () => {
+    const pag = pagamentoDe($('#pag'), $('#pag-outro')); if(pag === null) return;
+    salvarOrcamento(pag, $('#obs').value, descDe());
+  });
+  $('#btn-limpar-rev').addEventListener('click', limparPedido);
 }
 // Número do pedido: o usuário entra como prefixo (JOAO-1001), assim dois vendedores nunca repetem número.
 const prefixoNum = () => DEMO || !sessao?.usuario ? '' : sessao.usuario.toUpperCase().replace(/[^A-Z0-9]/g, '');
