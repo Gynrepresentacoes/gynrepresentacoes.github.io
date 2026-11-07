@@ -51,7 +51,7 @@ O ícone aparece junto dos outros apps. Na primeira vez é preciso internet; dep
 
 - **Mudar preço ou produto:** edita na planilha e, no app, vai em **Catálogo > Atualizar catálogo**. O app também atualiza sozinho ao abrir com internet.
 - **Sem internet:** o pedido é fechado normalmente e fica marcado como **Aguardando internet**. Quando o sinal volta, ele vai para a planilha sozinho e passa a **Na planilha**. O mesmo pedido nunca entra duas vezes.
-- **Enviar para a empresa:** no pedido, **Enviar no WhatsApp**, **Imprimir ou salvar PDF** ou **Copiar pedido**.
+- **Enviar para a empresa:** no pedido, **Enviar no WhatsApp**, **Baixar ou enviar PDF** (no celular abre o menu de compartilhar, dá para mandar o PDF direto no WhatsApp) ou **Copiar pedido**.
 - **Produto que saiu de linha:** na planilha, coloque **Não** na coluna Ativo.
 
 ## Se mudar o Code.gs depois
