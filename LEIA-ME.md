@@ -46,9 +46,10 @@ Cada pessoa que cria pedidos tem o próprio usuário e senha. O nome dela aparec
 
 1. Na planilha, crie uma aba chamada **Usuarios** com estes cabeçalhos na linha 1:
 
-   | Usuário | Nome | Senha | Ativo |
-   |---|---|---|---|
-   | andre | André | (senha) | Sim |
+   | Usuário | Nome | Senha | Ativo | Perfil |
+   |---|---|---|---|---|
+   | andre | André | (senha) | Sim | Administrador |
+   | joao | João | (senha) | Sim | Vendedor |
 
 2. Em cada linha, coloque o usuário (sem espaços, por exemplo `andre`), o nome que aparece no app e a senha.
 3. **A senha se embaralha sozinha:** assim que você digita, a planilha troca a senha por um código que começa com `sha256$`. Ninguém consegue ler a senha depois, nem você. Se ela continuar visível (por exemplo, se colou várias de uma vez), use o menu **Pedidos > Proteger senhas digitadas**. O menu aparece depois de recarregar a planilha.
@@ -61,6 +62,22 @@ No dia a dia:
 - **Errou a senha 5 vezes seguidas:** o usuário fica bloqueado por 15 minutos.
 - **Sair / trocar de pessoa no mesmo celular:** toque no nome no topo do app e em **Sair**. Pedidos que ainda estão aguardando internet só são enviados quando a mesma pessoa entrar de novo.
 - O celular fica conectado por 90 dias. Depois, pede a senha de novo.
+
+## Aprovação de pedidos
+
+A coluna **Perfil** da aba Usuarios define o que cada um pode fazer. Em branco conta como Vendedor.
+
+| | Vendedor | Administrador |
+|---|---|---|
+| Fazer pedidos | Sim, ficam **Aguardando aprovação** | Sim, já saem **Aprovados** |
+| Ver pedidos | Só os dele | Os de todos, com o nome de quem fez |
+| Aprovar ou recusar | Não | Sim, na aba **Aprovar** (recusa com motivo opcional) |
+| Cancelar | Os dele, enquanto aguardam aprovação | Qualquer pedido |
+
+- Na aba **Pedidos** da planilha, a coluna **Status** é atualizada sozinha, e as colunas **Atualizado por**, **Atualizado em** e **Motivo** registram quem mudou e quando. Pedidos cancelados continuam na planilha.
+- Aprovar, recusar e cancelar precisam de internet. Pedido que ainda está **Aguardando internet** pode ser cancelado no próprio celular e não é mais enviado.
+- A situação nova aparece quando o app é aberto ou ao tocar em **Atualizar** na aba Pedidos. Não há notificação no celular.
+- Não mude a situação direto na coluna Status da planilha; use o app, que confere as regras.
 
 ## 4. Instalar no celular do André
 
