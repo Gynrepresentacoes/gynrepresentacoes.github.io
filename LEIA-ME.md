@@ -79,6 +79,21 @@ A coluna **Perfil** da aba Usuarios define o que cada um pode fazer. Em branco c
 - A situação nova aparece quando o app é aberto ou ao tocar em **Atualizar** na aba Pedidos. Não há notificação no celular.
 - Não mude a situação direto na coluna Status da planilha; use o app, que confere as regras.
 
+## Relatórios (só administrador)
+
+Aba **Relatórios** do app. Escolha o período (ou use os atalhos Hoje, 7 dias, Este mês, Mês passado, Este ano), a empresa, o vendedor e a situação, e toque em **Gerar relatório**. Aparecem:
+
+- totais (pedidos, itens, valor, lojas atendidas);
+- **itens mais pedidos** (quantidade e valor por produto);
+- **por loja**;
+- **histórico detalhado**: data, pedido, loja, vendedor, produto, quantidade, total e situação.
+
+**Baixar PDF** gera o relatório em A4 deitado. **Baixar Excel** gera uma planilha com as abas Histórico detalhado, Por produto, Por loja e Resumo. O histórico é sempre o da planilha: dá para consultar qualquer período desde o primeiro pedido. Precisa de internet.
+
+## Quantidade no pedido
+
+**−** e **+** mudam de 1 em 1, **+10** soma dez de uma vez, e o número pode ser digitado (toque nele e digite, por exemplo, 50). Digitar 0 tira o item do pedido.
+
 ## 4. Instalar no celular do André
 
 - **Android (Chrome):** abra o link, toque nos três pontinhos e em **Instalar app** (ou **Adicionar à tela inicial**).
