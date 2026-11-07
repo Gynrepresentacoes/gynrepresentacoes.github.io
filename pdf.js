@@ -7,16 +7,26 @@
            d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  function gerar(jsPDF, p, representante) {
+  // logo (opcional): dataURL JPEG/PNG desenhado na faixa do topo, à esquerda.
+  function gerar(jsPDF, p, representante, logo) {
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    var W = 210, M = 15, verde = [47, 93, 70], ipe = [233, 176, 30], tinta = [30, 39, 34], cinza = [92, 104, 97];
+    var W = 210, M = 15, marinho = [10, 24, 56], azul = [47, 123, 255], tinta = [11, 22, 48], cinza = [86, 98, 125];
+    var verde = marinho; // cor de cabeçalhos e títulos da tabela
 
     // Faixa do topo
-    doc.setFillColor.apply(doc, verde); doc.rect(0, 0, W, 30, 'F');
-    doc.setFillColor.apply(doc, ipe); doc.rect(0, 30, W, 2, 'F');
+    doc.setFillColor.apply(doc, marinho); doc.rect(0, 0, W, 30, 'F');
+    doc.setFillColor.apply(doc, azul); doc.rect(0, 30, W, 2, 'F');
+    var xTitulo = M;
+    if (logo) {
+      try {
+        var fmt = /^data:image\/png/i.test(logo) ? 'PNG' : 'JPEG';
+        doc.addImage(logo, fmt, M, 5, 20, 20);
+        xTitulo = M + 20 + 5;
+      } catch (e) { xTitulo = M; }
+    }
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
-    doc.text('Pedido ' + p.num, M, 19);
+    doc.text('Pedido ' + p.num, xTitulo, 19);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
     doc.text(dataBR(p.data), W - M, 13, { align: 'right' });
     doc.text('Representante: ' + representante, W - M, 20, { align: 'right' });
@@ -41,7 +51,7 @@
     // Tabela
     var col = { q: 27, prod: 32, un: 120, preco: 165, sub: W - M };
     function cabecalho() {
-      doc.setFillColor(228, 237, 230); doc.rect(M, y - 5.5, W - 2 * M, 8, 'F');
+      doc.setFillColor(227, 236, 255); doc.rect(M, y - 5.5, W - 2 * M, 8, 'F');
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor.apply(doc, verde);
       doc.text('Qtd.', col.q, y, { align: 'right' });
       doc.text('Produto', col.prod, y);
@@ -64,15 +74,15 @@
       doc.text(brl(it.preco), col.preco, y, { align: 'right' });
       doc.setFont('helvetica', 'bold'); doc.text(brl(it.q * it.preco), col.sub, y, { align: 'right' });
       y += alt - 3;
-      doc.setDrawColor(220, 225, 218); doc.setLineWidth(0.2); doc.line(M, y, W - M, y);
+      doc.setDrawColor(215, 223, 238); doc.setLineWidth(0.2); doc.line(M, y, W - M, y);
       y += 6;
     });
 
     // Total
     if (y > 250) { doc.addPage(); y = 22; }
     y += 2;
-    doc.setFillColor.apply(doc, ipe); doc.roundedRect(W - M - 80, y - 7, 80, 14, 2, 2, 'F');
-    doc.setTextColor(42, 33, 4);
+    doc.setFillColor.apply(doc, azul); doc.roundedRect(W - M - 80, y - 7, 80, 14, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.text('Total', W - M - 75, y + 1.8);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text(brl(p.total), W - M - 5, y + 2.2, { align: 'right' });
     y += 18;
