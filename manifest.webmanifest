@@ -1,13 +1,13 @@
 {
-  "name": "Pedidos do André",
-  "short_name": "Pedidos",
+  "name": "GYN Pedidos",
+  "short_name": "GYN Pedidos",
   "description": "Montar e enviar pedidos de venda",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F5F6F2",
-  "theme_color": "#2F5D46",
+  "background_color": "#0A1838",
+  "theme_color": "#0A1838",
   "lang": "pt-BR",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
