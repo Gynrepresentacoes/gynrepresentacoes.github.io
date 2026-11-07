@@ -65,6 +65,12 @@
     }
     var n1 = campo('Empresa', p.empresaNome, M, y, 85);
     var n2 = campo('Cliente', p.clienteNome + (p.clienteCidade ? ' (' + p.clienteCidade + ')' : ''), 110, y, 85);
+    // CNPJ do cliente (importante quando a rede tem várias filiais: a nota sai para este CNPJ).
+    if (p.clienteCnpj) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor.apply(doc, cinza);
+      doc.text('CNPJ ' + limpa(p.clienteCnpj) + (p.clienteGrupo ? ' - ' + (/^rede\b/i.test(p.clienteGrupo) ? '' : 'rede ') + limpa(p.clienteGrupo) : ''), 110, y + 5.5 + n2 * 5);
+      n2 += 1;
+    }
     y += 8 + Math.max(n1, n2) * 5.5;
     campo('Pagamento', p.pagamento, M, y, 85);
     campo('Itens', p.itens.length + (p.itens.length === 1 ? ' produto' : ' produtos'), 110, y, 85);
@@ -230,9 +236,13 @@
       { t: 'Pedidos', w: 20, a: 'r' }, { t: 'Qtd', w: 20, a: 'r', b: 1 }, { t: 'Valor', w: 30, a: 'r' }],
       d.porProduto.map(function (x) { return [x.produto, x.empresa, x.codigo, x.pedidos, n(x.q), brl(x.total)]; }));
     tabela('Por loja', [
-      { t: 'Loja', w: 120 }, { t: 'Cidade', w: 63, cinza: 1 }, { t: 'Pedidos', w: 25, a: 'r' },
-      { t: 'Itens', w: 25, a: 'r' }, { t: 'Valor', w: 40, a: 'r', b: 1 }],
-      d.porLoja.map(function (x) { return [x.loja, x.cidade, x.pedidos, n(x.q), brl(x.total)]; }));
+      { t: 'Loja', w: 82 }, { t: 'CNPJ', w: 38, cinza: 1 }, { t: 'Rede', w: 35, cinza: 1 }, { t: 'Cidade', w: 28, cinza: 1 },
+      { t: 'Pedidos', w: 25, a: 'r' }, { t: 'Itens', w: 25, a: 'r' }, { t: 'Valor', w: 40, a: 'r', b: 1 }],
+      d.porLoja.map(function (x) { return [x.loja, x.cnpj || '', x.rede || '', x.cidade, x.pedidos, n(x.q), brl(x.total)]; }));
+    if (d.temRede && d.porRede) tabela('Por rede (soma das filiais)', [
+      { t: 'Rede / loja', w: 120 }, { t: 'Tipo', w: 38, cinza: 1 }, { t: 'CNPJs', w: 25, a: 'r' },
+      { t: 'Pedidos', w: 25, a: 'r' }, { t: 'Itens', w: 25, a: 'r' }, { t: 'Valor', w: 40, a: 'r', b: 1 }],
+      d.porRede.map(function (x) { return [x.rede, x.ehRede ? 'Rede' : 'Loja sem rede', x.cnpjs, x.pedidos, n(x.q), brl(x.total)]; }));
     tabela('Histórico detalhado', [
       { t: 'Data', w: 26 }, { t: 'Pedido', w: 24 }, { t: 'Loja', w: 44 }, { t: 'Vendedor', w: 26, cinza: 1 },
       { t: 'Empresa', w: 26, cinza: 1 }, { t: 'Produto', w: 69 }, { t: 'Qtd', w: 14, a: 'r', b: 1 },
