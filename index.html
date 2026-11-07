@@ -182,6 +182,28 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 .cli-linha{display:flex;gap:8px}
 .cli-linha select{flex:1;min-width:0}
 .cli-linha .mini{flex:none;white-space:nowrap}
+/* Redes (vários CNPJs) */
+.cli-busca{width:100%;margin-bottom:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;color:var(--ink)}
+.cond-grupo{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:var(--leaf-soft);font-size:13.5px;line-height:1.45;color:var(--ink)}
+.cond-grupo[hidden],.btn.lote[hidden]{display:none}
+.cond-grupo small{color:var(--muted)}
+.btn.lote{margin-top:6px}
+.link-rede{display:block;width:100%;text-align:left;background:var(--leaf-soft);border:0;border-radius:10px;padding:10px 12px;margin:0 0 10px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+.lote-lista{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
+.lote-fil{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.lote-fil:has(input[type=checkbox]:checked){border-color:var(--ipe)}
+.lote-chk{display:flex;align-items:center;gap:10px;cursor:pointer}
+.lote-chk input{width:20px;height:20px;flex:none;accent-color:var(--ipe)}
+.lote-nome{flex:1;min-width:0;line-height:1.3}
+.lote-nome small{display:block;color:var(--muted);font-size:12.5px}
+.lote-chk .v{font-weight:700;white-space:nowrap}
+.lote-fil details{margin-top:6px}
+.lote-fil summary{cursor:pointer;color:var(--ipe);font-size:13.5px;font-weight:600;padding:4px 0}
+.lote-itens{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.lote-itens li{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.lote-itens li span{flex:1;min-width:0}
+.lote-itens small{display:block;color:var(--muted)}
+.lote-q{width:72px;flex:none;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;text-align:right;color:var(--ink)}
 .mini.repetir{margin-top:8px;border-color:var(--ipe);color:var(--ipe);background:var(--surface)}
 .mini[hidden],.sub-h[hidden]{display:none}
 .sub-h{font-size:18px;margin:6px 0 10px}
@@ -334,7 +356,9 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
     </div>
     <div class="field">
       <label class="lbl" for="cliente">Cliente (loja)</label>
+      <input id="cli-busca" class="cli-busca" type="search" placeholder="Buscar cliente, rede ou CNPJ" aria-label="Buscar cliente" autocomplete="off">
       <div class="cli-linha"><select id="cliente"></select><button class="mini" id="btn-nova-loja" type="button">+ Nova loja</button></div>
+      <p class="cond-grupo" id="cond-grupo" hidden></p>
       <button class="mini repetir" id="btn-repetir" type="button" hidden></button>
     </div>
     <label class="field" id="campo-cat" hidden>
@@ -360,6 +384,7 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
       <label class="field"><span class="lbl">Observação</span>
         <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
       <button class="btn primary" id="btn-fechar-p" type="button">Fechar pedido</button>
+      <button class="btn sec lote" id="btn-lote-p" type="button" hidden>Fechar para várias filiais da rede…</button>
       <button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
       <button class="btn ghost limpar" id="btn-limpar-p" type="button" hidden>Limpar pedido</button>
     </aside>
@@ -380,7 +405,7 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
       <div class="chips" id="lojas-filtros"></div>
       <button class="mini" id="btn-nova-loja2" type="button">+ Nova loja</button>
     </div>
-    <div class="field"><input id="lojas-busca" type="search" placeholder="Buscar loja pelo nome, cidade ou CNPJ" aria-label="Buscar loja"></div>
+    <div class="field"><input id="lojas-busca" type="search" placeholder="Buscar loja pelo nome, rede, cidade ou CNPJ" aria-label="Buscar loja"></div>
     <p class="meta" id="lojas-info"></p>
     <ul id="lista-lojas" class="orders"></ul>
   </section>
@@ -392,6 +417,7 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
       <label class="field"><span class="lbl">Até</span><input type="date" id="rel-ate"></label>
       <label class="field"><span class="lbl">Empresa</span><select id="rel-emp"></select></label>
       <label class="field"><span class="lbl">Vendedor</span><select id="rel-vend"></select></label>
+      <label class="field"><span class="lbl">Rede / grupo</span><select id="rel-grupo"></select></label>
       <label class="field"><span class="lbl">Situação</span><select id="rel-sit">
         <option value="aprov">Aprovados (inclui enviados, faturados e entregues)</option>
         <option value="faturados">Só faturados e entregues</option>
@@ -526,7 +552,26 @@ const ENVIADO = 'Enviado ao fornecedor', FATURADO = 'Faturado', ENTREGUE = 'Entr
 const POS_APROVACAO = [APROVADO, ENVIADO, FATURADO, ENTREGUE];
 // Regras de cada marca (vêm da aba Empresas).
 const pagamentosDe = e => (emp(e)?.pagamentos?.length ? emp(e).pagamentos : CFG.PAGAMENTOS);
-const descontoMaxDe = e => ehAdmin() ? 100 : (Number(emp(e)?.descontoMax) || 0);
+// Desconto máximo: o da marca, ou o combinado com a rede do cliente escolhido (aba Grupos), o que for maior.
+const descontoMaxDe = e => ehAdmin() ? 100 : Math.max(Number(emp(e)?.descontoMax) || 0, Number(condGrupo($('#cliente')?.value)?.desconto) || 0);
+const soDigitos = s => String(s || '').replace(/\D/g, '');
+// Redes: vários CNPJs (lojas) com o mesmo nome na coluna Grupo da aba Clientes.
+// O nome da rede é o da aba Grupos; sem ela, a grafia mais usada nas filiais ("rede silva" e "Rede Silva" são a mesma).
+let canonCache = null, canonDe = null;
+function canonRede(v){
+  if(canonDe !== DATA?.clientes){
+    canonDe = DATA?.clientes; canonCache = new Map(); const cont = new Map();
+    (DATA?.clientes || []).forEach(c => { const g = String(c.grupo || '').trim(); if(!g) return;
+      const m = cont.get(norm(g)) || cont.set(norm(g), new Map()).get(norm(g)); m.set(g, (m.get(g) || 0) + 1); });
+    cont.forEach((m, k) => canonCache.set(k, [...m.entries()].sort((a,b) => b[1] - a[1])[0][0]));
+    (DATA?.grupos || []).forEach(g => canonCache.set(norm(g.nome), g.nome));
+  }
+  return canonCache.get(norm(v)) || v;
+}
+const grupoDe = c => { const g = String(c?.grupo || '').trim(); return g ? canonRede(g) : ''; };
+const lojasDoGrupo = g => g ? (DATA?.clientes || []).filter(c => norm(grupoDe(c)) === norm(g)) : [];
+const condGrupo = clienteId => { const g = grupoDe(cli(clienteId)); return g ? (DATA?.grupos || []).find(x => norm(x.nome) === norm(g)) || null : null; };
+const nomesGrupos = () => [...new Map((DATA?.clientes || []).filter(grupoDe).map(c => [norm(grupoDe(c)), grupoDe(c)])).values()].sort((a,b) => a.localeCompare(b, 'pt-BR'));
 const minimoDe = e => Number(emp(e)?.pedidoMinimo) || 0;
 const numBR = s => { const t = String(s ?? '').trim().replace(/\./g, '').replace(',', '.'); const n = Number(t); return isFinite(n) ? n : NaN; };
 let orcamentos = LS.get('orcamentos', []);
@@ -562,7 +607,7 @@ async function carregarCatalogo(avisar){
   if(DEMO) return true;
   try{
     const j = await api({acao:'catalogo'});
-    DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes};
+    DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes, grupos:j.grupos || []};
     LS.set('catalogo', DATA); LS.set('catalogoEm', new Date().toISOString());
     if(j.voce && sessao){ sessao.nome = j.voce.nome; sessao.perfil = j.voce.perfil || 'vendedor'; LS.set('sessao', sessao); mostrarUsuario(); }
     renderTudo(); if(avisar) toast('Catálogo atualizado');
@@ -579,7 +624,8 @@ async function sincronizar(){
   sincronizando = true;
   let enviou = false;
   // Só envia os pedidos de quem está conectado; os de outra pessoa esperam ela entrar de novo.
-  for(const p of pedidos.filter(p => p.sync === 'pendente' && (!p.usuario || p.usuario === sessao.usuario))){
+  // Do mais antigo para o mais novo, para a planilha ficar na ordem dos números.
+  for(const p of pedidos.filter(p => p.sync === 'pendente' && (!p.usuario || p.usuario === sessao.usuario)).reverse()){
     try{
       const j = await api({acao:'pedido', pedido:p});
       p.sync = 'ok'; if(j.status) p.status = j.status; LS.set('pedidos', pedidos); enviou = true;
@@ -674,12 +720,46 @@ function renderEmpresas(){
   $('#empresas').innerHTML = (DATA?.empresas || []).map(e =>
     `<button class="chip" data-emp="${esc(e.id)}" aria-pressed="${st.empresa===e.id}">${esc(e.nome)}</button>`).join('');
 }
+// Lista de clientes: as redes aparecem agrupadas (um título por rede, com cada CNPJ embaixo).
+// A busca acima da lista filtra por nome, rede, cidade ou CNPJ.
 function renderClientes(){
   const atual = $('#cliente').value;
-  $('#cliente').innerHTML = '<option value="">Escolha o cliente</option>' +
-    [...(DATA?.clientes || [])].sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'))
-      .map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.cidade ? ' ('+esc(c.cidade)+')' : ''}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</option>`).join('');
+  const termos = norm($('#cli-busca').value || '').split(/\s+/).filter(Boolean), soNum = soDigitos($('#cli-busca').value);
+  const bateCli = c => { const t = norm(`${c.nome} ${grupoDe(c)} ${c.cidade} ${c.cnpj || ''}`);
+    return termos.every(x => t.includes(x)) || (soNum.length >= 3 && soDigitos(c.cnpj).includes(soNum)); };
+  const todos = [...(DATA?.clientes || [])].sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+  const lista = todos.filter(c => !termos.length || bateCli(c) || c.id === atual);
+  const opt = (c, naRede) => `<option value="${esc(c.id)}">${esc(c.nome)}${c.cidade ? ' ('+esc(c.cidade)+')' : ''}${naRede && c.cnpj ? ' · ' + esc(c.cnpj) : ''}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</option>`;
+  const redes = new Map(), soltas = [];
+  lista.forEach(c => { const g = grupoDe(c); if(g){ const k = norm(g); (redes.get(k) || redes.set(k, {nome:g, lojas:[]}).get(k)).lojas.push(c); } else soltas.push(c); });
+  const grupos = [...redes.values()].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  $('#cliente').innerHTML = `<option value="">${termos.length && !lista.length ? 'Nenhum cliente com essa busca' : 'Escolha o cliente'}</option>` +
+    grupos.map(g => `<optgroup label="🏢 ${esc(g.nome)} (${g.lojas.length} CNPJ${g.lojas.length > 1 ? 's' : ''})">${g.lojas.map(c => opt(c, true)).join('')}</optgroup>`).join('') +
+    (grupos.length && soltas.length ? `<optgroup label="Outras lojas">${soltas.map(c => opt(c)).join('')}</optgroup>` : soltas.map(c => opt(c)).join(''));
   $('#cliente').value = atual;
+  // Busca que achou um cliente só: já deixa escolhido.
+  if(termos.length && !atual && lista.length === 1){ $('#cliente').value = lista[0].id; aoTrocarCliente(); }
+}
+$('#cli-busca').addEventListener('input', renderClientes);
+// Ao escolher o cliente: mostra a condição da rede, se houver, e já aplica o pagamento combinado.
+function mostrarCondGrupo(){
+  const g = condGrupo($('#cliente').value), c = cli($('#cliente').value), cg = $('#cond-grupo');
+  const n = c && grupoDe(c) ? lojasDoGrupo(grupoDe(c)).length : 0;
+  cg.hidden = !c || !grupoDe(c);
+  if(!cg.hidden) cg.innerHTML = `🏢 <b>${esc(grupoDe(c))}</b> ·${n} CNPJ${n > 1 ? 's' : ''}${c.cnpj ? ` · este: ${esc(c.cnpj)}` : ''}` +
+    (g && (g.desconto || g.pagamento) ? `<br>Condição da rede: ${[g.desconto ? `desconto de até ${String(g.desconto).replace('.', ',')}%` : '', g.pagamento ? `pagamento ${esc(g.pagamento)}` : ''].filter(Boolean).join(', ')}` : '') +
+    (g?.obs ? `<br><small>${esc(g.obs)}</small>` : '');
+}
+function aoTrocarCliente(){
+  const g = condGrupo($('#cliente').value);
+  // Pagamento combinado com a rede: vira a opção escolhida (as listas são refeitas no renderCart).
+  if(g?.pagamento){ $('#pag-p').innerHTML = ''; $('#pag-outro-p').value = ''; }
+  // Desconto combinado com a rede entra sozinho se o campo estiver vazio (e só vale enquanto for o mesmo cliente).
+  const d = $('#desc-p');
+  if(d.dataset.daRede && d.value === d.dataset.daRede) d.value = '';
+  delete d.dataset.daRede;
+  if(g?.desconto && !d.value){ d.value = String(g.desconto).replace('.', ','); d.dataset.daRede = d.value; }
+  renderCart();
 }
 function renderCategorias(){
   const cats = st.empresa ? categoriasDe(st.empresa) : [];
@@ -802,6 +882,7 @@ function renderCart(){
   $('#cart-total').textContent = brl(tot);
   renderPainel(its, tot);
   renderRepetir();
+  mostrarCondGrupo();
 }
 // Totais com desconto: bruto, desconto e líquido.
 function contas(bruto, desc){
@@ -824,14 +905,16 @@ function conferirRegras(bruto, desc){
 // Pagamento: as opções da marca + "Outro…", que abre um campo para digitar a forma de pagamento.
 const OUTRO = '__outro';
 function opcoesPagamento(){
-  const ult = LS.get('ultPag','28 dias'), lista = pagamentosDe(st.empresa);
+  const ult = pagPreferido(), lista = pagamentosDe(st.empresa);
   const custom = ult && !lista.includes(ult);
   return lista.map(p => `<option${p===ult?' selected':''}>${esc(p)}</option>`).join('') +
     `<option value="${OUTRO}"${custom ? ' selected' : ''}>Outro…</option>`;
 }
 // Mostra o campo de texto quando "Outro…" está escolhido. Na primeira vez, traz a última forma digitada.
+// Pagamento que já vem escolhido: o combinado com a rede do cliente; se não houver, o último usado.
+const pagPreferido = () => condGrupo($('#cliente').value)?.pagamento || LS.get('ultPag','28 dias');
 function ligarOutro(sel, inp){
-  const ult = LS.get('ultPag','28 dias');
+  const ult = pagPreferido();
   const mostrar = () => { inp.hidden = sel.value !== OUTRO; };
   if(sel.value === OUTRO && !inp.value && !pagamentosDe(st.empresa).includes(ult)) inp.value = ult;
   mostrar();
@@ -873,6 +956,7 @@ function renderPainel(its, tot){
   av.hidden = !(its.length && min && tot < min);
   if(!av.hidden) av.textContent = `Pedido mínimo de ${e.nome}: ${brl(min)}. Faltam ${brl(min - tot)}.` + (ehAdmin() ? ' (Você pode fechar mesmo assim.)' : '');
   $('#btn-fechar-p').disabled = !its.length;
+  $('#btn-lote-p').hidden = !its.length || !temFiliais();
   $('#btn-orc-p').disabled = !its.length;
   $('#btn-limpar-p').hidden = !its.length;
   const sel = $('#pag-p'), atual = sel.value;
@@ -881,7 +965,7 @@ function renderPainel(its, tot){
   ligarOutro(sel, $('#pag-outro-p'));
 }
 $('#desc-p').addEventListener('input', () => renderCart());
-$('#cliente').addEventListener('change', () => renderCart());
+$('#cliente').addEventListener('change', aoTrocarCliente);
 function validarFechamento(){
   if(!itensAtuais().length){ toast('Adicione pelo menos um produto'); return false; }
   if(!$('#cliente').value){ toast('Escolha o cliente antes de fechar'); $('#cliente').focus(); return false; }
@@ -893,6 +977,13 @@ $('#btn-fechar-p').addEventListener('click', () => {
   const erro = conferirRegras(bruto, desc); if(erro){ toast(erro); return; }
   const pag = pagamentoDe($('#pag-p'), $('#pag-outro-p')); if(pag === null) return;
   fecharPedido(pag, $('#obs-p').value, desc);
+});
+$('#btn-lote-p').addEventListener('click', () => {
+  if(!validarFechamento()) return;
+  const desc = numBR($('#desc-p').value || '0');
+  const erro = conferirRegras(Number.MAX_VALUE, desc); if(erro){ toast(erro); return; }
+  const pag = pagamentoDe($('#pag-p'), $('#pag-outro-p')); if(pag === null) return;
+  abrirLote(pag, $('#obs-p').value, desc);
 });
 $('#btn-orc-p').addEventListener('click', () => {
   if(!validarFechamento()) return;
@@ -972,9 +1063,11 @@ function abrirRevisao(){
     <label class="field"><span class="lbl">Observação</span>
       <textarea id="obs" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
     <button class="btn primary" id="btn-fechar">Fechar pedido</button>
+    ${temFiliais() ? '<button class="btn sec lote" id="btn-lote">Fechar para várias filiais da rede…</button>' : ''}
     <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>
     <button class="btn ghost limpar" id="btn-limpar-rev">Limpar pedido</button>`);
   ligarOutro($('#pag'), $('#pag-outro'));
+  if($('#desc') && $('#desc-p').value) $('#desc').value = $('#desc-p').value;   // ex.: desconto combinado com a rede
   atualizarRevisao();
   const descDe = () => $('#desc') ? numBR($('#desc').value || '0') : 0;
   if($('#desc')) $('#desc').addEventListener('input', atualizarRevisao);
@@ -986,6 +1079,11 @@ function abrirRevisao(){
   $('#btn-orc').addEventListener('click', () => {
     const pag = pagamentoDe($('#pag'), $('#pag-outro')); if(pag === null) return;
     salvarOrcamento(pag, $('#obs').value, descDe());
+  });
+  $('#btn-lote')?.addEventListener('click', () => {
+    const erro = conferirRegras(Number.MAX_VALUE, descDe()); if(erro){ toast(erro); return; }
+    const pag = pagamentoDe($('#pag'), $('#pag-outro')); if(pag === null) return;
+    abrirLote(pag, $('#obs').value, descDe());
   });
   $('#btn-limpar-rev').addEventListener('click', limparPedido);
 }
@@ -1003,22 +1101,26 @@ function acertarContador(){
   const maior = remotos.reduce((m, p) => { const x = re.exec(String(p.num)); return x ? Math.max(m, +x[1]) : m; }, 0);
   if(maior > LS.get(chaveNum(), 1000)) LS.set(chaveNum(), maior);
 }
-function fecharPedido(pag, obs, desc, deOrcamento){
-  const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
-  deOrcamento = deOrcamento || st.orcamento;
-  const num = proximoNumero();
-  LS.set('ultPag', pag);
+// Monta um pedido (com número novo) para um cliente e uma lista de itens.
+function montarPedido(c, its, pag, obs, desc){
+  const e = emp(st.empresa);
   const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
-  const p = {
+  return {
     id: 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    num, data: new Date().toISOString(),
+    num: proximoNumero(), data: new Date().toISOString(),
     empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
+    clienteCnpj: c.cnpj || '', clienteGrupo: grupoDe(c),
     pagamento: pag, obs: (obs || '').trim(), itens: its,
     bruto: cc.bruto, desconto: cc.desc, total: cc.total,
     usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
     status: DEMO ? '' : (ehAdmin() ? APROVADO : AGUARDANDO),
     sync: DEMO ? 'demo' : 'pendente'
   };
+}
+function fecharPedido(pag, obs, desc, deOrcamento){
+  deOrcamento = deOrcamento || st.orcamento;
+  LS.set('ultPag', pag);
+  const p = montarPedido(cli($('#cliente').value), itensAtuais(), pag, obs, desc);
   pedidos.unshift(p); LS.set('pedidos', pedidos);
   // Orçamento que virou pedido sai da lista de orçamentos.
   if(deOrcamento){ orcamentos = orcamentos.filter(o => o.id !== deOrcamento); LS.set('orcamentos', orcamentos); }
@@ -1034,6 +1136,71 @@ function fecharPedido(pag, obs, desc, deOrcamento){
   sincronizar();
 }
 
+/* ---------- Pedido para várias filiais da mesma rede ---------- */
+// Outras filiais da rede do cliente escolhido (sem as recusadas).
+const filiaisDaRede = () => { const c = cli($('#cliente').value); return c && grupoDe(c) ? lojasDoGrupo(grupoDe(c)).filter(x => x.situacao !== RECUSADO) : []; };
+const temFiliais = () => !DEMO && filiaisDaRede().length > 1;
+// Uma lista de filiais com caixa de marcar. Cada filial marcada vira um pedido com número próprio,
+// com os mesmos itens; em "Ajustar quantidades" muda-se a quantidade só daquela filial (0 tira o item).
+function abrirLote(pag, obs, desc){
+  const c0 = cli($('#cliente').value), its = itensAtuais(), e = emp(st.empresa);
+  const filiais = filiaisDaRede().sort((a,b) => (b.id === c0.id) - (a.id === c0.id) || a.nome.localeCompare(b.nome, 'pt-BR'));
+  abrirSheet(`
+    <div class="sheet-head"><h2>Pedido para a rede</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">🏢 <b>${esc(grupoDe(c0))}</b> · ${esc(e.nome)} · ${esc(pag)}${desc ? ` · desconto ${String(desc).replace('.', ',')}%` : ''}</p>
+    <p class="dica-preco">Marque as filiais. Cada uma vira um pedido com número próprio. Para mudar a quantidade de uma filial, toque em <b>Ajustar quantidades</b> (0 tira o item).</p>
+    <ul class="lote-lista">${filiais.map(c => `<li class="lote-fil">
+      <label class="lote-chk"><input type="checkbox" data-fil="${esc(c.id)}"${c.id === c0.id ? ' checked' : ''}>
+        <span class="lote-nome"><b>${esc(c.nome)}</b><small>${[c.cnpj, c.cidade].filter(Boolean).map(esc).join(' · ') || 'sem CNPJ'}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</small></span>
+        <span class="v" data-tot="${esc(c.id)}"></span></label>
+      <details><summary>Ajustar quantidades</summary><ul class="lote-itens">${its.map(i => `<li><span>${esc(i.nome)}<small>${brl(i.preco)}</small></span>
+        <input class="lote-q" type="text" inputmode="numeric" autocomplete="off" data-fil="${esc(c.id)}" data-it="${esc(i.id)}" value="${i.q}" aria-label="Quantidade de ${esc(i.nome)} para ${esc(c.nome)}"></li>`).join('')}</ul></details></li>`).join('')}</ul>
+    <div id="lote-resumo"></div>
+    <button class="btn primary" id="btn-lote-ok">Fechar pedidos</button>
+    <button class="btn ghost" data-close>Voltar</button>`);
+  const itensDe = id => its.map(i => { const inp = document.querySelector(`.lote-q[data-fil="${CSS.escape(id)}"][data-it="${CSS.escape(i.id)}"]`);
+      return Object.assign({}, i, {q: Math.max(0, Math.min(99999, Math.floor(numBR(inp.value) || 0)))}); }).filter(i => i.q > 0);
+  const marcadas = () => [...document.querySelectorAll('.lote-chk input:checked')].map(x => x.dataset.fil);
+  const atualizar = () => {
+    let soma = 0, n = 0;
+    filiais.forEach(c => { const b = itensDe(c.id).reduce((s,i) => s + i.q*i.preco, 0), on = marcadas().includes(c.id);
+      document.querySelector(`[data-tot="${CSS.escape(c.id)}"]`).textContent = on ? brl(contas(b, desc).total) : '';
+      if(on){ soma += contas(b, desc).total; n++; } });
+    $('#lote-resumo').innerHTML = `<div class="total-line"><span>${n} pedido${n === 1 ? '' : 's'}</span><strong>${brl(soma)}</strong></div>`;
+    $('#btn-lote-ok').textContent = n > 1 ? `Fechar ${n} pedidos` : 'Fechar pedido';
+    $('#btn-lote-ok').disabled = !n;
+  };
+  $('#sheet-body .lote-lista').addEventListener('change', atualizar);
+  $('#sheet-body .lote-lista').addEventListener('input', e => { if(e.target.matches('.lote-q')) atualizar(); });
+  atualizar();
+  $('#btn-lote-ok').addEventListener('click', () => {
+    const min = minimoDe(st.empresa), lista = [];
+    for(const id of marcadas()){
+      const c = cli(id), itens = itensDe(id), b = itens.reduce((s,i) => s + i.q*i.preco, 0);
+      if(!itens.length){ toast(`${c.nome}: todos os itens estão com quantidade 0.`); return; }
+      if(min && b < min && !ehAdmin()){ toast(`${c.nome}: pedido mínimo de ${e.nome} é ${brl(min)}. Faltam ${brl(min - b)}.`, 5000); return; }
+      lista.push({c, itens});
+    }
+    fecharLote(pag, obs, desc, lista);
+  });
+}
+function fecharLote(pag, obs, desc, lista){
+  LS.set('ultPag', pag);
+  const feitos = lista.map(x => montarPedido(x.c, x.itens, pag, obs, desc));
+  pedidos.unshift(...feitos.slice().reverse()); LS.set('pedidos', pedidos);
+  if(st.orcamento){ orcamentos = orcamentos.filter(o => o.id !== st.orcamento); LS.set('orcamentos', orcamentos); }
+  st.itens = {}; st.precos = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  abrirSheet(`
+    <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
+      <h2>${feitos.length} pedido${feitos.length > 1 ? 's' : ''} fechado${feitos.length > 1 ? 's' : ''}</h2>
+      <p class="meta">${esc(feitos[0].empresaNome)} · ${brl(feitos.reduce((s,p) => s + p.total, 0))} no total</p></div>
+    <p class="dica-preco">Toque em um pedido para baixar o PDF ou mandar pelo WhatsApp.</p>
+    <ul class="orders">${feitos.map(cartaoPedido).join('')}</ul>
+    <button class="btn ghost" data-close style="margin-top:8px">Começar outro pedido</button>`);
+  document.querySelectorAll('#sheet-body [data-id]').forEach(b => b.addEventListener('click', () => abrirPedido(b.dataset.id)));
+  sincronizar();
+}
+
 /* ---------- Orçamentos (ficam neste aparelho) ---------- */
 function salvarOrcamento(pag, obs, desc){
   const its = itensAtuais(), c = cli($('#cliente').value), e = emp(st.empresa);
@@ -1045,6 +1212,7 @@ function salvarOrcamento(pag, obs, desc){
     tipo: 'orcamento', id: antigo ? antigo.id : 'O' + Date.now().toString(36),
     num: antigo ? antigo.num : 'ORC-' + (LS.get('ultimoOrc', 100) + 1),
     data: new Date().toISOString(), empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
+    clienteCnpj: c.cnpj || '', clienteGrupo: grupoDe(c),
     pagamento: pag, obs: (obs || '').trim(), itens: its, bruto: cc.bruto, desconto: cc.desc, total: cc.total,
     usuario: sessao?.usuario || '', representante: nomeAtual()
   };
@@ -1118,30 +1286,42 @@ async function repetirUltimo(cliente, empresa){
 $('#btn-repetir').addEventListener('click', () => repetirUltimo($('#cliente').value, st.empresa));
 
 /* ---------- Lojas: cadastro, contato e lojas paradas ---------- */
-function abrirNovaLoja(depois){
+// base: loja da mesma rede (ao cadastrar uma filial), para já trazer rede, nome, cidade, contato e telefone.
+function abrirNovaLoja(depois, base){
   if(DEMO){ toast('No modo demonstração não dá para cadastrar lojas.'); return; }
+  const v = s => esc(s || '');
   abrirSheet(`
-    <div class="sheet-head"><h2>Nova loja</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="sheet-head"><h2>${base ? 'Nova filial (outro CNPJ)' : 'Nova loja'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${ehAdmin() ? '' : '<p class="note">A loja entra na hora para você fazer o pedido; o administrador confere o cadastro.</p>'}
+    ${base ? `<p class="meta">Filial da rede <b>${esc(grupoDe(base))}</b>. Os dados abaixo vieram de ${esc(base.nome)}: troque o que for diferente.</p>` : ''}
     <form class="form-loja" id="form-loja" novalidate>
-      <label class="field"><span class="lbl">Nome da loja *</span><input id="nl-nome" autocomplete="organization" required></label>
-      <label class="field"><span class="lbl">Cidade</span><input id="nl-cidade" autocomplete="address-level2"></label>
+      <label class="field"><span class="lbl">Nome da loja *</span><input id="nl-nome" autocomplete="organization" required value="${base ? v(base.nome) : ''}"></label>
       <label class="field"><span class="lbl">CNPJ ou CPF</span><input id="nl-cnpj" inputmode="numeric" placeholder="só números"></label>
-      <label class="field"><span class="lbl">Telefone / WhatsApp</span><input id="nl-tel" type="tel" inputmode="tel" placeholder="(62) 99999-9999"></label>
-      <label class="field"><span class="lbl">Contato (quem compra)</span><input id="nl-contato"></label>
+      <label class="field"><span class="lbl">Rede / grupo <small>(lojas do mesmo dono com CNPJs diferentes)</small></span>
+        <input id="nl-grupo" list="dl-grupos" placeholder="Deixe vazio se for loja única" value="${base ? v(grupoDe(base)) : ''}">
+        <datalist id="dl-grupos">${nomesGrupos().map(g => `<option value="${esc(g)}">`).join('')}</datalist></label>
+      <label class="field"><span class="lbl">Cidade</span><input id="nl-cidade" autocomplete="address-level2" value="${base ? v(base.cidade) : ''}"></label>
+      <label class="field"><span class="lbl">Telefone / WhatsApp</span><input id="nl-tel" type="tel" inputmode="tel" placeholder="(62) 99999-9999" value="${base ? v(base.telefone) : ''}"></label>
+      <label class="field"><span class="lbl">Contato (quem compra)</span><input id="nl-contato" value="${base ? v(base.contato) : ''}"></label>
       <label class="field"><span class="lbl">Endereço</span><input id="nl-end" autocomplete="street-address"></label>
-      <button class="btn primary" id="nl-salvar" type="submit">Cadastrar loja</button>
+      <button class="btn primary" id="nl-salvar" type="submit">${base ? 'Cadastrar filial' : 'Cadastrar loja'}</button>
     </form>`);
-  setTimeout(() => $('#nl-nome').focus(), 80);
+  setTimeout(() => (base ? $('#nl-cnpj') : $('#nl-nome')).focus(), 80);
   $('#form-loja').addEventListener('submit', async ev => {
     ev.preventDefault();
-    const dados = {nome:$('#nl-nome').value, cidade:$('#nl-cidade').value, cnpj:$('#nl-cnpj').value, telefone:$('#nl-tel').value, contato:$('#nl-contato').value, endereco:$('#nl-end').value};
+    // Rede digitada parecida com uma que já existe (só muda acento/maiúscula): usa o nome que já existe.
+    const gDig = $('#nl-grupo').value.trim(), gExiste = nomesGrupos().find(g => norm(g) === norm(gDig));
+    const dados = {nome:$('#nl-nome').value, cidade:$('#nl-cidade').value, cnpj:$('#nl-cnpj').value, telefone:$('#nl-tel').value, contato:$('#nl-contato').value, endereco:$('#nl-end').value, grupo: gExiste || gDig};
+    if(base && !soDigitos(dados.cnpj)){ toast('Digite o CNPJ desta filial'); $('#nl-cnpj').focus(); return; }
+    if(base) dados.base = base.id;   // a loja de origem entra na mesma rede, se ainda não tiver uma
     if(dados.nome.trim().length < 2){ toast('Digite o nome da loja'); return; }
     if(!navigator.onLine){ toast('Sem internet. O cadastro de loja precisa de conexão.'); return; }
     const b = $('#nl-salvar'); b.disabled = true; b.textContent = 'Cadastrando…';
     try{
       const j = await api({acao:'cliente', cliente: dados});
-      DATA.clientes = [...(DATA.clientes || []), j.cliente]; LS.set('catalogo', DATA);
+      DATA.clientes = [...(DATA.clientes || []), j.cliente];
+      const b0 = base && cli(base.id); if(b0 && !grupoDe(b0) && j.cliente.grupo){ b0.grupo = j.cliente.grupo; canonDe = null; }
+      LS.set('catalogo', DATA);
       renderClientes(); renderLojas(); renderAprovar();
       fecharSheet();
       toast(j.cliente.situacao === AGUARDANDO ? 'Loja cadastrada. O administrador vai conferir o cadastro.' : 'Loja cadastrada.');
@@ -1152,7 +1332,7 @@ function abrirNovaLoja(depois){
     }
   });
 }
-$('#btn-nova-loja').addEventListener('click', () => abrirNovaLoja(c => { $('#cliente').value = c.id; renderCart(); }));
+$('#btn-nova-loja').addEventListener('click', () => abrirNovaLoja(c => { $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = c.id; aoTrocarCliente(); }));
 $('#btn-nova-loja2').addEventListener('click', () => abrirNovaLoja());
 
 const diasDesde = iso => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
@@ -1161,12 +1341,14 @@ async function carregarLojas(){
   try{ const j = await api({acao:'lojas'}); resumoLojas = j.lojas || {}; LS.set('resumoLojas', resumoLojas); renderLojas(); }
   catch(e){ if(e.login) sessaoCaiu(e.message); }
 }
-const FILTROS_LOJAS = [['todas','Todas'],['30','Sem pedido há 30+ dias'],['60','60+ dias'],['90','90+ dias'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
+const FILTROS_LOJAS = [['todas','Todas'],['redes','Por rede'],['30','Sem pedido há 30+ dias'],['60','60+ dias'],['90','90+ dias'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
 function renderLojas(){
   $('#lojas-filtros').innerHTML = FILTROS_LOJAS.map(([v,t]) => `<button class="chip" data-fl="${v}" aria-pressed="${filtroLojas===v}">${t}</button>`).join('');
   const q = norm($('#lojas-busca').value || '');
   const todas = (DATA?.clientes || []).map(c => { const r = resumoLojas[c.id] || {}; return Object.assign({}, c, {pedidos: r.pedidos || 0, total: r.total || 0, ultimo: r.ultimo || '', ultimoNum: r.ultimoNum || '', dias: diasDesde(r.ultimo)}); });
-  let lista = todas.filter(c => !q || norm(`${c.nome} ${c.cidade} ${c.cnpj || ''} ${c.contato || ''}`).includes(q));
+  const qNum = soDigitos($('#lojas-busca').value);
+  let lista = todas.filter(c => !q || norm(`${c.nome} ${grupoDe(c)} ${c.cidade} ${c.cnpj || ''} ${c.contato || ''}`).includes(q) || (qNum.length >= 3 && soDigitos(c.cnpj).includes(qNum)));
+  if(filtroLojas === 'redes'){ renderRedes(todas, lista); return; }
   if(filtroLojas === 'nunca') lista = lista.filter(c => !c.pedidos);
   else if(filtroLojas === 'aguard') lista = lista.filter(c => c.situacao === AGUARDANDO);
   else if(filtroLojas !== 'todas') lista = lista.filter(c => c.pedidos && c.dias >= Number(filtroLojas));
@@ -1178,14 +1360,50 @@ function renderLojas(){
   $('#lista-lojas').innerHTML = lista.length ? lista.map(c => `<li><button class="order loja" data-loja="${esc(c.id)}">
       <span class="num">${c.pedidos ? (c.dias === 0 ? 'Último pedido hoje' : `Último pedido há ${c.dias} dia${c.dias === 1 ? '' : 's'}`) : 'Nunca comprou'}</span>
       <span class="cli">${esc(c.nome)}</span>
-      <span class="emp">${esc(c.cidade || '')}${c.contato ? ' · ' + esc(c.contato) : ''}</span>
+      <span class="emp">${grupoDe(c) ? '🏢 ' + esc(grupoDe(c)) + ' · ' : ''}${esc(c.cidade || '')}${c.contato ? ' · ' + esc(c.contato) : ''}</span>
       ${c.situacao === AGUARDANDO ? '<span class="badge espera">Aguardando aprovação</span>' : c.pedidos && c.dias >= 60 ? '<span class="badge rec">Parada</span>' : c.pedidos && c.dias >= 30 ? '<span class="badge espera">Atenção</span>' : ''}
       <span class="tot">${c.pedidos ? brl(c.total) : ''}</span></button></li>`).join('')
     : '<li class="empty">Nenhuma loja com esse filtro.</li>';
 }
+// Visão "Por rede": um cartão por rede com a soma das filiais e quantas estão paradas. As lojas únicas ficam no fim.
+function renderRedes(todas, lista){
+  const redes = new Map();
+  lista.filter(c => grupoDe(c)).forEach(c => { const k = norm(grupoDe(c)); if(!redes.has(k)) redes.set(k, grupoDe(c)); });
+  const resumo = [...redes.values()].map(g => { const fs = todas.filter(c => norm(grupoDe(c)) === norm(g));
+    const ult = fs.map(c => c.ultimo).filter(Boolean).sort().pop() || '';
+    return {nome: g, filiais: fs, total: fs.reduce((s,c) => s + c.total, 0), pedidos: fs.reduce((s,c) => s + c.pedidos, 0),
+      paradas: fs.filter(c => c.pedidos && c.dias >= 30).length, nunca: fs.filter(c => !c.pedidos).length, dias: diasDesde(ult)}; })
+    .sort((a,b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'));
+  const unicas = lista.filter(c => !grupoDe(c)).length;
+  $('#lojas-info').textContent = `${resumo.length} rede${resumo.length === 1 ? '' : 's'}` + (unicas ? ` · ${unicas} loja${unicas === 1 ? '' : 's'} sem rede (veja em Todas)` : '');
+  $('#lista-lojas').innerHTML = resumo.length ? resumo.map(r => `<li><button class="order loja" data-rede="${esc(r.nome)}">
+      <span class="num">${r.filiais.length} CNPJ${r.filiais.length > 1 ? 's' : ''} · ${r.pedidos ? (r.dias === 0 ? 'último pedido hoje' : `último pedido há ${r.dias} dia${r.dias === 1 ? '' : 's'}`) : 'nunca comprou'}</span>
+      <span class="cli">🏢 ${esc(r.nome)}</span>
+      <span class="emp">${r.paradas ? `${r.paradas} filial${r.paradas > 1 ? 'is' : ''} sem pedido há 30+ dias` : 'Todas as filiais comprando'}${r.nunca ? ` · ${r.nunca} nunca ${r.nunca > 1 ? 'compraram' : 'comprou'}` : ''}</span>
+      ${r.paradas ? '<span class="badge espera">Atenção</span>' : ''}
+      <span class="tot">${r.pedidos ? brl(r.total) : ''}</span></button></li>`).join('')
+    : '<li class="empty">Nenhuma rede ainda. Para juntar lojas numa rede, abra a loja e toque em <b>Rede</b> (administrador) ou cadastre a filial com o nome da rede.</li>';
+}
+function abrirRede(nome){
+  const fs = lojasDoGrupo(nome).map(c => Object.assign({}, c, resumoLojas[c.id] || {}));
+  const g = (DATA?.grupos || []).find(x => norm(x.nome) === norm(nome));
+  const total = fs.reduce((s,c) => s + (c.total || 0), 0), peds = fs.reduce((s,c) => s + (c.pedidos || 0), 0);
+  abrirSheet(`
+    <div class="sheet-head"><h2>🏢 ${esc(nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">${fs.length} CNPJ${fs.length > 1 ? 's' : ''} · ${peds ? `<b>${peds}</b> pedido${peds > 1 ? 's' : ''}, <b>${brl(total)}</b> no total` : 'ainda sem pedido'}</p>
+    ${g && (g.desconto || g.pagamento || g.obs) ? `<div class="situacao aprov">Condição da rede: ${[g.desconto ? `desconto de até <b>${String(g.desconto).replace('.', ',')}%</b>` : '', g.pagamento ? `pagamento <b>${esc(g.pagamento)}</b>` : ''].filter(Boolean).join(', ')}${g.obs ? `<br>${esc(g.obs)}` : ''}</div>`
+      : ehAdmin() ? '<p class="note">Para combinar desconto ou pagamento com a rede inteira, preencha a aba <b>Grupos</b> da planilha (Grupo, Desconto %, Pagamento, Observação).</p>' : ''}
+    <ul class="orders">${fs.sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(c => { const d = diasDesde(c.ultimo); return `<li><button class="order loja" data-loja="${esc(c.id)}">
+      <span class="num">${c.pedidos ? (d === 0 ? 'Último pedido hoje' : `Último pedido há ${d} dia${d === 1 ? '' : 's'}`) : 'Nunca comprou'}</span>
+      <span class="cli">${esc(c.nome)}</span><span class="emp">${[c.cnpj, c.cidade].filter(Boolean).map(esc).join(' · ')}</span>
+      ${c.situacao === AGUARDANDO ? '<span class="badge espera">Aguardando aprovação</span>' : c.pedidos && d >= 60 ? '<span class="badge rec">Parada</span>' : c.pedidos && d >= 30 ? '<span class="badge espera">Atenção</span>' : ''}
+      <span class="tot">${c.pedidos ? brl(c.total) : ''}</span></button></li>`; }).join('')}</ul>
+    <div class="btns"><button class="btn sec" id="rd-filial">+ Adicionar filial (outro CNPJ)</button></div>`);
+  $('#rd-filial').addEventListener('click', () => abrirNovaLoja(null, fs[0]));
+  document.querySelectorAll('#sheet-body [data-loja]').forEach(b => b.addEventListener('click', () => abrirLoja(b.dataset.loja)));
+}
 $('#lojas-filtros').addEventListener('click', e => { const b = e.target.closest('[data-fl]'); if(b){ filtroLojas = b.dataset.fl; renderLojas(); } });
 $('#lojas-busca').addEventListener('input', renderLojas);
-const soDigitos = s => String(s || '').replace(/\D/g, '');
 function abrirLoja(id){
   const c = cli(id); if(!c) return;
   const r = resumoLojas[id] || {}, tel = soDigitos(c.telefone);
@@ -1194,6 +1412,7 @@ function abrirLoja(id){
   abrirSheet(`
     <div class="sheet-head"><h2>${esc(c.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
+    ${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} ·${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}
     <p class="meta">${[c.cidade, c.cnpj && 'CNPJ/CPF ' + c.cnpj, c.endereco, c.contato && 'Contato: ' + c.contato, c.telefone && 'Tel. ' + c.telefone].filter(Boolean).map(esc).join('<br>') || 'Sem dados de contato.'}</p>
     ${tel ? `<div class="contato-btns"><a class="btn sec" href="tel:${tel}">Ligar</a><a class="btn zap" href="https://wa.me/${zap}" target="_blank" rel="noopener">WhatsApp</a></div>` : ''}
     <p class="meta">${r.pedidos ? `<b>${r.pedidos}</b> pedido${r.pedidos > 1 ? 's' : ''}, <b>${brl(r.total)}</b> no total. Último: ${new Date(r.ultimo).toLocaleDateString('pt-BR')} (${esc(r.ultimoNum)}).` : 'Ainda não tem pedido.'}</p>
@@ -1201,15 +1420,39 @@ function abrirLoja(id){
     <div class="btns">
       <button class="btn primary" id="lj-novo">Novo pedido para esta loja</button>
       ${r.pedidos || recentes.length ? '<button class="btn sec" id="lj-repetir">Repetir último pedido</button>' : ''}
+      <button class="btn sec" id="lj-filial">+ Adicionar filial (outro CNPJ)</button>
+      ${ehAdmin() ? `<button class="btn ghost" id="lj-mudar-rede">${grupoDe(c) ? 'Mudar / tirar da rede' : 'Colocar numa rede'}</button>` : ''}
       ${ehAdmin() && c.situacao === AGUARDANDO ? '<button class="btn aprovar" id="lj-aprovar">Aprovar cadastro</button><button class="btn perigo" id="lj-recusar">Recusar cadastro</button>' : ''}
     </div>`);
-  $('#lj-novo').addEventListener('click', () => { $('#cliente').value = id; fecharSheet(); irPara('novo'); renderCart(); });
+  $('#lj-novo').addEventListener('click', () => { $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = id; fecharSheet(); irPara('novo'); aoTrocarCliente(); });
+  $('#lj-rede-ver')?.addEventListener('click', () => abrirRede(grupoDe(c)));
+  // Filial nova: se a loja ainda não tem rede, a rede ganha o nome da loja (dá para mudar no formulário).
+  $('#lj-filial').addEventListener('click', () => abrirNovaLoja(null, grupoDe(c) ? c : Object.assign({}, c, {grupo: c.nome})));
+  $('#lj-mudar-rede')?.addEventListener('click', () => mudarRedeLoja(id));
   $('#lj-repetir')?.addEventListener('click', () => repetirUltimo(id, ''));
   $('#lj-aprovar')?.addEventListener('click', () => mudarSituacaoLoja(id, 'Ativo'));
   $('#lj-recusar')?.addEventListener('click', () => { const m = prompt('Motivo da recusa (opcional):'); if(m !== null) mudarSituacaoLoja(id, RECUSADO, m); });
   document.querySelectorAll('#sheet-body [data-id]').forEach(b => b.addEventListener('click', () => abrirPedido(b.dataset.id)));
 }
-$('#lista-lojas').addEventListener('click', e => { const b = e.target.closest('[data-loja]'); if(b) abrirLoja(b.dataset.loja); });
+$('#lista-lojas').addEventListener('click', e => {
+  const b = e.target.closest('[data-loja]'); if(b) return abrirLoja(b.dataset.loja);
+  const r = e.target.closest('[data-rede]'); if(r) abrirRede(r.dataset.rede);
+});
+// Administrador: põe a loja numa rede (ou tira, deixando vazio).
+async function mudarRedeLoja(id){
+  const c = cli(id); if(!c) return;
+  const ex = nomesGrupos();
+  const r = prompt(`Rede / grupo de ${c.nome}.\nDigite o nome da rede (igual para todas as filiais) ou deixe vazio para tirar da rede.` + (ex.length ? `\n\nRedes que já existem: ${ex.join(', ')}` : ''), grupoDe(c));
+  if(r === null) return;
+  if(!navigator.onLine){ toast('Sem internet.'); return; }
+  const nome = ex.find(g => norm(g) === norm(r.trim())) || r.trim();
+  try{
+    await api({acao:'clienteGrupo', id, grupo: nome});
+    c.grupo = nome; canonDe = null; LS.set('catalogo', DATA);
+    renderClientes(); renderLojas(); renderCart(); abrirLoja(id);
+    toast(nome ? `${c.nome} agora é da rede ${nome}` : `${c.nome} saiu da rede`);
+  }catch(e){ if(e.login) sessaoCaiu(e.message); else toast(e.message); }
+}
 async function mudarSituacaoLoja(id, nova, motivo){
   if(!navigator.onLine){ toast('Sem internet.'); return; }
   try{
@@ -1228,7 +1471,7 @@ function dataBR(iso){
          d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 function texto(p){
-  let t = `*${p.tipo === 'orcamento' ? 'Orçamento' : 'Pedido'} ${p.num}*\nEmpresa: ${p.empresaNome}\nCliente: ${p.clienteNome}${p.clienteCidade ? ' ('+p.clienteCidade+')' : ''}\nData: ${dataBR(p.data)}\n\n`;
+  let t = `*${p.tipo === 'orcamento' ? 'Orçamento' : 'Pedido'} ${p.num}*\nEmpresa: ${p.empresaNome}\nCliente: ${p.clienteNome}${p.clienteCidade ? ' ('+p.clienteCidade+')' : ''}${p.clienteCnpj ? '\nCNPJ: ' + p.clienteCnpj : ''}\nData: ${dataBR(p.data)}\n\n`;
   t += p.itens.map(i => `${i.q}× ${i.nome} (${i.un}): ${brl(i.q*i.preco)}`).join('\n');
   if(p.desconto) t += `\n\nSubtotal: ${brl(p.bruto)}\nDesconto: ${String(p.desconto).replace('.', ',')}%`;
   t += `\n\n*Total: ${brl(p.total)}*\nPagamento: ${p.pagamento}`;
@@ -1328,6 +1571,10 @@ function prepararRelatorio(){
   $('#rel-emp').innerHTML = '<option value="">Todas</option>' + (DATA?.empresas || []).map(e => `<option value="${esc(e.id)}">${esc(e.nome)}</option>`).join('');
   $('#rel-emp').value = atual;
   opcoesVendedores();
+  const gAtual = $('#rel-grupo').value;
+  $('#rel-grupo').innerHTML = '<option value="">Todas as lojas</option><option value="__sem">Só lojas sem rede</option>' +
+    nomesGrupos().map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  $('#rel-grupo').value = [...$('#rel-grupo').options].some(o => o.value === gAtual) ? gAtual : '';
 }
 $('#rel-atalhos').addEventListener('click', e => { const b = e.target.closest('[data-per]'); if(b){ periodo(b.dataset.per); gerarRelatorio(); } });
 
@@ -1347,18 +1594,23 @@ async function gerarRelatorio(){
   }finally{ b.disabled = false; b.textContent = 'Gerar relatório'; }
 }
 $('#rel-gerar').addEventListener('click', gerarRelatorio);
-['#rel-emp','#rel-vend','#rel-sit'].forEach(s => $(s).addEventListener('change', () => { if(REL) renderRelatorio(); }));
+['#rel-emp','#rel-vend','#rel-sit','#rel-grupo'].forEach(s => $(s).addEventListener('change', () => { if(REL) renderRelatorio(); }));
 
 // Aplica os filtros e devolve as linhas de item (uma por produto de cada pedido) e os resumos.
 function dadosRelatorio(){
-  const fEmp = $('#rel-emp').value, vend = $('#rel-vend').value, sit = $('#rel-sit').value;
+  const fEmp = $('#rel-emp').value, vend = $('#rel-vend').value, sit = $('#rel-sit').value, fGrupo = $('#rel-grupo').value;
   const ok = s => sit === 'todos' ? true : sit === 'aprov' ? POS_APROVACAO.includes(s)
     : sit === 'faturados' ? (s === FATURADO || s === ENTREGUE) : (POS_APROVACAO.includes(s) || s === AGUARDANDO);
-  const peds = REL.pedidos.filter(p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status));
+  // Rede do pedido: a que a loja tem hoje no cadastro (vale também para pedidos antigos).
+  const redeDe = p => grupoDe(cli(p.cliente)) || p.clienteGrupo || '';
+  const cnpjDe = p => cli(p.cliente)?.cnpj || p.clienteCnpj || '';
+  const okGrupo = p => !fGrupo || (fGrupo === '__sem' ? !redeDe(p) : norm(redeDe(p)) === norm(fGrupo));
+  const peds = REL.pedidos.filter(p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p));
   const linhas = [];
   // Valor de cada item já com o desconto do pedido.
   peds.forEach(p => { const f = 1 - (Number(p.desconto) || 0) / 100; p.itens.forEach(i => linhas.push({
-    data: p.data, num: p.num, status: p.status, loja: p.clienteNome, cidade: p.clienteCidade || '', vendedor: p.representante || p.usuario,
+    data: p.data, num: p.num, status: p.status, loja: p.clienteNome, cidade: p.clienteCidade || '', rede: redeDe(p), cnpj: cnpjDe(p),
+    clienteId: p.cliente, vendedor: p.representante || p.usuario,
     empresa: p.empresaNome, codigo: i.id, produto: i.nome, un: i.un || '', q: Number(i.q) || 0, preco: Number(i.preco) || 0,
     total: Math.round((Number(i.q) || 0) * (Number(i.preco) || 0) * f * 100) / 100, nf: p.nf || ''
   })); });
@@ -1376,13 +1628,21 @@ function dadosRelatorio(){
     linhas.forEach(l => { const k = chave(l); const x = m.get(k) || Object.assign({q:0, total:0, pedidos:new Set()}, rot(l)); x.q += l.q; x.total += l.total; x.pedidos.add(l.num); m.set(k, x); });
     return [...m.values()].map(x => Object.assign(x, {pedidos: x.pedidos.size})); };
   const porProduto = somar(l => l.empresa + '|' + l.codigo, l => ({empresa:l.empresa, codigo:l.codigo, produto:l.produto})).sort((a,b) => b.q - a.q);
-  const porLoja = somar(l => l.loja, l => ({loja:l.loja, cidade:l.cidade})).sort((a,b) => b.total - a.total);
+  // Por loja: cada CNPJ separado (filiais com o mesmo nome não se misturam).
+  const porLoja = somar(l => l.clienteId || l.loja, l => ({loja:l.loja, cidade:l.cidade, rede:l.rede, cnpj:l.cnpj})).sort((a,b) => b.total - a.total);
+  // Por rede: soma das filiais; quem não tem rede aparece como a própria loja.
+  const chaveRede = l => l.rede ? 'R|' + norm(l.rede) : 'L|' + (l.clienteId || l.loja);
+  const cnpjsPor = new Map();
+  linhas.forEach(l => { const k = chaveRede(l); (cnpjsPor.get(k) || cnpjsPor.set(k, new Set()).get(k)).add(l.clienteId || l.loja); });
+  const porRede = somar(chaveRede, l => ({rede: l.rede || l.loja, ehRede: !!l.rede, cnpjs: cnpjsPor.get(chaveRede(l)).size}))
+    .sort((a,b) => b.total - a.total);
   const filtros = [`Período: ${diaBR(REL.de)} a ${diaBR(REL.ate)}`,
     `Empresa: ${fEmp ? (emp(fEmp)?.nome || fEmp) : 'todas'}`,
     `Vendedor: ${vend ? $('#rel-vend').selectedOptions[0].textContent : 'todos'}`,
+    ...(fGrupo ? [`Rede: ${fGrupo === '__sem' ? 'só lojas sem rede' : fGrupo}`] : []),
     `Situação: ${$('#rel-sit').selectedOptions[0].textContent.toLowerCase()}`];
-  return {peds, linhas, porProduto, porLoja, filtros, comissao,
-    totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: peds.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(peds.map(p => p.clienteNome)).size,
+  return {peds, linhas, porProduto, porLoja, porRede, temRede: porRede.some(r => r.ehRede), filtros, comissao,
+    totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: peds.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(peds.map(p => p.cliente)).size,
       comissaoMarcas: comissao.marcas.reduce((s,x) => s + x.comissao, 0), comissaoVendedores: comissao.vendedores.reduce((s,x) => s + x.comissao, 0)}};
 }
 function renderRelatorio(){
@@ -1418,9 +1678,13 @@ function renderRelatorio(){
       </table></div></section>
       <section class="rel-sec"><h2>Por loja</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
         <thead><tr><th>Loja</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
-        <tbody>${d.porLoja.map(x => `<tr><td>${esc(x.loja)}<div class="sub">${esc(x.cidade)}</div></td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+        <tbody>${d.porLoja.map(x => `<tr><td>${esc(x.loja)}<div class="sub">${[x.rede && '🏢 ' + x.rede, x.cnpj, x.cidade].filter(Boolean).map(esc).join(' · ')}</div></td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
       </table></div></section>
     </div>
+    ${d.temRede ? `<section class="rel-sec"><h2>Por rede (soma das filiais)</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
+      <thead><tr><th>Rede / loja</th><th class="n">CNPJs</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
+      <tbody>${d.porRede.map(x => `<tr><td>${x.ehRede ? '🏢 <b>' + esc(x.rede) + '</b>' : esc(x.rede) + '<div class="sub">loja sem rede</div>'}</td><td class="n">${x.cnpjs}</td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+    </table></div></section>` : ''}
     <section class="rel-sec"><h2>Histórico detalhado</h2><div class="tabela-wrap"><table class="tabela" style="min-width:820px">
       <thead><tr><th>Data</th><th>Pedido</th><th>Loja</th><th>Vendedor</th><th>Produto</th><th class="n">Qtd</th><th class="n">Total</th><th>Situação</th></tr></thead>
       <tbody>${d.linhas.map(l => `<tr><td>${dt(l.data)}</td><td>${esc(l.num)}</td><td>${esc(l.loja)}<div class="sub">${esc(l.cidade)}</div></td><td>${esc(l.vendedor)}</td>
@@ -1465,13 +1729,15 @@ $('#rel-xlsx').addEventListener('click', async () => {
     };
     const wb = X.utils.book_new();
     X.utils.book_append_sheet(wb, folha(
-      ['Data','Pedido','Situação','NF','Loja','Cidade','Vendedor','Empresa','Código','Produto','Unidade','Qtd','Preço','Total (c/ desconto)'],
-      d.linhas.map(l => [new Date(l.data), String(l.num), l.status, l.nf, l.loja, l.cidade, l.vendedor, l.empresa, l.codigo, l.produto, l.un, l.q, l.preco, l.total]),
-      [16,14,20,10,30,16,18,20,14,50,8,8,12,16], {0:'dd/mm/yyyy hh:mm', 12:moeda, 13:moeda}), 'Histórico detalhado');
+      ['Data','Pedido','Situação','NF','Loja','CNPJ','Rede','Cidade','Vendedor','Empresa','Código','Produto','Unidade','Qtd','Preço','Total (c/ desconto)'],
+      d.linhas.map(l => [new Date(l.data), String(l.num), l.status, l.nf, l.loja, l.cnpj, l.rede, l.cidade, l.vendedor, l.empresa, l.codigo, l.produto, l.un, l.q, l.preco, l.total]),
+      [16,14,20,10,30,20,20,16,18,20,14,50,8,8,12,16], {0:'dd/mm/yyyy hh:mm', 14:moeda, 15:moeda}), 'Histórico detalhado');
     X.utils.book_append_sheet(wb, folha(['Empresa','Código','Produto','Qtd','Pedidos','Valor'],
       d.porProduto.map(x => [x.empresa, x.codigo, x.produto, x.q, x.pedidos, x.total]), [20,14,55,10,10,14], {5:moeda}), 'Por produto');
-    X.utils.book_append_sheet(wb, folha(['Loja','Cidade','Pedidos','Itens','Valor'],
-      d.porLoja.map(x => [x.loja, x.cidade, x.pedidos, x.q, x.total]), [34,18,10,10,14], {4:moeda}), 'Por loja');
+    X.utils.book_append_sheet(wb, folha(['Loja','CNPJ','Rede','Cidade','Pedidos','Itens','Valor'],
+      d.porLoja.map(x => [x.loja, x.cnpj, x.rede, x.cidade, x.pedidos, x.q, x.total]), [34,20,20,18,10,10,14], {6:moeda}), 'Por loja');
+    X.utils.book_append_sheet(wb, folha(['Rede / loja','Tipo','CNPJs','Pedidos','Itens','Valor'],
+      d.porRede.map(x => [x.rede, x.ehRede ? 'Rede' : 'Loja sem rede', x.cnpjs, x.pedidos, x.q, x.total]), [34,16,8,10,10,14], {5:moeda}), 'Por rede');
     X.utils.book_append_sheet(wb, folha(['Tipo','Nome','Pedidos','Vendas','Comissão %','Comissão'],
       [...d.comissao.marcas.map(x => ['Marca (a receber)', x.nome, x.pedidos, x.vendas, x.pct, x.comissao]),
        ...d.comissao.vendedores.map(x => ['Vendedor (a pagar)', x.nome, x.pedidos, x.vendas, x.pct, x.comissao])],
@@ -1577,7 +1843,7 @@ function abrirPedido(id){
   abrirSheet(`
     <div class="sheet-head"><h2>Pedido ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${caixa}
-    <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
+    <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}${p.clienteCnpj ? `<br>CNPJ ${esc(p.clienteCnpj)}` : ''}${p.clienteGrupo ? ` · 🏢 ${esc(p.clienteGrupo)}` : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
     ${resumoHTML(p.itens)}
     ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
     <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
