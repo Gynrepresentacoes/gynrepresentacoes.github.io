@@ -85,6 +85,13 @@ textarea{resize:vertical}
 .step button.add{border-color:var(--leaf);color:var(--leaf)}
 .step output{min-width:34px;text-align:center;font-weight:700;font-size:18px}
 .empty{padding:22px 16px;color:var(--muted);text-align:center;list-style:none}
+.field[hidden]{display:none}
+.prod-list .grupo{padding:9px 14px;background:var(--paper);border-top:1px solid var(--line);font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.prod-list .grupo:first-child{border-top:0}
+.cat-sec{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.cat-sec summary{padding:13px 14px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.cat-sec summary small{color:var(--muted);font-weight:600}
+.cat-sec .prod-list{border:0;border-top:1px solid var(--line);border-radius:0}
 
 .cart{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px);z-index:6;padding:0 12px}
 .cart[hidden]{display:none}
@@ -250,8 +257,12 @@ textarea{resize:vertical}
       <span class="lbl">Cliente</span>
       <select id="cliente"></select>
     </label>
+    <label class="field" id="campo-cat" hidden>
+      <span class="lbl">Categoria</span>
+      <select id="categoria"></select>
+    </label>
     <div class="field">
-      <input id="busca" type="search" placeholder="Buscar produto" aria-label="Buscar produto">
+      <input id="busca" type="search" placeholder="Buscar produto pelo nome ou código" aria-label="Buscar produto">
     </div>
     <ul id="produtos" class="prod-list"></ul>
    </div>
@@ -379,7 +390,14 @@ const AGUARDANDO = 'Aguardando aprovação', APROVADO = 'Aprovado', RECUSADO = '
 // Pedidos vindos da planilha (do usuário conectado, ou de todos se for administrador).
 let remotos = (() => { const r = LS.get('pedidosServidor', null); return r && sessao && r.usuario === sessao.usuario ? r.lista : []; })();
 let filtro = 'todos';
-const st = {empresa:null, itens:{}, busca:''};
+const st = {empresa:null, itens:{}, busca:'', cat:''};
+const catDe = p => (p.categoria || '').trim();
+// Categorias de uma empresa, em ordem alfabética, com a quantidade de produtos.
+function categoriasDe(empresa){
+  const c = new Map();
+  prodsDe(empresa).forEach(p => { const k = catDe(p); if(k) c.set(k, (c.get(k) || 0) + 1); });
+  return [...c.entries()].sort((a,b) => a[0].localeCompare(b[0], 'pt-BR'));
+}
 
 const emp = id => (DATA?.empresas || []).find(e => e.id === id);
 const cli = id => (DATA?.clientes || []).find(c => c.id === id);
@@ -516,21 +534,75 @@ function renderClientes(){
       .map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.cidade ? ' ('+esc(c.cidade)+')' : ''}</option>`).join('');
   $('#cliente').value = atual;
 }
+function renderCategorias(){
+  const cats = st.empresa ? categoriasDe(st.empresa) : [];
+  $('#campo-cat').hidden = !cats.length;
+  if(!cats.length){ st.cat = ''; return; }
+  if(st.cat && !cats.some(([c]) => c === st.cat)) st.cat = '';
+  const total = prodsDe(st.empresa).length;
+  $('#categoria').innerHTML = `<option value="">Todas as categorias (${total})</option>` +
+    cats.map(([c,n]) => `<option value="${esc(c)}"${c === st.cat ? ' selected' : ''}>${esc(c)} (${n})</option>`).join('');
+}
+const LIMITE_LISTA = 80;
+function linhaProduto(p){
+  const n = st.itens[p.id] || 0;
+  const step = n
+    ? `<button data-act="dec" data-id="${esc(p.id)}" aria-label="Tirar um">−</button><output>${n}</output><button data-act="inc" data-id="${esc(p.id)}" aria-label="Pôr mais um">+</button>`
+    : `<button class="add" data-act="inc" data-id="${esc(p.id)}" aria-label="Adicionar ${esc(p.nome)}">+</button>`;
+  return `<li class="prod${n?' on':''}"><div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
+    <div class="prod-sub">${esc(p.un)}, <strong>${brl(p.preco)}</strong></div></div><div class="step">${step}</div></li>`;
+}
+// Busca: todas as palavras digitadas precisam aparecer no nome, código ou categoria (qualquer ordem, sem ligar para acento).
+const textoBusca = new WeakMap();
+// "×" vira "x" e as aspas tipográficas viram aspas simples, para "7x1" achar "7×1,00" e 12" achar 12”.
+const normBusca = s => norm(s).replace(/×/g, 'x').replace(/[”“″]/g, '"');
+function bate(p, termos){
+  let t = textoBusca.get(p);
+  if(t === undefined){ t = normBusca(`${p.nome} ${catDe(p)} ${p.id}`); textoBusca.set(p, t); }
+  return termos.every(x => t.includes(x));
+}
 function renderProdutos(){
   const ul = $('#produtos');
   if(!DATA){ ul.innerHTML = '<li class="empty">Carregando o catálogo da planilha…</li>'; return; }
-  if(!st.empresa){ ul.innerHTML = '<li class="empty">Escolha a empresa para ver os produtos.</li>'; return; }
-  const q = norm(st.busca);
-  const lista = prodsDe(st.empresa).filter(p => !q || norm(p.nome).includes(q));
-  if(!lista.length){ ul.innerHTML = `<li class="empty">${q ? 'Nenhum produto com esse nome.' : 'Essa empresa ainda não tem produtos na planilha.'}</li>`; return; }
-  ul.innerHTML = lista.map(p => {
-    const n = st.itens[p.id] || 0;
-    const step = n
-      ? `<button data-act="dec" data-id="${esc(p.id)}" aria-label="Tirar um">−</button><output>${n}</output><button data-act="inc" data-id="${esc(p.id)}" aria-label="Pôr mais um">+</button>`
-      : `<button class="add" data-act="inc" data-id="${esc(p.id)}" aria-label="Adicionar ${esc(p.nome)}">+</button>`;
-    return `<li class="prod${n?' on':''}"><div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
-      <div class="prod-sub">${esc(p.un)}, <strong>${brl(p.preco)}</strong></div></div><div class="step">${step}</div></li>`;
-  }).join('');
+  const termos = normBusca(st.busca).split(/\s+/).filter(Boolean);
+  const q = termos.length > 0;
+  // Sem empresa escolhida: a busca procura nos produtos de todas as empresas.
+  if(!st.empresa){
+    if(!q){ ul.innerHTML = '<li class="empty">Escolha a empresa ou busque um produto pelo nome ou código.</li>'; return; }
+    const achados = (DATA.produtos || []).filter(p => bate(p, termos));
+    if(!achados.length){ ul.innerHTML = '<li class="empty">Nenhum produto com essas palavras.</li>'; return; }
+    const mostrar = achados.slice(0, LIMITE_LISTA);
+    const porEmp = new Map();
+    mostrar.forEach(p => (porEmp.get(p.empresa) || porEmp.set(p.empresa, []).get(p.empresa)).push(p));
+    ul.innerHTML = [...porEmp.entries()].map(([e, ps]) => `<li class="grupo">${esc(emp(e)?.nome || e)}</li>` + ps.map(linhaProduto).join('')).join('') +
+      (achados.length > mostrar.length ? `<li class="empty">Mostrando ${mostrar.length} de ${achados.length}. Digite mais palavras para refinar.</li>` : '');
+    return;
+  }
+  const todos = prodsDe(st.empresa);
+  // A busca procura em todas as categorias da empresa; sem busca, vale a categoria escolhida.
+  const lista = q ? todos.filter(p => bate(p, termos)) : todos.filter(p => !st.cat || catDe(p) === st.cat);
+  if(!lista.length){ ul.innerHTML = `<li class="empty">${q ? 'Nenhum produto desta empresa com essas palavras.' : 'Essa empresa ainda não tem produtos na planilha.'}</li>`; return; }
+  // Catálogo grande: em vez de mostrar centenas de itens de uma vez, pede uma categoria ou uma busca.
+  if(q && lista.length > LIMITE_LISTA){
+    ul.innerHTML = lista.slice(0, LIMITE_LISTA).map(linhaProduto).join('') +
+      `<li class="empty">Mostrando ${LIMITE_LISTA} de ${lista.length}. Digite mais palavras para refinar.</li>`;
+    return;
+  }
+  if(!st.cat && !q && lista.length > LIMITE_LISTA){
+    const no = todos.filter(p => st.itens[p.id]);
+    ul.innerHTML = `<li class="empty">São ${lista.length} produtos. Escolha uma <b>categoria</b> acima ou busque pelo nome ou código.</li>` +
+      (no.length ? '<li class="grupo">No pedido</li>' + no.map(linhaProduto).join('') : '');
+    return;
+  }
+  // Sem categoria escolhida (ou buscando), agrupa pelos títulos de categoria.
+  if((!st.cat || q) && lista.some(catDe)){
+    const grupos = new Map();
+    lista.forEach(p => { const k = catDe(p) || 'Outros'; (grupos.get(k) || grupos.set(k, []).get(k)).push(p); });
+    ul.innerHTML = [...grupos.entries()].sort((a,b) => a[0].localeCompare(b[0], 'pt-BR'))
+      .map(([c, ps]) => `<li class="grupo">${esc(c)}</li>` + ps.map(linhaProduto).join('')).join('');
+    return;
+  }
+  ul.innerHTML = lista.map(linhaProduto).join('');
 }
 function itensAtuais(){
   return st.empresa ? prodsDe(st.empresa).filter(p => st.itens[p.id]).map(p => ({id:p.id, nome:p.nome, un:p.un, preco:p.preco, q:st.itens[p.id]})) : [];
@@ -563,13 +635,20 @@ $('#btn-fechar-p').addEventListener('click', () => {
 $('#empresas').addEventListener('click', e => {
   const b = e.target.closest('[data-emp]'); if(!b || st.empresa === b.dataset.emp) return;
   const tinha = itensAtuais().length;
-  st.empresa = b.dataset.emp; st.itens = {}; st.busca = ''; $('#busca').value = '';
+  st.empresa = b.dataset.emp; st.itens = {}; st.busca = ''; st.cat = ''; $('#busca').value = '';
   if(tinha) toast('Itens da outra empresa foram removidos');
-  renderEmpresas(); renderProdutos(); renderCart();
+  renderEmpresas(); renderCategorias(); renderProdutos(); renderCart();
 });
+$('#categoria').addEventListener('change', e => { st.cat = e.target.value; renderProdutos(); });
 $('#produtos').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if(!b) return;
-  const id = b.dataset.id, n = st.itens[id] || 0, novo = b.dataset.act === 'inc' ? n + 1 : n - 1;
+  const id = b.dataset.id;
+  // Item achado na busca geral: escolhe a empresa dele automaticamente.
+  if(!st.empresa){
+    const p = (DATA?.produtos || []).find(x => x.id === id); if(!p) return;
+    st.empresa = p.empresa; st.cat = ''; renderEmpresas(); renderCategorias();
+  }
+  const n = st.itens[id] || 0, novo = b.dataset.act === 'inc' ? n + 1 : n - 1;
   if(novo > 0) st.itens[id] = novo; else delete st.itens[id];
   renderProdutos(); renderCart();
 });
@@ -842,10 +921,25 @@ function renderCatalogo(){
     : em ? `Catálogo da planilha, atualizado em ${dataBR(em)}. Mude produtos e preços na planilha e toque em Atualizar.`
          : 'O catálogo ainda não foi carregado da planilha.';
   $('#btn-atualizar').hidden = DEMO;
-  $('#catalogo').innerHTML = (DATA?.empresas || []).map(e => `<div class="cat-group"><h2>${esc(e.nome)}</h2><ul class="prod-list">` +
-    (prodsDe(e.id).map(p => `<li class="prod"><div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
-      <div class="prod-sub">${esc(p.un)}</div></div><strong>${brl(p.preco)}</strong></li>`).join('') || '<li class="empty">Sem produtos.</li>') + '</ul></div>').join('');
+  // Por empresa e, dentro dela, por categoria. Cada categoria abre e fecha; a lista só é montada ao abrir.
+  $('#catalogo').innerHTML = (DATA?.empresas || []).map(e => {
+    const ps = prodsDe(e.id);
+    if(!ps.length) return `<div class="cat-group"><h2>${esc(e.nome)}</h2><p class="empty">Sem produtos.</p></div>`;
+    const cats = categoriasDe(e.id);
+    const semCat = ps.filter(p => !catDe(p)).length;
+    const secoes = [...cats, ...(semCat ? [['', semCat]] : [])];
+    return `<div class="cat-group"><h2>${esc(e.nome)} <small style="font-size:15px;color:var(--muted)">${ps.length} produtos</small></h2>` +
+      secoes.map(([c, n]) => `<details class="cat-sec" data-emp="${esc(e.id)}" data-cat="${esc(c)}"${secoes.length === 1 ? ' open' : ''}>
+        <summary>${esc(c || (secoes.length === 1 ? 'Produtos' : 'Sem categoria'))} <small>${n}</small></summary><ul class="prod-list"></ul></details>`).join('') + '</div>';
+  }).join('');
+  document.querySelectorAll('#catalogo details[open]').forEach(preencherSecao);
 }
+function preencherSecao(d){
+  const ul = d.querySelector('ul'); if(ul.childElementCount) return;
+  ul.innerHTML = prodsDe(d.dataset.emp).filter(p => catDe(p) === d.dataset.cat).map(p => `<li class="prod"><div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
+    <div class="prod-sub">${esc(p.un)}</div></div><strong>${brl(p.preco)}</strong></li>`).join('');
+}
+$('#catalogo').addEventListener('toggle', e => { if(e.target.open) preencherSecao(e.target); }, true);
 $('#btn-atualizar').addEventListener('click', () => carregarCatalogo(true));
 
 /* ---------- Navegação, sheet, toast, rede ---------- */
@@ -878,7 +972,7 @@ function rede(){ $('#net').hidden = navigator.onLine; }
 window.addEventListener('online', () => { rede(); sincronizar(); });
 window.addEventListener('offline', rede);
 
-function renderTudo(){ renderEmpresas(); renderClientes(); renderProdutos(); renderCart(); renderPedidos(); renderCatalogo(); }
+function renderTudo(){ renderEmpresas(); renderClientes(); renderCategorias(); renderProdutos(); renderCart(); renderPedidos(); renderCatalogo(); }
 
 /* ---------- Início ---------- */
 mostrarUsuario();
