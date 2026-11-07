@@ -45,9 +45,10 @@
         xTitulo = M + 20 + 5;
       } catch (e) { xTitulo = M; }
     }
+    var tipo = p0.tipo === 'orcamento' ? 'Orçamento' : 'Pedido';
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
-    doc.text('Pedido ' + p.num, xTitulo, 19);
+    doc.text(tipo + ' ' + p.num, xTitulo, 19);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
     doc.text(dataBR(p.data), W - M, 13, { align: 'right' });
     doc.text('Representante: ' + representante, W - M, 20, { align: 'right' });
@@ -99,6 +100,16 @@
       y += 6;
     });
 
+    // Subtotal e desconto (quando houver)
+    var desc = Number(p0.desconto) || 0;
+    if (desc) {
+      if (y > 240) { doc.addPage(); y = 22; }
+      var bruto = Number(p0.bruto) || p.itens.reduce(function (s, i) { return s + i.q * i.preco; }, 0);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor.apply(doc, cinza);
+      doc.text('Subtotal', W - M - 75, y); doc.text(brl(bruto), W - M - 5, y, { align: 'right' }); y += 6;
+      doc.text('Desconto ' + String(desc).replace('.', ',') + '%', W - M - 75, y); doc.text('- ' + brl(bruto - p.total), W - M - 5, y, { align: 'right' }); y += 9;
+    }
+
     // Total
     if (y > 250) { doc.addPage(); y = 22; }
     y += 2;
@@ -112,7 +123,13 @@
       doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor.apply(doc, cinza);
       doc.text('Observação', M, y);
       doc.setFontSize(11); doc.setTextColor.apply(doc, tinta);
-      doc.text(doc.splitTextToSize(p.obs, W - 2 * M), M, y + 5.5);
+      var lo = doc.splitTextToSize(p.obs, W - 2 * M);
+      doc.text(lo, M, y + 5.5);
+      y += 10 + lo.length * 5;
+    }
+    if (tipo === 'Orçamento') {
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(9.5); doc.setTextColor.apply(doc, cinza);
+      doc.text('Orçamento válido por 7 dias. Preços e disponibilidade sujeitos a confirmação do fornecedor.', M, Math.min(y + 4, 278));
     }
 
     // Rodapé
@@ -120,7 +137,7 @@
     for (var i = 1; i <= tot; i++) {
       doc.setPage(i);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc, cinza);
-      doc.text('Pedido ' + p.num + ', ' + p.clienteNome, M, 287);
+      doc.text(tipo + ' ' + p.num + ', ' + p.clienteNome, M, 287);
       doc.text('Página ' + i + ' de ' + tot, W - M, 287, { align: 'right' });
     }
     return doc;
@@ -129,7 +146,7 @@
   function nomeArquivo(p) {
     var cli = String(p.clienteNome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    return 'Pedido-' + p.num + (cli ? '-' + cli : '') + '.pdf';
+    return (p.tipo === 'orcamento' ? 'Orcamento-' : 'Pedido-') + p.num + (cli ? '-' + cli : '') + '.pdf';
   }
 
   // Relatório do administrador: A4 deitado, com totais, itens mais pedidos, lojas e histórico detalhado.
@@ -154,9 +171,11 @@
     doc.text('Gerado em ' + agora.toLocaleDateString('pt-BR') + ' às ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), W - M, 12, { align: 'right' });
 
     // Quadros de totais
-    var y = 32, cw = (W - 2 * M - 3 * 4) / 4;
-    [['Pedidos', String(d.totais.pedidos)], ['Itens (unidades)', d.totais.itens.toLocaleString('pt-BR')],
-     ['Valor total', brl(d.totais.valor)], ['Lojas atendidas', String(d.totais.lojas)]].forEach(function (c, i) {
+    var quadros = [['Pedidos', String(d.totais.pedidos)], ['Itens (unidades)', d.totais.itens.toLocaleString('pt-BR')],
+      ['Valor total', brl(d.totais.valor)], ['Lojas atendidas', String(d.totais.lojas)]];
+    if (d.comissao) quadros.push(['Comissão a receber', brl(d.totais.comissaoMarcas)], ['Comissão a pagar', brl(d.totais.comissaoVendedores)]);
+    var y = 32, cw = (W - 2 * M - (quadros.length - 1) * 4) / quadros.length;
+    quadros.forEach(function (c, i) {
       var x = M + i * (cw + 4);
       doc.setFillColor.apply(doc, claro); doc.roundedRect(x, y, cw, 16, 2, 2, 'F');
       doc.setTextColor.apply(doc, cinza); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.text(c[0], x + 4, y + 5.5);
@@ -197,6 +216,15 @@
     var n = function (v) { return Number(v).toLocaleString('pt-BR'); };
     var dt = function (s) { var x = new Date(s); return x.toLocaleDateString('pt-BR') + ' ' + x.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
 
+    if (d.comissao) {
+      var pct = function (x) { return x.pct ? String(x.pct).replace('.', ',') + '%' : 'definir'; };
+      tabela('Comissão por marca (a receber)', [
+        { t: 'Marca', w: 113 }, { t: 'Pedidos', w: 30, a: 'r' }, { t: 'Vendas', w: 45, a: 'r' }, { t: '%', w: 30, a: 'r' }, { t: 'Comissão', w: 55, a: 'r', b: 1 }],
+        d.comissao.marcas.map(function (x) { return [x.nome, x.pedidos, brl(x.vendas), pct(x), brl(x.comissao)]; }));
+      tabela('Comissão por vendedor (a pagar)', [
+        { t: 'Vendedor', w: 113 }, { t: 'Pedidos', w: 30, a: 'r' }, { t: 'Vendas', w: 45, a: 'r' }, { t: '%', w: 30, a: 'r' }, { t: 'Comissão', w: 55, a: 'r', b: 1 }],
+        d.comissao.vendedores.map(function (x) { return [x.nome, x.pedidos, brl(x.vendas), pct(x), brl(x.comissao)]; }));
+    }
     tabela('Itens mais pedidos', [
       { t: 'Produto', w: 128 }, { t: 'Empresa', w: 45, cinza: 1 }, { t: 'Código', w: 30, cinza: 1 },
       { t: 'Pedidos', w: 20, a: 'r' }, { t: 'Qtd', w: 20, a: 'r', b: 1 }, { t: 'Valor', w: 30, a: 'r' }],
