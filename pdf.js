@@ -1,5 +1,20 @@
 // Monta o PDF de um pedido. Usado pelo app (navegador) e funciona também no Node para testes.
 (function (root) {
+  // As fontes padrão do PDF só têm os caracteres do Windows-1252. Símbolos fora dele (Ω, ″, ...)
+  // embaralham a linha inteira, então são trocados por equivalentes antes de escrever.
+  var TROCAS = {
+    'Ω': ' ohm', 'Ω': ' ohm',            // Ω (letra grega) e Ω (símbolo de ohm)
+    '″': '"', '′': "'",                   // ″ ′ (polegada, pé)
+    '“': '"', '”': '"', '‘': "'", '’': "'",
+    '–': '-', '—': '-', '≈': '~', '≤': '<=', '≥': '>=', '→': '->'
+  };
+  var EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+  function limpa(s) {
+    return String(s == null ? '' : s).replace(/[^\u0000-ÿ]/g, function (c) {
+      if (TROCAS[c] != null) return TROCAS[c];
+      return EXTRA.indexOf(c) >= 0 ? c : '';
+    }).replace(/ {2,}/g, ' ');
+  }
   function brl(v) { return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
   function dataBR(iso) {
     var d = new Date(iso);
@@ -8,7 +23,13 @@
   }
 
   // logo (opcional): dataURL JPEG/PNG desenhado na faixa do topo, à esquerda.
-  function gerar(jsPDF, p, representante, logo) {
+  function gerar(jsPDF, p0, representante, logo) {
+    // Cópia do pedido com os textos já limpos para a fonte do PDF.
+    var p = {};
+    for (var k in p0) p[k] = p0[k];
+    ['num', 'empresaNome', 'clienteNome', 'clienteCidade', 'pagamento', 'obs'].forEach(function (k) { if (p[k] != null) p[k] = limpa(p[k]); });
+    p.itens = (p0.itens || []).map(function (i) { return { id: i.id, nome: limpa(i.nome), un: limpa(i.un), q: i.q, preco: i.preco }; });
+    representante = limpa(representante);
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
     var W = 210, M = 15, marinho = [10, 24, 56], azul = [47, 123, 255], tinta = [11, 22, 48], cinza = [86, 98, 125];
     var verde = marinho; // cor de cabeçalhos e títulos da tabela
@@ -111,7 +132,97 @@
     return 'Pedido-' + p.num + (cli ? '-' + cli : '') + '.pdf';
   }
 
-  var api = { gerar: gerar, nomeArquivo: nomeArquivo };
+  // Relatório do administrador: A4 deitado, com totais, itens mais pedidos, lojas e histórico detalhado.
+  // d = { filtros: [texto], totais: {pedidos, itens, valor, lojas}, porProduto: [], porLoja: [], linhas: [] }
+  function relatorio(jsPDF, d, logo) {
+    var doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    var W = 297, H = 210, M = 12, marinho = [10, 24, 56], azul = [47, 123, 255], tinta = [11, 22, 48], cinza = [86, 98, 125];
+    var claro = [227, 236, 255], linha = [215, 223, 238];
+
+    // Cabeçalho
+    doc.setFillColor.apply(doc, marinho); doc.rect(0, 0, W, 24, 'F');
+    doc.setFillColor.apply(doc, azul); doc.rect(0, 24, W, 1.5, 'F');
+    var x0 = M;
+    if (logo) {
+      try { doc.addImage(logo, /^data:image\/png/i.test(logo) ? 'PNG' : 'JPEG', M, 4, 16, 16); x0 = M + 21; } catch (e) { x0 = M; }
+    }
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.text('Relatório de pedidos', x0, 12);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+    doc.text(doc.splitTextToSize(limpa(d.filtros.join('   ·   ')), W - x0 - M - 50), x0, 18);
+    var agora = new Date();
+    doc.text('Gerado em ' + agora.toLocaleDateString('pt-BR') + ' às ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), W - M, 12, { align: 'right' });
+
+    // Quadros de totais
+    var y = 32, cw = (W - 2 * M - 3 * 4) / 4;
+    [['Pedidos', String(d.totais.pedidos)], ['Itens (unidades)', d.totais.itens.toLocaleString('pt-BR')],
+     ['Valor total', brl(d.totais.valor)], ['Lojas atendidas', String(d.totais.lojas)]].forEach(function (c, i) {
+      var x = M + i * (cw + 4);
+      doc.setFillColor.apply(doc, claro); doc.roundedRect(x, y, cw, 16, 2, 2, 'F');
+      doc.setTextColor.apply(doc, cinza); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.text(c[0], x + 4, y + 5.5);
+      doc.setTextColor.apply(doc, tinta); doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text(c[1], x + 4, y + 12.5);
+    });
+    y += 24;
+
+    // Tabela com quebra de página, cabeçalho repetido e texto quebrado em até 3 linhas por célula.
+    function tabela(titulo, cols, rows) {
+      if (y > H - 40) { doc.addPage(); y = 16; }
+      doc.setTextColor.apply(doc, tinta); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(titulo, M, y); y += 4;
+      function cab() {
+        doc.setFillColor.apply(doc, claro); doc.rect(M, y, W - 2 * M, 7, 'F');
+        doc.setTextColor.apply(doc, marinho); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+        var x = M;
+        cols.forEach(function (c) { doc.text(c.t, c.a === 'r' ? x + c.w - 2 : x + 2, y + 4.8, c.a === 'r' ? { align: 'right' } : undefined); x += c.w; });
+        y += 7;
+      }
+      cab();
+      doc.setFontSize(8.3);
+      rows.forEach(function (r) {
+        doc.setFont('helvetica', 'normal');
+        var partes = cols.map(function (c, i) { return doc.splitTextToSize(limpa(r[i]), c.w - 4).slice(0, 3); });
+        var h = Math.max.apply(null, partes.map(function (p) { return p.length; })) * 3.6 + 2.6;
+        if (y + h > H - 12) { doc.addPage(); y = 16; cab(); doc.setFontSize(8.3); doc.setFont('helvetica', 'normal'); }
+        var x = M;
+        cols.forEach(function (c, i) {
+          doc.setTextColor.apply(doc, c.cinza ? cinza : tinta);
+          doc.setFont('helvetica', c.b ? 'bold' : 'normal');
+          doc.text(partes[i], c.a === 'r' ? x + c.w - 2 : x + 2, y + 3.9, c.a === 'r' ? { align: 'right' } : undefined);
+          x += c.w;
+        });
+        y += h;
+        doc.setDrawColor.apply(doc, linha); doc.setLineWidth(0.15); doc.line(M, y, W - M, y);
+      });
+      y += 9;
+    }
+    var n = function (v) { return Number(v).toLocaleString('pt-BR'); };
+    var dt = function (s) { var x = new Date(s); return x.toLocaleDateString('pt-BR') + ' ' + x.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
+
+    tabela('Itens mais pedidos', [
+      { t: 'Produto', w: 128 }, { t: 'Empresa', w: 45, cinza: 1 }, { t: 'Código', w: 30, cinza: 1 },
+      { t: 'Pedidos', w: 20, a: 'r' }, { t: 'Qtd', w: 20, a: 'r', b: 1 }, { t: 'Valor', w: 30, a: 'r' }],
+      d.porProduto.map(function (x) { return [x.produto, x.empresa, x.codigo, x.pedidos, n(x.q), brl(x.total)]; }));
+    tabela('Por loja', [
+      { t: 'Loja', w: 120 }, { t: 'Cidade', w: 63, cinza: 1 }, { t: 'Pedidos', w: 25, a: 'r' },
+      { t: 'Itens', w: 25, a: 'r' }, { t: 'Valor', w: 40, a: 'r', b: 1 }],
+      d.porLoja.map(function (x) { return [x.loja, x.cidade, x.pedidos, n(x.q), brl(x.total)]; }));
+    tabela('Histórico detalhado', [
+      { t: 'Data', w: 26 }, { t: 'Pedido', w: 24 }, { t: 'Loja', w: 44 }, { t: 'Vendedor', w: 26, cinza: 1 },
+      { t: 'Empresa', w: 26, cinza: 1 }, { t: 'Produto', w: 69 }, { t: 'Qtd', w: 14, a: 'r', b: 1 },
+      { t: 'Total', w: 24, a: 'r' }, { t: 'Situação', w: 20, cinza: 1 }],
+      d.linhas.map(function (l) { return [dt(l.data), l.num, l.loja, l.vendedor, l.empresa, l.produto, n(l.q), brl(l.total), l.status]; }));
+
+    // Rodapé
+    var tot = doc.getNumberOfPages();
+    for (var i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor.apply(doc, cinza);
+      doc.text('GYN Representações · Relatório de pedidos', M, H - 6);
+      doc.text('Página ' + i + ' de ' + tot, W - M, H - 6, { align: 'right' });
+    }
+    return doc;
+  }
+
+  var api = { gerar: gerar, nomeArquivo: nomeArquivo, relatorio: relatorio };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.PedidoPDF = api;
 })(this);
