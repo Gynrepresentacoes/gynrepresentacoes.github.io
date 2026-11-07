@@ -172,6 +172,7 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 .preco-linha{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:6px;font-size:14px;color:var(--muted)}
 .preco-linha label{display:inline-flex;align-items:center;gap:6px}
 .desc-item{width:58px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;font-weight:600;color:var(--ink);text-align:right}
+.sem-tabela{font-size:12.5px;color:var(--terra)}
 .desc-item.alterado{border-color:var(--ipe);background:var(--leaf-soft)}
 .preco-item{width:104px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 8px;font-size:15px;font-weight:600;color:var(--ink);text-align:right}
 .preco-item.alterado{border-color:var(--ipe);background:var(--leaf-soft)}
@@ -871,6 +872,8 @@ document.addEventListener('change', e => {
   const voltar = () => { inp.value = inp.matches('.desc-item') ? pctItem(it) : numFmt(it.preco); };
   let v;
   if(inp.matches('.desc-item')){
+    // Produto sem preço na planilha: não há sobre o que calcular o %.
+    if(!(it.tabela > 0)){ toast('Este produto está sem preço de tabela na planilha. Digite o preço de venda no campo R$.', 5000); voltar(); return; }
     const pct = inp.value.trim() === '' ? 0 : numBR(inp.value);
     if(isNaN(pct) || pct < 0 || pct >= 100){ toast('Digite um desconto entre 0 e 99%'); voltar(); return; }
     v = it.tabela * (1 - pct / 100);
@@ -881,6 +884,7 @@ document.addEventListener('change', e => {
   const novo = Math.round(v * 100) / 100;
   const min = precoMinimo(it.tabela);
   if(novo < min - 0.004){
+    if(!(it.tabela > 0) || ehAdmin()){ toast('Digite um preço maior que zero.'); voltar(); return; }
     const maxPct = String(descontoMaxDe(st.empresa)).replace('.', ',');
     toast(`Para este item o máximo é ${maxPct}% de desconto: preço mínimo ${brl(min)} (tabela ${brl(it.tabela)}).`, 5000); voltar(); return;
   }
@@ -1052,9 +1056,10 @@ $('#btn-revisar').addEventListener('click', () => {
 // Lista de itens do resumo. Com "editavel", cada item tem o campo do preço de venda.
 function resumoHTML(itens, editavel){
   return '<ul class="resumo">' + itens.map(i => editavel
-    ? `<li class="editavel"><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}${i.tabela != null && i.preco !== i.tabela ? ` · tabela ${brl(i.tabela)}` : ''}</small>
+    ? `<li class="editavel"><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}${i.tabela > 0 && i.preco !== i.tabela ? ` · tabela ${brl(i.tabela)}` : ''}</small>
         <span class="preco-linha"><label>R$ <input class="preco-item${i.tabela != null && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.preco)}" aria-label="Preço de venda de ${esc(i.nome)}"> cada</label>
-        <label class="desc-linha">desc. <input class="desc-item${pctItem(i) ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${pctItem(i)}" aria-label="Desconto em % de ${esc(i.nome)}">%</label></span></span>
+        ${i.tabela > 0 ? `<label class="desc-linha">desc. <input class="desc-item${pctItem(i) ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${pctItem(i)}" aria-label="Desconto em % de ${esc(i.nome)}">%</label>`
+          : `<span class="sem-tabela">sem preço de tabela: digite o preço</span>`}</span></span>
         <span class="v">${brl(i.q*i.preco)}</span></li>`
     : `<li><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}, ${brl(i.preco)}</small></span><span class="v">${brl(i.q*i.preco)}</span></li>`).join('') + '</ul>';
 }
