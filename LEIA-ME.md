@@ -29,16 +29,38 @@ Pronto: o app já abre em modo demonstração.
 
 1. Na planilha, vá em **Extensões > Apps Script**.
 2. Apague o que estiver lá, cole todo o conteúdo do `Code.gs` e salve.
-3. Clique na engrenagem (**Configurações do projeto**). Em **Propriedades do script**, adicione uma propriedade com nome `PIN` e um valor numérico, por exemplo `482915`. Esse é o PIN que o André vai digitar no app.
+3. Crie os usuários (veja **Usuários e senhas**, logo abaixo).
 4. Clique em **Implantar > Nova implantação**. No tipo, escolha **App da Web**.
    - Executar como: **Eu**
    - Quem pode acessar: **Qualquer pessoa**
 5. Clique em **Implantar**, autorize o acesso com a sua conta Google e copie o **URL do app da Web** (termina com `/exec`).
 6. No GitHub, abra o `config.js`, clique no lápis para editar, cole o URL entre as aspas de `API_URL` e clique em **Commit changes**.
 
-Na próxima vez que o app abrir, ele pede o PIN e carrega o catálogo da planilha.
+Na próxima vez que o app abrir, ele pede usuário e senha e carrega o catálogo da planilha.
 
-> "Qualquer pessoa" pode chamar o endereço, mas sem o PIN a planilha não devolve nada nem aceita pedidos. O PIN fica guardado só no Apps Script, nunca no código do GitHub.
+> "Qualquer pessoa" pode chamar o endereço, mas sem um login válido a planilha não devolve nada nem aceita pedidos. As senhas ficam só na planilha, embaralhadas, nunca no código do GitHub.
+
+## Usuários e senhas
+
+Cada pessoa que cria pedidos tem o próprio usuário e senha. O nome dela aparece no topo do app, no PDF, na mensagem do WhatsApp e na coluna **Criado por** da aba Pedidos (a coluna é criada sozinha no primeiro pedido).
+
+1. Na planilha, crie uma aba chamada **Usuarios** com estes cabeçalhos na linha 1:
+
+   | Usuário | Nome | Senha | Ativo |
+   |---|---|---|---|
+   | andre | André | (senha) | Sim |
+
+2. Em cada linha, coloque o usuário (sem espaços, por exemplo `andre`), o nome que aparece no app e a senha.
+3. **A senha se embaralha sozinha:** assim que você digita, a planilha troca a senha por um código que começa com `sha256$`. Ninguém consegue ler a senha depois, nem você. Se ela continuar visível (por exemplo, se colou várias de uma vez), use o menu **Pedidos > Proteger senhas digitadas**. O menu aparece depois de recarregar a planilha.
+
+No dia a dia:
+
+- **Trocar a senha de alguém:** digite a senha nova por cima do código. O celular dessa pessoa vai pedir login de novo.
+- **Tirar o acesso:** coloque **Não** na coluna Ativo. O app dela para de enviar pedidos na hora.
+- **Esqueceu a senha:** não dá para recuperar; digite uma nova.
+- **Errou a senha 5 vezes seguidas:** o usuário fica bloqueado por 15 minutos.
+- **Sair / trocar de pessoa no mesmo celular:** toque no nome no topo do app e em **Sair**. Pedidos que ainda estão aguardando internet só são enviados quando a mesma pessoa entrar de novo.
+- O celular fica conectado por 90 dias. Depois, pede a senha de novo.
 
 ## 4. Instalar no celular do André
 
@@ -51,7 +73,7 @@ O ícone aparece junto dos outros apps. Na primeira vez é preciso internet; dep
 
 - **Mudar preço ou produto:** edita na planilha e, no app, vai em **Catálogo > Atualizar catálogo**. O app também atualiza sozinho ao abrir com internet.
 - **Sem internet:** o pedido é fechado normalmente e fica marcado como **Aguardando internet**. Quando o sinal volta, ele vai para a planilha sozinho e passa a **Na planilha**. O mesmo pedido nunca entra duas vezes.
-- **Enviar para a empresa:** no pedido, **Enviar no WhatsApp**, **Baixar ou enviar PDF** (no celular abre o menu de compartilhar, dá para mandar o PDF direto no WhatsApp) ou **Copiar pedido**.
+- **Enviar para a empresa:** no pedido, **Enviar no WhatsApp**, **Abrir ou imprimir PDF**, **Baixar ou enviar PDF** (no celular abre o menu de compartilhar, dá para mandar o PDF direto no WhatsApp) ou **Copiar pedido**.
 - **Produto que saiu de linha:** na planilha, coloque **Não** na coluna Ativo.
 
 ## Se mudar o Code.gs depois
@@ -60,6 +82,7 @@ Em **Implantar > Gerenciar implantações**, clique no lápis, escolha **Nova ve
 
 ## Cuidados
 
-- O repositório é público: qualquer pessoa pode ver o código do app, mas não os dados, que ficam na planilha protegida pelo PIN. Por isso, **nunca suba a planilha nem o Code.gs** no GitHub.
+- O repositório é público: qualquer pessoa pode ver o código do app, mas não os dados, que ficam na planilha protegida pelo login. Por isso, **nunca suba a planilha nem o Code.gs** no GitHub.
 - Não compartilhe a planilha como "qualquer pessoa com o link".
-- Para trocar o PIN, mude a propriedade `PIN` no Apps Script. O app vai pedir o PIN novo.
+- O Apps Script cria sozinho uma propriedade `SEGREDO` (em Configurações do projeto > Propriedades do script). Não apague nem compartilhe. Se apagar, todo mundo precisa entrar de novo.
+- A propriedade `PIN` da versão antiga não é mais usada e pode ser apagada.
