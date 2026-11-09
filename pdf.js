@@ -95,16 +95,21 @@
       ['Contato', [c.contato, c.telefone].filter(Boolean).join(' - ')],
       ['E-mail', c.emailCompra],
       ['Enviar NF para', c.emailNotas],
-      ['Rede', p.clienteGrupo || c.grupo]
+      ['Rede', p.clienteGrupo || c.grupo],
+      ['Entregar em', p0.enderecoEntrega, true]
     ]);
+    var dBR = function (s) { return s ? String(s).split('-').reverse().join('/') : ''; };
     var qp = quadro(M + 92, 88, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', [
       ['', p.empresaNome],
       [enviado ? 'Enviado por e-mail para' : 'E-mail da marca', emailsMarca, true],
       ['Pagamento', p.pagamento],
       ['Prazo', c.prazo],
       ['Frete', c.frete],
+      ['Entrega desejada', dBR(p0.entrega), true],
+      ['Transportadora', p0.transportadora],
       ['Itens', p.itens.length + (p.itens.length === 1 ? ' produto' : ' produtos') + ', ' + unidades + (unidades === 1 ? ' unidade' : ' unidades')],
       ['Situação', tipo === 'Orçamento' ? '' : (p0.status || '')],
+      ['Nota fiscal', p0.nf ? p0.nf + (p0.dataFat ? ' de ' + dBR(p0.dataFat) : '') + (p0.valorFat ? ' - ' + brl(p0.valorFat) : '') : '', true],
       ['Vendedor', representante]
     ]);
     var hq = Math.max(qc.altura, qp.altura);
@@ -168,10 +173,18 @@
       doc.text(lo, M, y + 5.5);
       y += 10 + lo.length * 5;
     }
-    if (tipo === 'Orçamento') {
-      doc.setFont('helvetica', 'italic'); doc.setFontSize(9.5); doc.setTextColor.apply(doc, cinza);
-      doc.text('Orçamento válido por 7 dias. Preços e disponibilidade sujeitos a confirmação do fornecedor.', M, Math.min(y + 4, 278));
-    }
+    // Condições e aceite do cliente (assinatura), no fim do documento.
+    if (y > 238) { doc.addPage(); y = 22; }
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor.apply(doc, cinza);
+    doc.text(doc.splitTextToSize(tipo === 'Orçamento'
+      ? 'Orçamento válido por 7 dias. Preços e disponibilidade sujeitos a confirmação do fornecedor.'
+      : 'Preços e condições conforme combinado na data do pedido. Faturamento e entrega sujeitos à disponibilidade e à aprovação de crédito do fornecedor.', W - 2 * M), M, y + 2);
+    y += 16;
+    doc.setDrawColor(150, 160, 180); doc.setLineWidth(0.3);
+    doc.line(M, y + 10, M + 95, y + 10); doc.line(M + 110, y + 10, W - M, y + 10);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+    doc.text('Aceite do cliente (nome e assinatura)', M, y + 14.5);
+    doc.text('Data', M + 110, y + 14.5);
 
     // Rodapé
     var tot = doc.getNumberOfPages();
