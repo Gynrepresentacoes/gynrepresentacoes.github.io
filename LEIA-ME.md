@@ -170,6 +170,14 @@ Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da t
 - **Vendas** (antiga aba Pedidos): os pedidos da empresa ativa, com busca por cliente, CNPJ ou número.
 - **Histórico do cliente:** em **Relatórios**, escolha o **Cliente (histórico)** e o período (o atalho **Tudo** pega desde o início). Aparece a ficha, total comprado, ticket médio, último pedido e a lista de pedidos. Atalho: abra a loja e toque em **Ver histórico completo** (administrador).
 
+## Ritmo de compra do cliente
+
+Mostra se o cliente está comprando como sempre, esfriando ou parado (só da empresa escolhida ao entrar).
+
+- **Etiquetas:** 🟢 **Comprando bem** (dentro do ritmo dele), 🟡 **Esfriando** (passou do tempo normal ou está comprando bem menos), 🔴 **Parado** (passou muito do tempo normal), 🔵 **Cliente novo** (primeira compra recente).
+- **Ritmo normal:** a média de dias entre as compras do cliente. **Próxima compra:** a data esperada; se já passou, aparece "deveria ter comprado em...". **Tendência:** valor dos últimos 3 meses comparado com os 3 anteriores. Mais um gráfico de barras dos últimos 12 meses.
+- **Onde aparece:** na ficha da loja (com os botões Ligar e WhatsApp logo abaixo); na aba **Lojas**, como etiqueta de cada loja e no filtro **Esfriando ou paradas**; em **Relatórios**, na seção **Ritmo de compra** (quem precisa de atenção primeiro; tocar na linha abre a loja), também no PDF e na aba "Ritmo de compra" do Excel.
+
 ## Cadastro do cliente
 
 Campos: **CNPJ/CPF**, **Nome fantasia**, **Razão social**, **Inscrição estadual**, Rede, **Endereço**, Cidade/UF, **Contato**, Telefone, **E-mail de compra**, **E-mail financeiro**, **E-mail para envio de notas**, **Forma de pagamento**, **Prazo**, **Frete** e **Observação**.
