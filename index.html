@@ -411,6 +411,38 @@ body{font-variant-numeric:tabular-nums}
 .badge.orc{background:var(--roxo-soft);color:var(--roxo)}
 .badge{padding:3px 10px}
 .field input[type=text]:not(.preco-item):not(.desc-item):not(.lote-q){width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink)}
+/* Empresa ativa: botão no topo e tela de escolha */
+.emp-ativa{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:5px 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.emp-ativa::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.8}
+.emp-ativa[hidden]{display:none}
+.escolha{z-index:39;overflow:auto}
+.escolha-box{max-width:420px}
+.escolha-box h1{font-size:26px}
+.escolha-lista{display:grid;gap:10px;margin-top:6px}
+.escolha-lista button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:16px;padding:16px 18px;cursor:pointer}
+.escolha-lista button:hover,.escolha-lista button.ultima{border-color:var(--ipe);background:rgba(47,123,255,.18)}
+.escolha-lista b{display:block;font-family:"Barlow Semi Condensed","Barlow",sans-serif;font-size:22px}
+.escolha-lista small{display:block;opacity:.75;font-size:13px}
+.escolha-lista .seta{font-size:22px;opacity:.7}
+@media (max-width: 420px){ .brand-txt{display:none} }
+/* Computador mais estreito: abre espaço para o botão da empresa ao lado das abas do topo. */
+@media (min-width: 1000px) and (max-width: 1399px){ .brand-txt{display:none} }
+@media (min-width: 1000px) and (max-width: 1199px){ .nav button{padding:0 10px!important;font-size:14px!important} .nav button svg{display:none} }
+/* Cadastro completo do cliente */
+.form-loja h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:16px 0 8px}
+.form-loja .duas{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.form-loja textarea{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink)}
+.cnpj-linha{display:flex;gap:8px}
+.cnpj-linha input{flex:1;min-width:0}
+.cnpj-linha .mini{flex:none}
+.cnpj-info{font-size:13px;margin:6px 0 0;color:var(--muted)}
+.cnpj-info.erro{color:var(--bad)}
+.ficha{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14.5px;margin:0 0 14px}
+.ficha dt{color:var(--muted)}
+.ficha dd{margin:0;word-break:break-word}
+/* Histórico do cliente nos relatórios */
+.hist-cli{background:var(--surface);border-radius:14px;padding:14px;box-shadow:var(--sombra);margin-bottom:18px}
+.hist-cli h2{margin-bottom:4px}
 /* Tema na conta */
 .tema-op{display:flex;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:3px;margin:0 0 6px}
 .tema-op button{flex:1;border:0;background:none;padding:9px 6px;border-radius:999px;font-weight:600;color:var(--muted);cursor:pointer}
@@ -472,7 +504,8 @@ body{font-variant-numeric:tabular-nums}
 <body>
 
 <header class="top"><div class="top-in">
-  <span class="brand"><img src="logo.png" alt="">GYN Pedidos</span>
+  <span class="brand"><img src="logo.png" alt=""><span class="brand-txt">GYN Pedidos</span></span>
+  <button class="emp-ativa" id="emp-ativa" type="button" hidden aria-label="Trocar de empresa"></button>
   <span class="net" id="net" hidden>Sem internet</span>
   <button class="rep" id="rep" type="button" aria-label="Conta"><span id="rep-nome"></span> <b aria-hidden="true" id="rep-ini"></b></button>
 </div></header>
@@ -527,11 +560,12 @@ body{font-variant-numeric:tabular-nums}
   </section>
 
   <section id="v-pedidos" class="view" hidden>
-    <h1>Pedidos</h1>
+    <h1>Vendas</h1>
     <div class="lista-topo" id="pedidos-topo" hidden>
       <div class="chips" id="filtros"></div>
       <button class="mini" id="btn-atualizar-pedidos" type="button">Atualizar</button>
     </div>
+    <div class="field"><input id="vendas-busca" type="search" placeholder="Buscar por cliente, CNPJ ou número do pedido" aria-label="Buscar venda"></div>
     <ul id="lista-pedidos" class="orders"></ul>
   </section>
 
@@ -554,6 +588,7 @@ body{font-variant-numeric:tabular-nums}
       <label class="field"><span class="lbl">Empresa</span><select id="rel-emp"></select></label>
       <label class="field"><span class="lbl">Vendedor</span><select id="rel-vend"></select></label>
       <label class="field"><span class="lbl">Rede / grupo</span><select id="rel-grupo"></select></label>
+      <label class="field rel-cli-campo"><span class="lbl">Cliente (histórico)</span><select id="rel-cli"></select></label>
       <label class="field"><span class="lbl">Situação</span><select id="rel-sit">
         <option value="aprov">Aprovados (inclui enviados, faturados e entregues)</option>
         <option value="faturados">Só faturados e entregues</option>
@@ -566,6 +601,7 @@ body{font-variant-numeric:tabular-nums}
         <button class="chip" data-per="mes" type="button">Este mês</button>
         <button class="chip" data-per="mesant" type="button">Mês passado</button>
         <button class="chip" data-per="ano" type="button">Este ano</button>
+        <button class="chip" data-per="tudo" type="button">Tudo</button>
       </div>
     </div>
     <div class="rel-botoes">
@@ -606,7 +642,7 @@ body{font-variant-numeric:tabular-nums}
   <button data-view="novo" aria-current="page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Novo pedido</button>
   <button data-view="pedidos">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg>Pedidos</button>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg>Vendas</button>
   <button data-view="lojas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>Lojas</button>
   <button data-view="aprovar" id="nav-aprovar" hidden>
@@ -634,6 +670,14 @@ body{font-variant-numeric:tabular-nums}
     <button class="btn" id="pin-btn" type="submit" style="width:100%">Entrar</button>
   </form>
   <div class="pin-erro" id="pin-erro" role="alert"></div>
+</div></div>
+
+<!-- Escolha da empresa: aparece ao abrir o app e depois do login. -->
+<div id="escolha-emp" class="pin escolha" hidden><div class="pin-box escolha-box">
+  <img src="logo.png" alt="GYN Representações">
+  <h1>Com qual empresa vamos trabalhar?</h1>
+  <p>O app passa a mostrar só a empresa escolhida: produtos, categorias, vendas e relatórios. Para trocar depois, toque no nome dela lá em cima.</p>
+  <div class="escolha-lista" id="escolha-lista"></div>
 </div></div>
 
 <div id="toast" class="toast" role="status" hidden></div>
@@ -722,6 +766,8 @@ let filtro = 'todos';
 // precos: preço de venda digitado no resumo (id -> valor).
 // base: "preço cheio" digitado para produto sem preço na planilha (o desconto % do item é calculado sobre ele).
 const st = {empresa:null, itens:{}, busca:'', cat:'', precos:{}, base:{}};
+// Empresa com que o app está trabalhando (escolhida ao abrir o app e depois do login).
+const empAtiva = () => { const id = LS.get('empresaAtiva', null); return id && emp(id) ? id : null; };
 const catDe = p => (p.categoria || '').trim();
 // Categorias de uma empresa, em ordem alfabética, com a quantidade de produtos.
 function categoriasDe(empresa){
@@ -751,7 +797,10 @@ async function carregarCatalogo(avisar){
     DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes, grupos:j.grupos || []};
     LS.set('catalogo', DATA); LS.set('catalogoEm', new Date().toISOString());
     if(j.voce && sessao){ sessao.nome = j.voce.nome; sessao.perfil = j.voce.perfil || 'vendedor'; LS.set('sessao', sessao); mostrarUsuario(); }
-    renderTudo(); if(avisar) toast('Catálogo atualizado');
+    if(!st.empresa) st.empresa = empAtiva();
+    mostrarEmpresa(); renderTudo(); if(avisar) toast('Catálogo atualizado');
+    // Primeira vez (ou depois do login): pergunta a empresa assim que o catálogo chega.
+    if(precisaEscolher && $('#pin').hidden) abrirEscolhaEmpresa();
     return true;
   }catch(e){
     if(e.login) sessaoCaiu(e.message);
@@ -830,7 +879,9 @@ async function entrar(ev){
     if(outro){ remotos = []; LS.set('pedidosServidor', null); }
     $('#login-senha').value = ''; $('#pin-erro').textContent = ''; $('#pin').hidden = true;
     mostrarUsuario(); toast('Olá, ' + j.nome);
-    await carregarCatalogo(false); await sincronizar(); await carregarPedidos(false); carregarLojas();
+    precisaEscolher = true;
+    await carregarCatalogo(false);
+    if(precisaEscolher) abrirEscolhaEmpresa(); await sincronizar(); await carregarPedidos(false); carregarLojas();
   }catch(e){
     $('#pin-erro').textContent = e instanceof TypeError || e instanceof SyntaxError
       ? 'Não deu para falar com a planilha. Tente de novo.' : e.message;
@@ -868,6 +919,8 @@ $('#rep').addEventListener('click', abrirConta);
 
 /* ---------- Novo pedido ---------- */
 function renderEmpresas(){
+  // Com a empresa já escolhida (ao entrar), o campo some: tudo é daquela empresa.
+  $('#empresas').closest('.field').hidden = !!empAtiva();
   // Cartão por marca, com o pedido mínimo embaixo do nome.
   $('#empresas').innerHTML = (DATA?.empresas || []).map(e => {
     const min = Number(e.pedidoMinimo) || 0, curto = e.nome.split(/\s+/)[0];
@@ -909,7 +962,8 @@ function mostrarCondGrupo(){
   const card = $('#cli-card'), mostrarCard = !!c && !st.trocandoCli;
   card.hidden = !mostrarCard; $('#cli-escolha').hidden = mostrarCard;
   if(mostrarCard) card.innerHTML = `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v7h14v-7M10 20v-4h4v4"/></svg></span>
-    <span class="txt"><b>${esc(c.nome)}</b><small>${[c.cidade, c.cnpj].filter(Boolean).map(esc).join(' · ') || 'sem CNPJ'}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</small></span>
+    <span class="txt"><b>${esc(c.nome)}</b><small>${[c.cidade, c.cnpj].filter(Boolean).map(esc).join(' · ') || 'sem CNPJ'}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</small>
+      ${c.prazo || c.frete ? `<small>${[c.prazo && 'Prazo ' + c.prazo, c.frete && 'Frete ' + c.frete].filter(Boolean).map(esc).join(' · ')}</small>` : ''}</span>
     <button class="trocar" type="button" id="btn-trocar-cli">Trocar</button>`;
 }
 $('#cli-card').addEventListener('click', e => {
@@ -921,7 +975,7 @@ function aoTrocarCliente(){
   const g = condGrupo($('#cliente').value);
   if($('#cliente').value){ st.trocandoCli = false; if($('#cli-busca').value){ $('#cli-busca').value = ''; renderClientes(); } }
   // Pagamento combinado com a rede: vira a opção escolhida (as listas são refeitas no renderCart).
-  if(g?.pagamento){ $('#pag-p').innerHTML = ''; $('#pag-outro-p').value = ''; }
+  if(g?.pagamento || cli($('#cliente').value)?.pagamento){ $('#pag-p').innerHTML = ''; $('#pag-outro-p').value = ''; }
   // Desconto combinado com a rede entra sozinho se o campo estiver vazio (e só vale enquanto for o mesmo cliente).
   const d = $('#desc-p');
   if(d.dataset.daRede && d.value === d.dataset.daRede) d.value = '';
@@ -1096,10 +1150,11 @@ function renderCart(){
 }
 // Faixa Empresa → Cliente → Produtos → Revisar.
 function renderPassos(its){
-  const feito = [!!st.empresa, !!$('#cliente').value, its.length > 0];
-  const atual = feito.indexOf(false);   // -1: tudo pronto, falta revisar
-  $('#passos').innerHTML = ['Empresa', 'Cliente', 'Produtos', 'Revisar'].map((t, i) =>
-    `<li class="${i < 3 && feito[i] ? 'ok' : (i === atual || (atual === -1 && i === 3)) ? 'agora' : ''}">${t}</li>`).join('');
+  // Com a empresa escolhida ao entrar, a etapa "Empresa" sai da faixa.
+  const etapas = [['Empresa', !!st.empresa], ['Cliente', !!$('#cliente').value], ['Produtos', its.length > 0]].filter(([t]) => t !== 'Empresa' || !empAtiva());
+  const atual = etapas.findIndex(x => !x[1]);   // -1: tudo pronto, falta revisar
+  $('#passos').innerHTML = [...etapas, ['Revisar', false]].map(([t, ok], i) =>
+    `<li class="${i < etapas.length && ok ? 'ok' : (i === atual || (atual === -1 && i === etapas.length)) ? 'agora' : ''}">${t}</li>`).join('');
 }
 $('#fab-novo').addEventListener('click', () => irPara('novo'));
 // Totais com desconto: bruto, desconto e líquido.
@@ -1135,7 +1190,8 @@ function opcoesPagamento(){
 }
 // Mostra o campo de texto quando "Outro…" está escolhido. Na primeira vez, traz a última forma digitada.
 // Pagamento que já vem escolhido: o combinado com a rede do cliente; se não houver, o último usado.
-const pagPreferido = () => condGrupo($('#cliente').value)?.pagamento || LS.get('ultPag','28 dias');
+// (combinado com a rede > o do cadastro do cliente, que é a última forma usada > o último usado neste aparelho)
+const pagPreferido = () => condGrupo($('#cliente').value)?.pagamento || cli($('#cliente').value)?.pagamento || LS.get('ultPag','28 dias');
 function ligarOutro(sel, inp){
   const ult = pagPreferido();
   const mostrar = () => { inp.hidden = sel.value !== OUTRO; };
@@ -1347,6 +1403,7 @@ function acertarContador(){
 // Monta um pedido (com número novo) para um cliente e uma lista de itens.
 function montarPedido(c, its, pag, obs, desc){
   const e = emp(st.empresa);
+  if(c && pag) c.pagamento = pag;   // a planilha também guarda: é a "última forma de pagamento" do cliente
   const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
   return {
     id: 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
@@ -1543,38 +1600,110 @@ async function repetirUltimo(cliente, empresa){
 $('#btn-repetir').addEventListener('click', () => repetirUltimo($('#cliente').value, st.empresa));
 
 /* ---------- Lojas: cadastro, contato e lojas paradas ---------- */
-// base: loja da mesma rede (ao cadastrar uma filial), para já trazer rede, nome, cidade, contato e telefone.
-function abrirNovaLoja(depois, base){
+// Cadastro completo do cliente. Serve para loja nova, filial nova (base: loja da mesma rede, para já trazer
+// rede, nome, cidade, contato e telefone) e para editar um cadastro (editar: o cliente).
+// Ao digitar o CNPJ, o app consulta a Receita (BrasilAPI) e preenche razão social, nome fantasia e endereço.
+const FRETES = ['CIF (por conta do fornecedor)', 'FOB (por conta do cliente)', 'Retira na loja'];
+function abrirNovaLoja(depois, base, editar){
   if(DEMO){ toast('No modo demonstração não dá para cadastrar lojas.'); return; }
-  const v = s => esc(s || '');
+  const o = editar || base || {}, v = k => esc(o[k] || '');
+  const novo = !editar, pags = [...new Set([...pagamentosDe(st.empresa), ...(DATA?.clientes || []).map(c => c.pagamento).filter(Boolean)])];
   abrirSheet(`
-    <div class="sheet-head"><h2>${base ? 'Nova filial (outro CNPJ)' : 'Nova loja'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
-    ${ehAdmin() ? '' : '<p class="note">A loja entra na hora para você fazer o pedido; o administrador confere o cadastro.</p>'}
-    ${base ? `<p class="meta">Filial da rede <b>${esc(grupoDe(base))}</b>. Os dados abaixo vieram de ${esc(base.nome)}: troque o que for diferente.</p>` : ''}
+    <div class="sheet-head"><h2>${editar ? 'Editar cadastro' : base ? 'Nova filial (outro CNPJ)' : 'Nova loja'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    ${novo && !ehAdmin() ? '<p class="note">A loja entra na hora para você fazer o pedido; o administrador confere o cadastro.</p>' : ''}
+    ${base && novo ? `<p class="meta">Filial da rede <b>${esc(grupoDe(base))}</b>. Os dados abaixo vieram de ${esc(base.nome)}: troque o que for diferente.</p>` : ''}
     <form class="form-loja" id="form-loja" novalidate>
-      <label class="field"><span class="lbl">Nome da loja *</span><input id="nl-nome" autocomplete="organization" required value="${base ? v(base.nome) : ''}"></label>
-      <label class="field"><span class="lbl">CNPJ ou CPF</span><input id="nl-cnpj" inputmode="numeric" placeholder="só números"></label>
-      <label class="field"><span class="lbl">Rede / grupo <small>(lojas do mesmo dono com CNPJs diferentes)</small></span>
-        <input id="nl-grupo" list="dl-grupos" placeholder="Deixe vazio se for loja única" value="${base ? v(grupoDe(base)) : ''}">
-        <datalist id="dl-grupos">${nomesGrupos().map(g => `<option value="${esc(g)}">`).join('')}</datalist></label>
-      <label class="field"><span class="lbl">Cidade</span><input id="nl-cidade" autocomplete="address-level2" value="${base ? v(base.cidade) : ''}"></label>
-      <label class="field"><span class="lbl">Telefone / WhatsApp</span><input id="nl-tel" type="tel" inputmode="tel" placeholder="(62) 99999-9999" value="${base ? v(base.telefone) : ''}"></label>
-      <label class="field"><span class="lbl">Contato (quem compra)</span><input id="nl-contato" value="${base ? v(base.contato) : ''}"></label>
-      <label class="field"><span class="lbl">Endereço</span><input id="nl-end" autocomplete="street-address"></label>
-      <button class="btn primary" id="nl-salvar" type="submit">${base ? 'Cadastrar filial' : 'Cadastrar loja'}</button>
+      <h3>Empresa</h3>
+      <label class="field"><span class="lbl">CNPJ ou CPF</span>
+        <span class="cnpj-linha"><input id="nl-cnpj" inputmode="numeric" placeholder="só números" value="${editar ? v('cnpj') : ''}" autocomplete="off">
+        <button class="mini" type="button" id="nl-consultar">Consultar</button></span>
+        <span class="cnpj-info" id="nl-cnpj-info">Digitando o CNPJ, o app busca razão social, nome fantasia e endereço.</span></label>
+      <label class="field"><span class="lbl">Nome fantasia *</span><input id="nl-nome" autocomplete="organization" required value="${v('nome')}"></label>
+      <label class="field"><span class="lbl">Razão social</span><input id="nl-razao" value="${editar ? v('razao') : ''}"></label>
+      <div class="duas">
+        <label class="field"><span class="lbl">Inscrição estadual</span><input id="nl-ie" inputmode="numeric" value="${editar ? v('ie') : ''}" placeholder="ou ISENTO"></label>
+        <label class="field"><span class="lbl">Rede / grupo</span><input id="nl-grupo" list="dl-grupos" placeholder="se tiver filiais" value="${esc(grupoDe(o))}">
+          <datalist id="dl-grupos">${nomesGrupos().map(g => `<option value="${esc(g)}">`).join('')}</datalist></label>
+      </div>
+      <h3>Endereço e contato</h3>
+      <label class="field"><span class="lbl">Endereço</span><input id="nl-end" autocomplete="street-address" value="${editar ? v('endereco') : ''}"></label>
+      <label class="field"><span class="lbl">Cidade / UF</span><input id="nl-cidade" autocomplete="address-level2" value="${v('cidade')}"></label>
+      <div class="duas">
+        <label class="field"><span class="lbl">Contato</span><input id="nl-contato" value="${v('contato')}"></label>
+        <label class="field"><span class="lbl">Telefone / WhatsApp</span><input id="nl-tel" type="tel" inputmode="tel" placeholder="(62) 99999-9999" value="${v('telefone')}"></label>
+      </div>
+      <h3>E-mails</h3>
+      <label class="field"><span class="lbl">E-mail de compra</span><input id="nl-em-compra" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailCompra') : ''}"></label>
+      <label class="field"><span class="lbl">E-mail financeiro</span><input id="nl-em-fin" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailFinanceiro') : ''}"></label>
+      <label class="field"><span class="lbl">E-mail para envio de notas</span><input id="nl-em-nf" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailNotas') : ''}"></label>
+      <h3>Condições</h3>
+      <label class="field"><span class="lbl">Forma de pagamento <small>(atualiza sozinha com a última usada)</small></span>
+        <input id="nl-pag" list="dl-pags" value="${v('pagamento')}"><datalist id="dl-pags">${pags.map(p => `<option value="${esc(p)}">`).join('')}</datalist></label>
+      <div class="duas">
+        <label class="field"><span class="lbl">Prazo</span><input id="nl-prazo" placeholder="ex.: 30/60/90 dias" value="${v('prazo')}"></label>
+        <label class="field"><span class="lbl">Frete</span><input id="nl-frete" list="dl-fretes" value="${v('frete')}"><datalist id="dl-fretes">${FRETES.map(f => `<option value="${esc(f)}">`).join('')}</datalist></label>
+      </div>
+      <label class="field"><span class="lbl">Observação</span><textarea id="nl-obs" rows="2">${editar ? v('obs') : ''}</textarea></label>
+      <button class="btn primary" id="nl-salvar" type="submit">${editar ? 'Salvar cadastro' : base ? 'Cadastrar filial' : 'Cadastrar loja'}</button>
     </form>`);
-  setTimeout(() => (base ? $('#nl-cnpj') : $('#nl-nome')).focus(), 80);
+  setTimeout(() => (editar ? $('#nl-nome') : $('#nl-cnpj')).focus(), 80);
+  // Consulta do CNPJ: preenche o que vier da Receita (nome fantasia só se estiver vazio ou igual ao da filial de origem).
+  let consultado = '';
+  const consultar = async (forcar) => {
+    const n = soDigitos($('#nl-cnpj').value), info = $('#nl-cnpj-info');
+    if(n.length !== 14){ if(forcar) { info.className = 'cnpj-info erro'; info.textContent = n.length === 11 ? 'CPF: não há consulta, preencha à mão.' : 'Digite os 14 números do CNPJ.'; } return; }
+    if(n === consultado && !forcar) return;
+    consultado = n;
+    if(!navigator.onLine){ info.className = 'cnpj-info erro'; info.textContent = 'Sem internet para consultar. Preencha à mão.'; return; }
+    info.className = 'cnpj-info'; info.textContent = 'Consultando o CNPJ…';
+    try{
+      const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + n);
+      if(!r.ok) throw new Error(r.status === 404 ? 'CNPJ não encontrado na Receita.' : 'A consulta não respondeu agora. Preencha à mão.');
+      const d = await r.json();
+      const pegar = (id, val, sempre) => { const el = $(id); if(val && (sempre || !el.value.trim() || (base && novo && el.value === (base[id === '#nl-nome' ? 'nome' : 'x'] || '')))) el.value = val; };
+      const tit = s => String(s || '').toLowerCase().replace(/(^|\s)\S/g, x => x.toUpperCase());
+      pegar('#nl-razao', d.razao_social, true);
+      pegar('#nl-nome', tit(d.nome_fantasia || d.razao_social));
+      const end = [[d.descricao_tipo_de_logradouro, d.logradouro].filter(Boolean).join(' '), d.numero, d.complemento, d.bairro, d.cep && 'CEP ' + String(d.cep).replace(/^(\d{5})(\d{3})$/, '$1-$2')]
+        .filter(Boolean).map(tit).join(', ').replace(/Cep /, 'CEP ');
+      pegar('#nl-end', end, true);
+      pegar('#nl-cidade', d.municipio ? tit(d.municipio) + (d.uf ? '/' + d.uf : '') : '', true);
+      pegar('#nl-tel', d.ddd_telefone_1 ? String(d.ddd_telefone_1).replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3') : '');
+      const sit = String(d.descricao_situacao_cadastral || '').toUpperCase();
+      info.className = 'cnpj-info' + (sit && sit !== 'ATIVA' ? ' erro' : '');
+      info.textContent = sit && sit !== 'ATIVA' ? `Atenção: situação na Receita "${sit}". Confira antes de vender.` : 'Dados da Receita preenchidos. Confira e complete o resto.';
+    }catch(e){ info.className = 'cnpj-info erro'; info.textContent = e instanceof TypeError ? 'A consulta não respondeu agora. Preencha à mão.' : e.message; }
+  };
+  $('#nl-cnpj').addEventListener('input', () => { if(soDigitos($('#nl-cnpj').value).length === 14) consultar(false); });
+  $('#nl-consultar').addEventListener('click', () => consultar(true));
   $('#form-loja').addEventListener('submit', async ev => {
     ev.preventDefault();
     // Rede digitada parecida com uma que já existe (só muda acento/maiúscula): usa o nome que já existe.
     const gDig = $('#nl-grupo').value.trim(), gExiste = nomesGrupos().find(g => norm(g) === norm(gDig));
-    const dados = {nome:$('#nl-nome').value, cidade:$('#nl-cidade').value, cnpj:$('#nl-cnpj').value, telefone:$('#nl-tel').value, contato:$('#nl-contato').value, endereco:$('#nl-end').value, grupo: gExiste || gDig};
-    if(base && !soDigitos(dados.cnpj)){ toast('Digite o CNPJ desta filial'); $('#nl-cnpj').focus(); return; }
-    if(base) dados.base = base.id;   // a loja de origem entra na mesma rede, se ainda não tiver uma
-    if(dados.nome.trim().length < 2){ toast('Digite o nome da loja'); return; }
-    if(!navigator.onLine){ toast('Sem internet. O cadastro de loja precisa de conexão.'); return; }
-    const b = $('#nl-salvar'); b.disabled = true; b.textContent = 'Cadastrando…';
+    const val = id => $(id).value.trim();
+    const dados = {nome: val('#nl-nome'), cnpj: val('#nl-cnpj'), razao: val('#nl-razao'), ie: val('#nl-ie'), grupo: gExiste || gDig,
+      endereco: val('#nl-end'), cidade: val('#nl-cidade'), contato: val('#nl-contato'), telefone: val('#nl-tel'),
+      emailCompra: val('#nl-em-compra'), emailFinanceiro: val('#nl-em-fin'), emailNotas: val('#nl-em-nf'),
+      pagamento: val('#nl-pag'), prazo: val('#nl-prazo'), frete: val('#nl-frete'), obs: val('#nl-obs')};
+    if(base && novo && !soDigitos(dados.cnpj)){ toast('Digite o CNPJ desta filial'); $('#nl-cnpj').focus(); return; }
+    if(base && novo) dados.base = base.id;   // a loja de origem entra na mesma rede, se ainda não tiver uma
+    if(dados.nome.length < 2){ toast('Digite o nome fantasia'); $('#nl-nome').focus(); return; }
+    const emRuim = ['#nl-em-compra', '#nl-em-fin', '#nl-em-nf'].find(id => val(id) && val(id).split(/[;,\s]+/).filter(Boolean).some(x => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x)));
+    if(emRuim){ toast('Confira o e-mail: ' + val(emRuim)); $(emRuim).focus(); return; }
+    if(!navigator.onLine){ toast('Sem internet. O cadastro precisa de conexão.'); return; }
+    const b = $('#nl-salvar'), txt = b.textContent; b.disabled = true; b.textContent = 'Salvando…';
     try{
+      if(editar){
+        dados.id = editar.id;
+        const j = await api({acao:'clienteEditar', cliente: dados});
+        // A rede muda pela ação própria (só administrador).
+        if(ehAdmin() && norm(dados.grupo) !== norm(grupoDe(editar))) await api({acao:'clienteGrupo', id: editar.id, grupo: dados.grupo});
+        Object.assign(cli(editar.id), j.cliente, ehAdmin() ? {grupo: dados.grupo} : {});
+        canonDe = null; LS.set('catalogo', DATA);
+        renderClientes(); renderLojas(); renderCart();
+        toast('Cadastro salvo'); abrirLoja(editar.id);
+        return;
+      }
       const j = await api({acao:'cliente', cliente: dados});
       DATA.clientes = [...(DATA.clientes || []), j.cliente];
       const b0 = base && cli(base.id); if(b0 && !grupoDe(b0) && j.cliente.grupo){ b0.grupo = j.cliente.grupo; canonDe = null; }
@@ -1584,7 +1713,7 @@ function abrirNovaLoja(depois, base){
       toast(j.cliente.situacao === AGUARDANDO ? 'Loja cadastrada. O administrador vai conferir o cadastro.' : 'Loja cadastrada.');
       if(depois) depois(j.cliente);
     }catch(e){
-      b.disabled = false; b.textContent = 'Cadastrar loja';
+      b.disabled = false; b.textContent = txt;
       if(e.login) sessaoCaiu(e.message); else toast(e instanceof TypeError ? 'Não deu para falar com a planilha' : e.message);
     }
   });
@@ -1595,7 +1724,7 @@ $('#btn-nova-loja2').addEventListener('click', () => abrirNovaLoja());
 const diasDesde = iso => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
 async function carregarLojas(){
   if(DEMO || !sessao || !navigator.onLine) return;
-  try{ const j = await api({acao:'lojas'}); resumoLojas = j.lojas || {}; LS.set('resumoLojas', resumoLojas); renderLojas(); }
+  try{ const j = await api({acao:'lojas', empresa: empAtiva() || ''}); resumoLojas = j.lojas || {}; LS.set('resumoLojas', resumoLojas); renderLojas(); }
   catch(e){ if(e.login) sessaoCaiu(e.message); }
 }
 const FILTROS_LOJAS = [['todas','Todas'],['redes','Por rede'],['30','Sem pedido há 30+ dias'],['60','60+ dias'],['90','90+ dias'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
@@ -1669,14 +1798,21 @@ function abrirLoja(id){
   abrirSheet(`
     <div class="sheet-head"><h2>${esc(c.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
-    ${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} ·${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}
-    <p class="meta">${[c.cidade, c.cnpj && 'CNPJ/CPF ' + c.cnpj, c.endereco, c.contato && 'Contato: ' + c.contato, c.telefone && 'Tel. ' + c.telefone].filter(Boolean).map(esc).join('<br>') || 'Sem dados de contato.'}</p>
+    ${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} · ${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}
+    ${(() => { // Ficha do cadastro: só os campos preenchidos.
+      const f = [['Razão social', c.razao], ['CNPJ/CPF', c.cnpj], ['Insc. estadual', c.ie], ['Endereço', c.endereco], ['Cidade', c.cidade],
+        ['Contato', c.contato], ['Telefone', c.telefone], ['E-mail compra', c.emailCompra], ['E-mail financeiro', c.emailFinanceiro],
+        ['E-mail notas', c.emailNotas], ['Pagamento', c.pagamento], ['Prazo', c.prazo], ['Frete', c.frete], ['Observação', c.obs]].filter(x => x[1]);
+      return f.length ? `<dl class="ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Cadastro sem dados. Toque em <b>Editar cadastro</b> para completar.</p>';
+    })()}
     ${tel ? `<div class="contato-btns"><a class="btn sec" href="tel:${tel}">Ligar</a><a class="btn zap" href="https://wa.me/${zap}" target="_blank" rel="noopener">WhatsApp</a></div>` : ''}
     <p class="meta">${r.pedidos ? `<b>${r.pedidos}</b> pedido${r.pedidos > 1 ? 's' : ''}, <b>${brl(r.total)}</b> no total. Último: ${new Date(r.ultimo).toLocaleDateString('pt-BR')} (${esc(r.ultimoNum)}).` : 'Ainda não tem pedido.'}</p>
     ${recentes.length ? '<h2 class="sub-h">Pedidos recentes</h2><ul class="orders">' + recentes.map(cartaoPedido).join('') + '</ul>' : ''}
     <div class="btns">
       <button class="btn primary" id="lj-novo">Novo pedido para esta loja</button>
       ${r.pedidos || recentes.length ? '<button class="btn sec" id="lj-repetir">Repetir último pedido</button>' : ''}
+      ${ehAdmin() || c.cadastradoPor === sessao?.usuario ? '<button class="btn sec" id="lj-editar">Editar cadastro</button>' : ''}
+      ${ehAdmin() ? '<button class="btn sec" id="lj-historico">Ver histórico completo</button>' : ''}
       <button class="btn sec" id="lj-filial">+ Adicionar filial (outro CNPJ)</button>
       ${ehAdmin() ? `<button class="btn ghost" id="lj-mudar-rede">${grupoDe(c) ? 'Mudar / tirar da rede' : 'Colocar numa rede'}</button>` : ''}
       ${ehAdmin() && c.situacao === AGUARDANDO ? '<button class="btn aprovar" id="lj-aprovar">Aprovar cadastro</button><button class="btn perigo" id="lj-recusar">Recusar cadastro</button>' : ''}
@@ -1686,7 +1822,13 @@ function abrirLoja(id){
   // Filial nova: se a loja ainda não tem rede, a rede ganha o nome da loja (dá para mudar no formulário).
   $('#lj-filial').addEventListener('click', () => abrirNovaLoja(null, grupoDe(c) ? c : Object.assign({}, c, {grupo: c.nome})));
   $('#lj-mudar-rede')?.addEventListener('click', () => mudarRedeLoja(id));
-  $('#lj-repetir')?.addEventListener('click', () => repetirUltimo(id, ''));
+  $('#lj-repetir')?.addEventListener('click', () => repetirUltimo(id, empAtiva() || ''));
+  $('#lj-editar')?.addEventListener('click', () => abrirNovaLoja(null, null, c));
+  // Histórico: Relatórios com este cliente e o período inteiro.
+  $('#lj-historico')?.addEventListener('click', () => {
+    fecharSheet(); irPara('relatorios'); periodo('tudo'); $('#rel-sit').value = 'todos';
+    $('#rel-cli').value = id; gerarRelatorio();
+  });
   $('#lj-aprovar')?.addEventListener('click', () => mudarSituacaoLoja(id, 'Ativo'));
   $('#lj-recusar')?.addEventListener('click', () => { const m = prompt('Motivo da recusa (opcional):'); if(m !== null) mudarSituacaoLoja(id, RECUSADO, m); });
   document.querySelectorAll('#sheet-body [data-id]').forEach(b => b.addEventListener('click', () => abrirPedido(b.dataset.id)));
@@ -1812,6 +1954,7 @@ function periodo(tipo){
   if(tipo === 'mes') de = new Date(h.getFullYear(), h.getMonth(), 1);
   if(tipo === 'mesant'){ de = new Date(h.getFullYear(), h.getMonth() - 1, 1); ate = new Date(h.getFullYear(), h.getMonth(), 0); }
   if(tipo === 'ano') de = new Date(h.getFullYear(), 0, 1);
+  if(tipo === 'tudo') de = new Date(2020, 0, 1);
   $('#rel-de').value = isoDia(de); $('#rel-ate').value = isoDia(ate);
 }
 function opcoesVendedores(){
@@ -1822,11 +1965,20 @@ function opcoesVendedores(){
     [...v.entries()].sort((a,b) => a[1].localeCompare(b[1],'pt-BR')).map(([u,n]) => `<option value="${esc(u)}">${esc(n)}</option>`).join('');
   $('#rel-vend').value = v.has(atual) ? atual : '';
 }
+const cliente_existe = id => !!id && !!cli(id);
 function prepararRelatorio(){
   if(!$('#rel-de').value) periodo('mes');
   const atual = $('#rel-emp').value;
   $('#rel-emp').innerHTML = '<option value="">Todas</option>' + (DATA?.empresas || []).map(e => `<option value="${esc(e.id)}">${esc(e.nome)}</option>`).join('');
   $('#rel-emp').value = atual;
+  // Empresa ativa: o relatório é sempre dela (o campo Empresa some).
+  if(empAtiva()) $('#rel-emp').value = empAtiva();
+  $('#rel-emp').closest('.field').hidden = !!empAtiva();
+  // Cliente: para ver o histórico de uma loja só.
+  const cAtual = $('#rel-cli').value;
+  $('#rel-cli').innerHTML = '<option value="">Todos os clientes</option>' + [...(DATA?.clientes || [])].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+    .map(c => `<option value="${esc(c.id)}">${esc(c.nome)}${c.cidade ? ' (' + esc(c.cidade) + ')' : ''}${c.cnpj ? ' · ' + esc(c.cnpj) : ''}</option>`).join('');
+  $('#rel-cli').value = cliente_existe(cAtual) ? cAtual : '';
   opcoesVendedores();
   const gAtual = $('#rel-grupo').value;
   $('#rel-grupo').innerHTML = '<option value="">Todas as lojas</option><option value="__sem">Só lojas sem rede</option>' +
@@ -1851,7 +2003,7 @@ async function gerarRelatorio(){
   }finally{ b.disabled = false; b.textContent = 'Gerar relatório'; }
 }
 $('#rel-gerar').addEventListener('click', gerarRelatorio);
-['#rel-emp','#rel-vend','#rel-sit','#rel-grupo'].forEach(s => $(s).addEventListener('change', () => { if(REL) renderRelatorio(); }));
+['#rel-emp','#rel-vend','#rel-sit','#rel-grupo','#rel-cli'].forEach(s => $(s).addEventListener('change', () => { if(REL) renderRelatorio(); }));
 
 // Aplica os filtros e devolve as linhas de item (uma por produto de cada pedido) e os resumos.
 function dadosRelatorio(){
@@ -1862,7 +2014,8 @@ function dadosRelatorio(){
   const redeDe = p => grupoDe(cli(p.cliente)) || p.clienteGrupo || '';
   const cnpjDe = p => cli(p.cliente)?.cnpj || p.clienteCnpj || '';
   const okGrupo = p => !fGrupo || (fGrupo === '__sem' ? !redeDe(p) : norm(redeDe(p)) === norm(fGrupo));
-  const peds = REL.pedidos.filter(p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p));
+  const fCli = $('#rel-cli').value;
+  const peds = REL.pedidos.filter(p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli));
   const linhas = [];
   // Valor de cada item já com o desconto do pedido.
   peds.forEach(p => { const f = 1 - (Number(p.desconto) || 0) / 100; p.itens.forEach(i => linhas.push({
@@ -1897,17 +2050,33 @@ function dadosRelatorio(){
     `Empresa: ${fEmp ? (emp(fEmp)?.nome || fEmp) : 'todas'}`,
     `Vendedor: ${vend ? $('#rel-vend').selectedOptions[0].textContent : 'todos'}`,
     ...(fGrupo ? [`Rede: ${fGrupo === '__sem' ? 'só lojas sem rede' : fGrupo}`] : []),
+    ...(fCli ? [`Cliente: ${cli(fCli)?.nome || fCli}`] : []),
     `Situação: ${$('#rel-sit').selectedOptions[0].textContent.toLowerCase()}`];
   return {peds, linhas, porProduto, porLoja, porRede, temRede: porRede.some(r => r.ehRede), filtros, comissao,
     totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: peds.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(peds.map(p => p.cliente)).size,
       comissaoMarcas: comissao.marcas.reduce((s,x) => s + x.comissao, 0), comissaoVendedores: comissao.vendedores.reduce((s,x) => s + x.comissao, 0)}};
 }
+$('#rel-resultado').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if(b) abrirPedido(b.dataset.id); });
 function renderRelatorio(){
   const d = dadosRelatorio();
   $('#rel-pdf').disabled = $('#rel-xlsx').disabled = !d.linhas.length;
   if(!d.linhas.length){ $('#rel-resultado').innerHTML = '<p class="empty">Nenhum pedido neste período com esses filtros.</p>'; return; }
   const dt = s => new Date(s).toLocaleDateString('pt-BR');
-  $('#rel-resultado').innerHTML = `
+  // Histórico de um cliente: ficha, resumo e a lista de pedidos dele (toque para abrir).
+  const fCli = $('#rel-cli').value, c = fCli && cli(fCli);
+  const hist = c ? (() => {
+    const ps = [...d.peds].sort((a,b) => a.data < b.data ? 1 : -1), tot = ps.reduce((s,p) => s + (Number(p.total) || 0), 0);
+    return `<section class="hist-cli"><h2>Histórico: ${esc(c.nome)}</h2>
+      <p class="meta">${[c.razao, c.cnpj && 'CNPJ ' + c.cnpj, c.cidade].filter(Boolean).map(esc).join(' · ')}</p>
+      <div class="rel-cards" style="margin-bottom:12px">
+        <div class="rel-card"><small>Pedidos</small><strong>${ps.length}</strong></div>
+        <div class="rel-card"><small>Total comprado</small><strong>${brl(tot)}</strong></div>
+        <div class="rel-card"><small>Ticket médio</small><strong>${brl(ps.length ? tot / ps.length : 0)}</strong></div>
+        <div class="rel-card"><small>Último pedido</small><strong>${ps[0] ? dt(ps[0].data) : '—'}</strong></div>
+      </div>
+      <ul class="orders" id="hist-pedidos">${ps.map(cartaoPedido).join('')}</ul></section>`;
+  })() : '';
+  $('#rel-resultado').innerHTML = hist + `
     <p class="meta">${d.filtros.map(esc).join(' · ')}</p>
     <div class="rel-cards">
       <div class="rel-card"><small>Pedidos</small><strong>${d.totais.pedidos}</strong></div>
@@ -2011,12 +2180,14 @@ $('#rel-xlsx').addEventListener('click', async () => {
 
 /* ---------- Pedidos ---------- */
 // Junta os pedidos da planilha com os que ainda só existem neste celular (sem internet ou cancelados antes de enviar).
+// Só os da empresa ativa (o app trabalha com uma empresa por vez).
 function listaPedidos(){
-  if(DEMO) return pedidos;
+  const daEmpresa = p => !empAtiva() || p.empresa === empAtiva();
+  if(DEMO) return pedidos.filter(daEmpresa);
   const meus = p => !sessao || !p.usuario || p.usuario === sessao.usuario;
   const porId = new Map(remotos.map(r => [r.id, r]));
   const locais = pedidos.filter(p => meus(p) && !porId.has(p.id) && (p.sync === 'pendente' || p.sync === 'cancelado' || !remotos.length));
-  return [...remotos, ...locais].sort((a,b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+  return [...remotos, ...locais].filter(daEmpresa).sort((a,b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
 }
 const situacaoDe = p => p.sync === 'cancelado' ? CANCELADO : (p.status || '');
 const CLASSE = {[AGUARDANDO]:'espera', [APROVADO]:'aprov', [ENVIADO]:'env', [FATURADO]:'fat', [ENTREGUE]:'ent', [RECUSADO]:'rec', [CANCELADO]:'canc'};
@@ -2044,7 +2215,11 @@ function renderPedidos(){
   const todos = listaPedidos();
   $('#pedidos-topo').hidden = false;
   $('#btn-atualizar-pedidos').hidden = DEMO;
-  const meusOrc = orcamentos.filter(o => DEMO || !o.usuario || o.usuario === sessao?.usuario);
+  const meusOrc = orcamentos.filter(o => (DEMO || !o.usuario || o.usuario === sessao?.usuario) && (!empAtiva() || o.empresa === empAtiva()));
+  // Busca por cliente (nome, rede, CNPJ) ou número do pedido.
+  const q = norm($('#vendas-busca').value || '').trim(), qNum = soDigitos($('#vendas-busca').value);
+  const bateVenda = p => !q || norm(`${p.clienteNome} ${p.num} ${p.clienteGrupo || ''} ${p.clienteCnpj || cli(p.cliente)?.cnpj || ''}`).includes(q) ||
+    (qNum.length >= 3 && soDigitos(p.clienteCnpj || cli(p.cliente)?.cnpj).includes(qNum));
   $('#filtros').innerHTML = FILTROS.filter(([v]) => !DEMO || v === 'todos' || v === 'orc')
     .map(([v,t]) => `<button class="chip" data-filtro="${esc(v)}" aria-pressed="${filtro===v}">${t}${v === 'orc' && meusOrc.length ? ' (' + meusOrc.length + ')' : ''}</button>`).join('');
   let lista;
@@ -2052,6 +2227,7 @@ function renderPedidos(){
   else if(filtro === 'todos') lista = todos;
   else if(filtro === 'andamento') lista = todos.filter(p => situacaoDe(p) === APROVADO && p.sync !== 'pendente');
   else lista = todos.filter(p => situacaoDe(p) === filtro && p.sync !== 'pendente');
+  lista = lista.filter(bateVenda);
   const ul = $('#lista-pedidos');
   ul.innerHTML = lista.length ? lista.map(cartaoPedido).join('')
     : `<li class="empty">${filtro === 'orc' ? 'Nenhum orçamento salvo. No Novo pedido, use "Salvar como orçamento".' : todos.length ? 'Nenhum pedido nesta situação.' : 'Nenhum pedido ainda. Toque em <b>+ Novo pedido</b> para começar.'}</li>`;
@@ -2075,9 +2251,11 @@ $('#filtros').addEventListener('click', e => {
 });
 $('#lista-pedidos').addEventListener('click', e => { const b = e.target.closest('[data-orc]'); if(b) abrirOrcamento(b.dataset.orc); });
 $('#btn-atualizar-pedidos').addEventListener('click', () => carregarPedidos(true));
+$('#vendas-busca').addEventListener('input', renderPedidos);
 
 function abrirPedido(id){
-  const p = listaPedidos().find(x => x.id === id); if(!p) return;
+  // (pedido antigo que só veio no relatório também abre)
+  const p = listaPedidos().find(x => x.id === id) || (REL?.pedidos || []).find(x => x.id === id); if(!p) return;
   const s = situacaoDe(p), pendente = p.sync === 'pendente';
   const dono = !p.usuario || (sessao && p.usuario === sessao.usuario);
   const podeAprovar = ehAdmin() && s === AGUARDANDO && !pendente;
@@ -2174,7 +2352,7 @@ function renderCatalogo(){
          : 'O catálogo ainda não foi carregado da planilha.';
   $('#btn-atualizar').hidden = DEMO;
   // Por empresa e, dentro dela, por categoria. Cada categoria abre e fecha; a lista só é montada ao abrir.
-  $('#catalogo').innerHTML = (DATA?.empresas || []).map(e => {
+  $('#catalogo').innerHTML = (DATA?.empresas || []).filter(e => !empAtiva() || e.id === empAtiva()).map(e => {
     const ps = prodsDe(e.id);
     if(!ps.length) return `<div class="cat-group"><h2>${esc(e.nome)}</h2><p class="empty">Sem produtos.</p></div>`;
     const cats = categoriasDe(e.id);
@@ -2228,14 +2406,49 @@ window.addEventListener('offline', rede);
 
 function renderTudo(){ renderEmpresas(); renderClientes(); renderCategorias(); renderProdutos(); renderCart(); renderPedidos(); renderCatalogo(); renderLojas(); }
 
+/* ---------- Empresa ativa: pergunta ao abrir o app e depois do login ---------- */
+let precisaEscolher = true;
+function abrirEscolhaEmpresa(){
+  const lista = DATA?.empresas || [];
+  if(!lista.length) return;   // o catálogo ainda não chegou; abre quando chegar
+  const ult = LS.get('empresaAtiva', null);
+  $('#escolha-lista').innerHTML = lista.map(e => {
+    const n = prodsDe(e.id).length, min = Number(e.pedidoMinimo) || 0;
+    return `<button type="button" data-escolher="${esc(e.id)}"${e.id === ult ? ' class="ultima"' : ''}><span><b>${esc(e.nome)}</b>
+      <small>${n} produto${n === 1 ? '' : 's'}${min ? ' · pedido mínimo ' + brl(min) : ''}${e.id === ult ? ' · última usada' : ''}</small></span><span class="seta" aria-hidden="true">›</span></button>`;
+  }).join('');
+  $('#escolha-emp').hidden = false;
+}
+$('#escolha-lista').addEventListener('click', e => { const b = e.target.closest('[data-escolher]'); if(b) escolherEmpresa(b.dataset.escolher); });
+$('#emp-ativa').addEventListener('click', abrirEscolhaEmpresa);
+function escolherEmpresa(id){
+  if(st.empresa && st.empresa !== id && itensAtuais().length &&
+     !confirm(`O pedido em andamento de ${emp(st.empresa)?.nome || st.empresa} será descartado. Trocar de empresa?`)) return;
+  const mudou = st.empresa !== id;
+  LS.set('empresaAtiva', id); precisaEscolher = false;
+  if(mudou){
+    st.empresa = id; st.itens = {}; st.precos = {}; st.base = {}; st.cat = ''; st.busca = ''; st.orcamento = null; st.aberto = null;
+    $('#busca').value = ''; $('#desc-p').value = ''; $('#obs-p').value = '';
+  }
+  $('#escolha-emp').hidden = true;
+  mostrarEmpresa(); renderTudo();
+  if(!$('#v-relatorios').hidden){ prepararRelatorio(); if(REL) renderRelatorio(); }
+  if(mudou){ resumoLojas = {}; carregarLojas(); toast('Trabalhando com ' + emp(id).nome); }
+}
+function mostrarEmpresa(){
+  const e = emp(empAtiva()), b = $('#emp-ativa');
+  b.hidden = !e; if(e) b.textContent = e.nome.split(/\s+/)[0];
+}
+
 /* ---------- Início ---------- */
-mostrarUsuario();
+st.empresa = empAtiva();
+mostrarUsuario(); mostrarEmpresa();
 $('#demo').hidden = !DEMO;
 rede(); renderTudo();
 if(!DEMO){
   if(!sessao) pedirLogin();
-  else { carregarCatalogo(false); sincronizar().then(() => carregarPedidos(false)).then(carregarLojas); }
-}
+  else { abrirEscolhaEmpresa(); carregarCatalogo(false); sincronizar().then(() => carregarPedidos(false)).then(carregarLojas); }
+} else abrirEscolhaEmpresa();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
