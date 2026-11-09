@@ -442,6 +442,17 @@ body{font-variant-numeric:tabular-nums}
 /* Histórico do cliente nos relatórios */
 .hist-cli{background:var(--surface);border-radius:14px;padding:14px;box-shadow:var(--sombra);margin-bottom:18px}
 .hist-cli h2{margin-bottom:4px}
+/* Celular: campos com menos de 16px fazem o iPhone dar zoom ao tocar; e nada pode passar da largura da tela. */
+@media (max-width: 999px){
+  input, select, textarea{font-size:16px!important}
+  body{overflow-x:clip}
+  img, svg, video{max-width:100%}
+}
+/* Entrega (opcional) no resumo */
+.entrega-det{border:1.5px solid var(--line);border-radius:12px;padding:4px 12px;margin:0 0 14px;background:var(--surface)}
+.entrega-det summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--ipe);padding:8px 0}
+.entrega-det .field{margin-bottom:10px}
+.entrega-det input{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;color:var(--ink)}
 /* Ritmo de compra */
 .barras rect{fill:var(--ipe)} .barras rect.zero{fill:var(--line)}
 .tend-up{color:var(--ok);font-weight:600} .tend-down{color:var(--bad);font-weight:600}
@@ -563,6 +574,7 @@ body{font-variant-numeric:tabular-nums}
         <input type="text" id="pag-outro-p" class="pag-outro" placeholder="Digite a forma de pagamento" autocomplete="off" hidden></label>
       <label class="field"><span class="lbl">Observação</span>
         <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
+      <div id="entrega-p"></div>
       <button class="btn sec lote" id="btn-lote-p" type="button" hidden>Fechar para várias filiais da rede…</button>
       <button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
       <button class="btn ghost limpar" id="btn-limpar-p" type="button" hidden>Limpar pedido</button>
@@ -818,7 +830,7 @@ async function carregarCatalogo(avisar){
     return false;
   }
 }
-let sincronizando = false;
+let sincronizando = false, precosMudaram = false;
 async function sincronizar(){
   if(DEMO || !sessao || !navigator.onLine || sincronizando) return;
   sincronizando = true;
@@ -829,11 +841,14 @@ async function sincronizar(){
     try{
       const j = await api({acao:'pedido', pedido:p});
       p.sync = 'ok'; if(j.status) p.status = j.status; LS.set('pedidos', pedidos); enviou = true;
+      if(j.precosNovos) precosMudaram = true;
       if(j.aviso) toast(j.aviso, 5000);
     }
     catch(e){ if(e.login) sessaoCaiu(e.message); break; }
   }
   sincronizando = false;
+  // Preço digitado pelo administrador virou o preço do produto na planilha: traz o catálogo atualizado.
+  if(precosMudaram){ precosMudaram = false; carregarCatalogo(false); }
   if(enviou) await carregarPedidos(false); else renderPedidos();
 }
 
@@ -1392,7 +1407,7 @@ function pagamentoDe(sel, inp){
 function limparPedido(){
   if(!itensAtuais().length) return;
   if(!confirm('Tirar todos os itens deste pedido?')) return;
-  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null;
+  st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.orcamento = null;
   $('#desc-p').value = ''; $('#obs-p').value = '';
   if(!$('#sheet').hidden) fecharSheet();
   renderProdutos(); renderCart();
@@ -1417,6 +1432,7 @@ function renderPainel(its, tot){
   const av = $('#aviso-min-p');
   av.hidden = !(its.length && min && tot < min);
   if(!av.hidden) av.textContent = `Pedido mínimo de ${e.nome}: ${brl(min)}. Faltam ${brl(min - tot)}.` + (ehAdmin() ? ' (Você pode fechar mesmo assim.)' : '');
+  renderEntregaPainel();
   $('#btn-fechar-p').disabled = !its.length;
   $('#btn-fechar-p').innerHTML = its.length ? `<span>Fechar pedido</span><span>${brl(cc.total)}</span>` : 'Fechar pedido';
   $('#btn-lote-p').hidden = !its.length || !temFiliais();
@@ -1544,6 +1560,7 @@ function abrirRevisao(){
       <input type="text" id="pag-outro" class="pag-outro" placeholder="Digite a forma de pagamento" autocomplete="off" hidden></label>
     <label class="field"><span class="lbl">Observação</span>
       <textarea id="obs" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
+    ${entregaHTML('')}
     ${temFiliais() ? '<button class="btn sec lote" id="btn-lote">Fechar para várias filiais da rede…</button>' : ''}
     <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>
     <button class="btn ghost limpar" id="btn-limpar-rev">Limpar pedido</button>
@@ -1583,10 +1600,35 @@ function acertarContador(){
   const maior = remotos.reduce((m, p) => { const x = re.exec(String(p.num)); return x ? Math.max(m, +x[1]) : m; }, 0);
   if(maior > LS.get(chaveNum(), 1000)) LS.set(chaveNum(), maior);
 }
+// Entrega (opcional): data desejada, transportadora e endereço quando for diferente do cadastro.
+// Os campos do resumo (computador) e da revisão (celular) mexem no mesmo st.entrega.
+st.entrega = {data: '', transp: '', endereco: ''};
+function entregaHTML(suf){
+  const e = st.entrega, aberto = st.entregaAberta || e.data || e.transp || e.endereco;
+  return `<details class="entrega-det"${aberto ? ' open' : ''}><summary>Entrega (opcional)${aberto ? ' · preenchida' : ''}</summary>
+    <label class="field"><span class="lbl">Entrega desejada</span><input type="date" class="ent-campo" data-ent="data" value="${esc(e.data)}"></label>
+    <label class="field"><span class="lbl">Transportadora</span><input type="text" class="ent-campo" data-ent="transp" value="${esc(e.transp)}" placeholder="se o frete for por conta do cliente" autocomplete="off"></label>
+    <label class="field"><span class="lbl">Entregar em outro endereço</span><input type="text" class="ent-campo" data-ent="endereco" value="${esc(e.endereco)}" placeholder="deixe vazio para o endereço do cadastro" autocomplete="off"></label>
+  </details>`;
+}
+document.addEventListener('input', e => { const i = e.target.closest('.ent-campo'); if(i) st.entrega[i.dataset.ent] = i.value.trim(); });
+document.addEventListener('toggle', e => { if(e.target.matches?.('.entrega-det')) st.entregaAberta = e.target.open; }, true);
+function renderEntregaPainel(){
+  if(document.activeElement?.closest('#entrega-p')) return;   // não redesenha enquanto digita
+  $('#entrega-p').innerHTML = itensAtuais().length ? entregaHTML('p') : '';
+}
+const limparEntrega = () => { st.entrega = {data: '', transp: '', endereco: ''}; st.entregaAberta = false; };
 // Monta um pedido (com número novo) para um cliente e uma lista de itens.
 function montarPedido(c, its, pag, obs, desc){
   const e = emp(st.empresa);
   if(c && pag) c.pagamento = pag;   // a planilha também guarda: é a "última forma de pagamento" do cliente
+  // Administrador: produto sem preço passa a ter o preço cheio digitado (a planilha faz o mesmo ao receber o pedido).
+  if(ehAdmin() && !DEMO){
+    let mudou = false;
+    its.forEach(i => { const pr = (DATA?.produtos || []).find(x => x.id === i.id);
+      if(pr && !(pr.preco > 0) && (i.tabela > 0 || i.preco > 0)){ pr.preco = Math.round((i.tabela > 0 ? i.tabela : i.preco) * 100) / 100; mudou = true; } });
+    if(mudou) LS.set('catalogo', DATA);
+  }
   const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
   return {
     id: 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
@@ -1595,6 +1637,7 @@ function montarPedido(c, its, pag, obs, desc){
     clienteCnpj: c.cnpj || '', clienteGrupo: grupoDe(c),
     pagamento: pag, obs: (obs || '').trim(), itens: its,
     bruto: cc.bruto, desconto: cc.desc, total: cc.total,
+    entrega: st.entrega.data, transportadora: st.entrega.transp, enderecoEntrega: st.entrega.endereco,
     usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
     status: DEMO ? '' : (ehAdmin() ? APROVADO : AGUARDANDO),
     sync: DEMO ? 'demo' : 'pendente'
@@ -1607,7 +1650,7 @@ function fecharPedido(pag, obs, desc, deOrcamento){
   pedidos.unshift(p); LS.set('pedidos', pedidos);
   // Orçamento que virou pedido sai da lista de orçamentos.
   if(deOrcamento){ orcamentos = orcamentos.filter(o => o.id !== deOrcamento); LS.set('orcamentos', orcamentos); }
-  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   // No celular a janela de revisão já está aberta; no computador ela abre agora com a confirmação.
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
@@ -1672,7 +1715,7 @@ function fecharLote(pag, obs, desc, lista){
   const feitos = lista.map(x => montarPedido(x.c, x.itens, pag, obs, desc));
   pedidos.unshift(...feitos.slice().reverse()); LS.set('pedidos', pedidos);
   if(st.orcamento){ orcamentos = orcamentos.filter(o => o.id !== st.orcamento); LS.set('orcamentos', orcamentos); }
-  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>${feitos.length} pedido${feitos.length > 1 ? 's' : ''} fechado${feitos.length > 1 ? 's' : ''}</h2>
@@ -1698,11 +1741,12 @@ function salvarOrcamento(pag, obs, desc){
     data: new Date().toISOString(), empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
     clienteCnpj: c.cnpj || '', clienteGrupo: grupoDe(c),
     pagamento: pag, obs: (obs || '').trim(), itens: its, bruto: cc.bruto, desconto: cc.desc, total: cc.total,
+    entrega: st.entrega.data, transportadora: st.entrega.transp, enderecoEntrega: st.entrega.endereco,
     usuario: sessao?.usuario || '', representante: nomeAtual()
   };
   if(!antigo) LS.set('ultimoOrc', LS.get('ultimoOrc', 100) + 1);
   orcamentos = [o, ...orcamentos.filter(x => x.id !== o.id)]; LS.set('orcamentos', orcamentos);
-  st.itens = {}; st.precos = {}; st.base = {}; st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
+  st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Orçamento ${esc(o.num)} salvo</h2>
@@ -1714,7 +1758,9 @@ function salvarOrcamento(pag, obs, desc){
 // Carrega itens (de um orçamento ou de um pedido anterior) no Novo pedido.
 function carregarNoPedido(origem, msgOk){
   const ativos = new Map(prodsDe(origem.empresa).map(p => [p.id, p]));
-  st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {}; st.precos = {}; st.base = {};
+  st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {}; st.precos = {}; st.base = {}; limparEntrega();
+  // Orçamento volta com a entrega combinada (repetir pedido não copia data de entrega).
+  if(origem.tipo === 'orcamento') st.entrega = {data: origem.entrega || '', transp: origem.transportadora || '', endereco: origem.enderecoEntrega || ''};
   let fora = 0, abaixo = 0;
   (origem.itens || []).forEach(i => { if(ativos.has(i.id)) st.itens[i.id] = (st.itens[i.id] || 0) + Number(i.q); else fora++; });
   if(cli(origem.cliente)){ $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = origem.cliente; st.trocandoCli = false; }
@@ -2062,6 +2108,9 @@ function texto(p){
   if(p.desconto) t += `\n\nSubtotal: ${brl(p.bruto)}\nDesconto: ${String(p.desconto).replace('.', ',')}%`;
   t += `\n\n*Total: ${brl(p.total)}*\nPagamento: ${p.pagamento}`;
   if(p.obs) t += `\nObs.: ${p.obs}`;
+  if(p.entrega) t += `\nEntrega desejada: ${diaBR(p.entrega)}`;
+  if(p.transportadora) t += `\nTransportadora: ${p.transportadora}`;
+  if(p.enderecoEntrega) t += `\nEntregar em: ${p.enderecoEntrega}`;
   const rep = DATA?.rep || {};
   return t + `\n\nRepresentante: ${p.representante || CFG.REPRESENTANTE}` +
     ([rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).length ? '\n' + [rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join(' · ') : '');
@@ -2562,7 +2611,10 @@ function abrirPedido(id){
   const quando = p.atualizadoEm ? ' em ' + dataBR(p.atualizadoEm) : '';
   const caixa = !DEMO && CLASSE[s] && !pendente ? `<div class="situacao ${CLASSE[s]}"><b>${esc(s)}</b>${
       p.atualizadoPor && s !== AGUARDANDO ? ` por ${esc(p.atualizadoPor)}${quando}` : ''}${
-      p.nf ? `<br>Nota fiscal: <b>${esc(p.nf)}</b>` : ''}${
+      p.nf ? `<br>Nota fiscal: <b>${esc(p.nf)}</b>${p.dataFat ? ' de ' + esc(diaBR(p.dataFat)) : ''}` : ''}${
+      p.valorFat ? `<br>Valor faturado: <b>${brl(p.valorFat)}</b>${Math.abs(p.valorFat - p.total) >= 0.01 ? ` <span class="${p.valorFat < p.total ? 'tend-down' : 'tend-up'}">(${p.valorFat < p.total ? 'faltou' : 'a mais'} ${brl(Math.abs(p.valorFat - p.total))} do pedido)</span>` : ' (igual ao pedido)'}` : ''}${
+      p.chaveNf ? `<br><small>Chave: ${esc(p.chaveNf.replace(/(\d{4})(?=\d)/g, '$1 '))}</small> <button class="mini" type="button" id="ad-copiar-chave">Copiar</button>` : ''}${
+      p.arquivoNf ? `<br><a href="${esc(p.arquivoNf)}" target="_blank" rel="noopener">Abrir o arquivo da NF</a>` : ''}${
       p.motivo ? `<br>Motivo: ${esc(p.motivo)}` : ''}</div>` : '';
   // Etapas depois da aprovação (só administrador): enviar à marca, faturar (com NF), entregar.
   const temEmail = !!emp(p.empresa)?.temEmail;
@@ -2570,7 +2622,8 @@ function abrirPedido(id){
     ${s === APROVADO && temEmail ? '<button class="btn aprovar" id="ad-email">Enviar à marca por e-mail</button>' : ''}
     ${s === APROVADO ? `<button class="btn sec" id="ad-enviado">Marcar como enviado${temEmail ? ' (sem e-mail)' : ''}</button>` : ''}
     ${s === ENVIADO && temEmail ? '<button class="btn sec" id="ad-reenviar">Reenviar e-mail à marca</button>' : ''}
-    ${[APROVADO, ENVIADO].includes(s) ? `<div class="linha"><input id="ad-nf" placeholder="Nº da nota fiscal" inputmode="numeric" autocomplete="off"><button class="btn sec" id="ad-faturar">Faturado</button></div>` : ''}
+    ${[APROVADO, ENVIADO].includes(s) ? '<button class="btn sec" id="ad-faturar">Registrar faturamento (NF)</button>' : ''}
+    ${s === FATURADO || s === ENTREGUE ? '<button class="btn ghost" id="ad-faturar">Corrigir dados da NF</button>' : ''}
     ${[ENVIADO, FATURADO].includes(s) ? '<button class="btn sec" id="ad-entregue">Marcar como entregue</button>' : ''}
     ${s === APROVADO && !temEmail ? `<p class="meta" style="margin:0">A marca ${esc(p.empresaNome)} está sem e-mail na aba Empresas: envie o PDF pelo WhatsApp e marque como enviado.</p>` : ''}
   </div>`;
@@ -2580,7 +2633,9 @@ function abrirPedido(id){
     <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}${p.clienteCnpj ? `<br>CNPJ ${esc(p.clienteCnpj)}` : ''}${p.clienteGrupo ? ` · 🏢 ${esc(p.clienteGrupo)}` : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
     ${resumoHTML(p.itens)}
     ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
-    <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
+    <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${
+      p.entrega ? `<br>Entrega desejada: <b>${esc(diaBR(p.entrega))}</b>` : ''}${p.transportadora ? `<br>Transportadora: ${esc(p.transportadora)}` : ''}${
+      p.enderecoEntrega ? `<br>Entregar em: ${esc(p.enderecoEntrega)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
     ${etapas}
     ${podeAprovar ? `<div class="btns">
         <button class="btn aprovar" id="btn-aprovar">Aprovar pedido</button>
@@ -2604,10 +2659,47 @@ function abrirPedido(id){
   $('#ad-enviado')?.addEventListener('click', () => mudarSituacao(p, ENVIADO));
   $('#ad-reenviar')?.addEventListener('click', () => mudarSituacao(p, 'reenviar'));
   $('#ad-entregue')?.addEventListener('click', () => mudarSituacao(p, ENTREGUE));
-  $('#ad-faturar')?.addEventListener('click', () => {
-    const nf = $('#ad-nf').value.trim();
-    if(!nf){ toast('Digite o número da nota fiscal'); $('#ad-nf').focus(); return; }
-    mudarSituacao(p, FATURADO, '', {nf});
+  $('#ad-faturar')?.addEventListener('click', () => abrirFaturamento(p));
+  $('#ad-copiar-chave')?.addEventListener('click', async () => { try{ await navigator.clipboard.writeText(p.chaveNf); toast('Chave copiada'); }catch(e){ toast('Não deu para copiar'); } });
+}
+// Faturamento: nº da NF, chave de acesso, data, valor faturado e o arquivo (PDF ou XML) que a marca mandou.
+// O arquivo fica numa pasta do Drive da planilha; dá para mandar a NF por e-mail para o cliente.
+function abrirFaturamento(p){
+  const c = cli(p.cliente) || {}, hoje = isoDia(new Date());
+  abrirSheet(`
+    <div class="sheet-head"><h2>Faturamento · ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta"><b>${esc(p.clienteNome)}</b> · ${esc(p.empresaNome)} · pedido de ${brl(p.total)}</p>
+    <form class="form-loja" id="form-fat" novalidate>
+      <div class="duas">
+        <label class="field"><span class="lbl">Nº da NF *</span><input id="ft-nf" inputmode="numeric" value="${esc(p.nf || '')}" autocomplete="off"></label>
+        <label class="field"><span class="lbl">Data do faturamento</span><input id="ft-data" type="date" value="${esc(p.dataFat || hoje)}"></label>
+      </div>
+      <label class="field"><span class="lbl">Valor faturado (R$)</span><input id="ft-valor" inputmode="decimal" value="${numFmt(p.valorFat || p.total)}" autocomplete="off">
+        <span class="cnpj-info">Se a marca faturou menos (falta de estoque) ou mais, coloque o valor da nota.</span></label>
+      <label class="field"><span class="lbl">Chave de acesso <small>(44 números, opcional)</small></span><input id="ft-chave" inputmode="numeric" value="${esc(p.chaveNf || '')}" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Arquivo da NF <small>(PDF ou XML que a marca mandou, opcional)</small></span>
+        <input id="ft-arq" type="file" accept=".pdf,.xml,application/pdf,text/xml,application/xml">
+        ${p.arquivoNf ? '<span class="cnpj-info">Já tem um arquivo guardado; escolher outro substitui.</span>' : ''}</label>
+      ${c.emailNotas ? `<label class="field" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ft-enviar" style="width:20px;height:20px">
+        <span>Enviar o arquivo da NF por e-mail para <b>${esc(c.emailNotas)}</b></span></label>` : '<p class="dica-preco">Cadastre o "E-mail para envio de notas" do cliente para poder mandar a NF por e-mail.</p>'}
+      <button class="btn primary" id="ft-salvar" type="submit">Salvar faturamento</button>
+    </form>`);
+  $('#ft-arq').addEventListener('change', () => { if($('#ft-enviar') && $('#ft-arq').files[0]) $('#ft-enviar').checked = true; });
+  $('#form-fat').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const nf = $('#ft-nf').value.trim(), chave = soDigitos($('#ft-chave').value), valor = numBR($('#ft-valor').value || '0');
+    if(!nf){ toast('Digite o número da NF'); $('#ft-nf').focus(); return; }
+    if(chave && chave.length !== 44){ toast('A chave de acesso tem 44 números (tem ' + chave.length + ').'); $('#ft-chave').focus(); return; }
+    if(isNaN(valor) || valor < 0){ toast('Valor faturado inválido'); return; }
+    const extra = {nf, chave, dataFat: $('#ft-data').value, valorFat: valor, enviarCliente: !!$('#ft-enviar')?.checked};
+    const f = $('#ft-arq').files[0];
+    if(f){
+      if(f.size > 8 * 1024 * 1024){ toast('Arquivo grande demais (máximo 8 MB).'); return; }
+      const b64 = await new Promise((ok, erro) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = erro; r.readAsDataURL(f); });
+      extra.arquivo = {nome: f.name, tipo: f.type || (/\.xml$/i.test(f.name) ? 'text/xml' : 'application/pdf'), base64: b64};
+    }else if(extra.enviarCliente && !p.arquivoNf){ toast('Escolha o arquivo da NF para mandar ao cliente.'); return; }
+    $('#ft-salvar').textContent = 'Salvando…';
+    mudarSituacao(p, FATURADO, '', extra);
   });
 }
 ['#lista-pedidos','#lista-aprovar'].forEach(sel => $(sel).addEventListener('click', e => {
@@ -2627,7 +2719,8 @@ async function mudarSituacao(p, nova, motivo, extra){
   try{
     const j = await api(Object.assign({acao:'situacao', id:p.id, nova, motivo: motivo || ''}, extra || {}));
     const r = remotos.find(x => x.id === p.id);
-    if(r) Object.assign(r, {status:j.status, atualizadoPor:j.atualizadoPor, atualizadoEm:j.atualizadoEm, motivo:j.motivo}, j.nf ? {nf:j.nf} : {});
+    if(r) Object.assign(r, {status:j.status, atualizadoPor:j.atualizadoPor, atualizadoEm:j.atualizadoEm, motivo:j.motivo}, j.nf ? {nf:j.nf} : {},
+      j.fat || {});   // faturamento: chave, data, valor e link do arquivo da NF
     LS.set('pedidosServidor', {usuario: sessao.usuario, lista: remotos});
     const local = pedidos.find(x => x.id === p.id);
     if(local){ local.status = j.status; LS.set('pedidos', pedidos); }
@@ -2724,7 +2817,7 @@ function escolherEmpresa(id){
   const mudou = st.empresa !== id;
   LS.set('empresaAtiva', id); precisaEscolher = false;
   if(mudou){
-    st.empresa = id; st.itens = {}; st.precos = {}; st.base = {}; st.cat = ''; st.busca = ''; st.orcamento = null; st.aberto = null;
+    st.empresa = id; st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.cat = ''; st.busca = ''; st.orcamento = null; st.aberto = null;
     $('#busca').value = ''; $('#desc-p').value = ''; $('#obs-p').value = '';
   }
   $('#escolha-emp').hidden = true;
