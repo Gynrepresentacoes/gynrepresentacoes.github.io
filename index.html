@@ -417,13 +417,11 @@ body{font-variant-numeric:tabular-nums}
 .emp-ativa[hidden]{display:none}
 .escolha{z-index:39;overflow:auto}
 .escolha-box{max-width:420px}
-.escolha-box h1{font-size:26px}
-.escolha-lista{display:grid;gap:10px;margin-top:6px}
-.escolha-lista button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:16px;padding:16px 18px;cursor:pointer}
+.escolha-box h1{font-size:26px;margin-bottom:22px}
+.escolha-lista{display:grid;gap:12px}
+.escolha-lista button{display:block;width:100%;text-align:center;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:16px;
+  padding:18px;cursor:pointer;font-family:"Barlow Semi Condensed","Barlow",sans-serif;font-weight:700;font-size:22px;letter-spacing:.2px;transition:background .15s,border-color .15s}
 .escolha-lista button:hover,.escolha-lista button.ultima{border-color:var(--ipe);background:rgba(47,123,255,.18)}
-.escolha-lista b{display:block;font-family:"Barlow Semi Condensed","Barlow",sans-serif;font-size:22px}
-.escolha-lista small{display:block;opacity:.75;font-size:13px}
-.escolha-lista .seta{font-size:22px;opacity:.7}
 @media (max-width: 420px){ .brand-txt{display:none} }
 /* Computador mais estreito: abre espaço para o botão da empresa ao lado das abas do topo. */
 @media (min-width: 1000px) and (max-width: 1399px){ .brand-txt{display:none} }
@@ -676,7 +674,6 @@ body{font-variant-numeric:tabular-nums}
 <div id="escolha-emp" class="pin escolha" hidden><div class="pin-box escolha-box">
   <img src="logo.png" alt="GYN Representações">
   <h1>Com qual empresa vamos trabalhar?</h1>
-  <p>O app passa a mostrar só a empresa escolhida: produtos, categorias, vendas e relatórios. Para trocar depois, toque no nome dela lá em cima.</p>
   <div class="escolha-lista" id="escolha-lista"></div>
 </div></div>
 
@@ -2412,11 +2409,9 @@ function abrirEscolhaEmpresa(){
   const lista = DATA?.empresas || [];
   if(!lista.length) return;   // o catálogo ainda não chegou; abre quando chegar
   const ult = LS.get('empresaAtiva', null);
-  $('#escolha-lista').innerHTML = lista.map(e => {
-    const n = prodsDe(e.id).length, min = Number(e.pedidoMinimo) || 0;
-    return `<button type="button" data-escolher="${esc(e.id)}"${e.id === ult ? ' class="ultima"' : ''}><span><b>${esc(e.nome)}</b>
-      <small>${n} produto${n === 1 ? '' : 's'}${min ? ' · pedido mínimo ' + brl(min) : ''}${e.id === ult ? ' · última usada' : ''}</small></span><span class="seta" aria-hidden="true">›</span></button>`;
-  }).join('');
+  // Só o nome da marca, centralizado. A última usada fica com a borda azul.
+  $('#escolha-lista').innerHTML = lista.map(e =>
+    `<button type="button" data-escolher="${esc(e.id)}"${e.id === ult ? ' class="ultima" aria-current="true"' : ''}>${esc(e.nome)}</button>`).join('');
   $('#escolha-emp').hidden = false;
 }
 $('#escolha-lista').addEventListener('click', e => { const b = e.target.closest('[data-escolher]'); if(b) escolherEmpresa(b.dataset.escolher); });
