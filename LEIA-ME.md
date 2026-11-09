@@ -161,7 +161,15 @@ Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da t
 - **Preço de venda:** no resumo do pedido (ao lado, no computador; em "Revisar pedido", no celular), cada item tem um campo com o preço, já preenchido com o da tabela. Digite o valor que vai vender. O item com preço mudado fica destacado e mostra o preço de tabela para comparar. O vendedor não pode ficar abaixo da tabela menos o "Desconto máx %" da marca; o administrador não tem limite. O preço digitado vai para o total, o PDF, o WhatsApp e a planilha (aba Itens).
 - **Desconto em um item só:** ao lado do preço, o campo **desc. %** dá desconto só naquele item (ex.: 10 = 10% a menos que a tabela). Preço e % andam juntos: mudando um, o outro se ajusta. O desconto do pedido (campo Desconto %) continua valendo para o pedido todo. Para o vendedor, o desconto do item somado ao do pedido não pode passar do "Desconto máx %" da marca (ou da rede); o app avisa antes de fechar. Produto sem preço na planilha (R$ 0,00): digite no campo R$ o preço cheio; o desc. % daquele item é calculado sobre ele (aparece "com desconto: R$ X cada").
 - **Pagamento "Outro…":** a última opção da lista abre um campo para digitar a forma de pagamento.
-- **Limpar pedido:** tira todos os itens de uma vez (no resumo do computador, na barra do carrinho e na revisão do celular).
+- **Limpar pedido:** tira todos os itens de uma vez (no resumo do computador, no ícone de lixeira da barra do carrinho e na revisão do celular).
+
+## Aparência
+
+- **Novo pedido:** a faixa no topo mostra a etapa (Empresa → Cliente → Produtos → Revisar). As marcas são cartões com o pedido mínimo. O cliente escolhido vira um cartão; para mudar, toque em **Trocar**. As categorias são botões acima da lista.
+- **Resumo / Revisar pedido:** lista tipo nota. Toque num item para abrir os campos de preço e desconto só dele. O botão **Fechar pedido** fica fixo embaixo, já com o total.
+- **Cores da situação:** amarelo aguardando, azul aprovado/enviado, verde faturado/entregue, vermelho recusado, roxo orçamento (barra na lateral de cada pedido).
+- **Botão "+ Novo pedido":** fica flutuando no canto de baixo nas outras telas.
+- **Tema claro ou escuro:** toque no seu nome (lá em cima) e escolha **Automático**, **Claro** ou **Escuro**. Cada aparelho guarda a sua escolha.
 
 ## 4. Instalar no celular do André
 
@@ -178,7 +186,7 @@ O ícone aparece junto dos outros apps. Na primeira vez é preciso internet; dep
 - **Sem internet:** o pedido é fechado normalmente e fica marcado como **Aguardando internet**. Quando o sinal volta, ele vai para a planilha sozinho e passa a **Na planilha**. O mesmo pedido nunca entra duas vezes.
 - **Enviar para a empresa:** no pedido, **Enviar no WhatsApp**, **Abrir ou imprimir PDF**, **Baixar ou enviar PDF** (no celular abre o menu de compartilhar, dá para mandar o PDF direto no WhatsApp) ou **Copiar pedido**.
 - **Produto que saiu de linha:** na planilha, coloque **Não** na coluna Ativo.
-- **Categorias:** a coluna **Categoria** da aba Produtos agrupa os produtos no app (seletor de categoria no Novo pedido e seções no Catálogo). Pode criar categorias novas à vontade: basta escrever o nome.
+- **Categorias:** a coluna **Categoria** da aba Produtos agrupa os produtos no app (botões de categoria no Novo pedido e seções no Catálogo). Pode criar categorias novas à vontade: basta escrever o nome.
 - **Busca:** acha o produto se todas as palavras digitadas aparecerem no nome, código ou categoria, em qualquer ordem. Sem empresa escolhida, busca nas três; ao adicionar um item, a empresa é escolhida sozinha.
 
 ## Se mudar o Code.gs depois
