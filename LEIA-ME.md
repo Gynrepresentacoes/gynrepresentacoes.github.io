@@ -163,6 +163,23 @@ Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da t
 - **Pagamento "Outro…":** a última opção da lista abre um campo para digitar a forma de pagamento.
 - **Limpar pedido:** tira todos os itens de uma vez (no resumo do computador, no ícone de lixeira da barra do carrinho e na revisão do celular).
 
+## Empresa de trabalho, Vendas e histórico
+
+- **Ao abrir o app (e depois do login)** ele pergunta **com qual empresa vamos trabalhar** (JFA, Permak ou Unlike). A última usada vem destacada. Daí em diante tudo mostra só aquela empresa: produtos, categorias, vendas, aprovações, lojas paradas, catálogo e relatórios.
+- **Trocar de empresa:** toque no nome dela no topo. Se houver um pedido em andamento, o app pergunta antes de descartá-lo.
+- **Vendas** (antiga aba Pedidos): os pedidos da empresa ativa, com busca por cliente, CNPJ ou número.
+- **Histórico do cliente:** em **Relatórios**, escolha o **Cliente (histórico)** e o período (o atalho **Tudo** pega desde o início). Aparece a ficha, total comprado, ticket médio, último pedido e a lista de pedidos. Atalho: abra a loja e toque em **Ver histórico completo** (administrador).
+
+## Cadastro do cliente
+
+Campos: **CNPJ/CPF**, **Nome fantasia**, **Razão social**, **Inscrição estadual**, Rede, **Endereço**, Cidade/UF, **Contato**, Telefone, **E-mail de compra**, **E-mail financeiro**, **E-mail para envio de notas**, **Forma de pagamento**, **Prazo**, **Frete** e **Observação**.
+
+- Ao digitar os 14 números do CNPJ, o app consulta a Receita (serviço público BrasilAPI) e preenche razão social, nome fantasia, endereço, cidade e telefone. Se a situação na Receita não for "ATIVA", ele avisa. A inscrição estadual não vem nessa consulta: digite.
+- A **forma de pagamento** se atualiza sozinha com a última usada nos pedidos do cliente, e já vem escolhida no próximo pedido.
+- **Editar cadastro:** abra a loja (aba Lojas) e toque em **Editar cadastro** (administrador ou quem cadastrou).
+- O e-mail que vai para a marca leva os dados do cliente: razão social, CNPJ, IE, endereço, contato, e-mails, prazo, frete e observação.
+- Na planilha, as colunas novas da aba Clientes são criadas sozinhas (ou pelo menu **Pedidos > Preparar colunas novas**).
+
 ## Aparência
 
 - **Novo pedido:** a faixa no topo mostra a etapa (Empresa → Cliente → Produtos → Revisar). As marcas são cartões com o pedido mínimo. O cliente escolhido vira um cartão; para mudar, toque em **Trocar**. As categorias são botões acima da lista.
