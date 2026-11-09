@@ -57,28 +57,59 @@
     var repTxt = [rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join('  |  ');
     if (repTxt) { doc.setFontSize(8.5); doc.text(limpa(repTxt), W - M, 26, { align: 'right' }); }
 
-    // Dados do pedido
-    var y = 44;
-    function campo(rot, val, x, yy, larg) {
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor.apply(doc, cinza);
-      doc.text(rot, x, yy);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor.apply(doc, tinta);
-      var linhas = doc.splitTextToSize(String(val || ''), larg);
-      doc.text(linhas, x, yy + 5.5);
-      return linhas.length;
+    // Dois quadros: CLIENTE (para quem é o pedido / a nota) e PEDIDO (marca, para onde foi, condições).
+    var y = 40;
+    var c = p0.cli || {};
+    var L = function (v) { return limpa(v == null ? '' : v); };
+    // linha: [rótulo, valor, negrito?]; sem rótulo = destaque (nome).
+    function quadro(x, w, titulo, linhas) {
+      var itens = [], alt = 9;
+      linhas.forEach(function (ln) {
+        if (!ln || !ln[1]) return;
+        var destaque = !ln[0];
+        doc.setFont('helvetica', destaque || ln[2] ? 'bold' : 'normal'); doc.setFontSize(destaque ? 12 : 9.5);
+        var txt = doc.splitTextToSize((ln[0] ? ln[0] + ': ' : '') + L(ln[1]), w - 8);
+        var h = txt.length * (destaque ? 5.6 : 4.4) + (destaque ? 1 : 0.6);
+        itens.push({ txt: txt, destaque: destaque, neg: ln[2], h: h }); alt += h;
+      });
+      return { desenhar: function (altura) {
+        doc.setFillColor(243, 246, 252); doc.roundedRect(x, y, w, altura, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, azul);
+        doc.text(titulo, x + 4, y + 5.5);
+        var yy = y + 11;
+        itens.forEach(function (it) {
+          doc.setFont('helvetica', it.destaque || it.neg ? 'bold' : 'normal'); doc.setFontSize(it.destaque ? 12 : 9.5);
+          doc.setTextColor.apply(doc, it.destaque || it.neg ? tinta : cinza);
+          doc.text(it.txt, x + 4, yy); yy += it.h;
+        });
+      }, altura: alt + 2 };
     }
-    var n1 = campo('Empresa', p.empresaNome, M, y, 85);
-    var n2 = campo('Cliente', p.clienteNome + (p.clienteCidade ? ' (' + p.clienteCidade + ')' : ''), 110, y, 85);
-    // CNPJ do cliente (importante quando a rede tem várias filiais: a nota sai para este CNPJ).
-    if (p.clienteCnpj) {
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor.apply(doc, cinza);
-      doc.text('CNPJ ' + limpa(p.clienteCnpj) + (p.clienteGrupo ? ' - ' + (/^rede\b/i.test(p.clienteGrupo) ? '' : 'rede ') + limpa(p.clienteGrupo) : ''), 110, y + 5.5 + n2 * 5);
-      n2 += 1;
-    }
-    y += 8 + Math.max(n1, n2) * 5.5;
-    campo('Pagamento', p.pagamento, M, y, 85);
-    campo('Itens', p.itens.length + (p.itens.length === 1 ? ' produto' : ' produtos'), 110, y, 85);
-    y += 16;
+    var enviado = ['Enviado ao fornecedor', 'Faturado', 'Entregue'].indexOf(p0.status) >= 0;
+    var emailsMarca = (p0.marcaEmail || []).join(', ');
+    var unidades = p.itens.reduce(function (s, i) { return s + (Number(i.q) || 0); }, 0);
+    var qc = quadro(M, 88, 'CLIENTE', [
+      ['', p.clienteNome],
+      ['Razão social', c.razao && L(c.razao) !== p.clienteNome ? c.razao : ''],
+      ['CNPJ', (p.clienteCnpj || c.cnpj || '') + (c.ie ? '   IE ' + c.ie : ''), true],
+      ['Endereço', [c.endereco, c.cidade || p.clienteCidade].filter(Boolean).join(' - ')],
+      ['Contato', [c.contato, c.telefone].filter(Boolean).join(' - ')],
+      ['E-mail', c.emailCompra],
+      ['Enviar NF para', c.emailNotas],
+      ['Rede', p.clienteGrupo || c.grupo]
+    ]);
+    var qp = quadro(M + 92, 88, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', [
+      ['', p.empresaNome],
+      [enviado ? 'Enviado por e-mail para' : 'E-mail da marca', emailsMarca, true],
+      ['Pagamento', p.pagamento],
+      ['Prazo', c.prazo],
+      ['Frete', c.frete],
+      ['Itens', p.itens.length + (p.itens.length === 1 ? ' produto' : ' produtos') + ', ' + unidades + (unidades === 1 ? ' unidade' : ' unidades')],
+      ['Situação', tipo === 'Orçamento' ? '' : (p0.status || '')],
+      ['Vendedor', representante]
+    ]);
+    var hq = Math.max(qc.altura, qp.altura);
+    qc.desenhar(hq); qp.desenhar(hq);
+    y += hq + 12;
 
     // Tabela
     var col = { q: 27, prod: 32, un: 120, preco: 165, sub: W - M };
