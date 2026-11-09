@@ -16,7 +16,7 @@ Sem configurar nada, o app já roda em **modo demonstração**, com produtos de 
 1. Entre em github.com e clique em **New repository**. Nome sugerido: `pedidos-andre`. Deixe como **Public** (o GitHub Pages grátis exige repositório público).
 2. Na página do repositório, clique em **Add file > Upload files** e arraste todos os arquivos, **menos** o `Code.gs` e a planilha. Clique em **Commit changes**.
 3. Vá em **Settings > Pages**. Em **Branch**, escolha `main` e a pasta `/ (root)`. Clique em **Save**.
-4. Em um ou dois minutos aparece o link, no formato `https://SEU-USUARIO.github.io/pedidos-andre/`.
+4. Em um ou dois minutos aparece o link. O app da GYN fica em **https://gynrepresentacoes.github.io/** (o repositório se chama `gynrepresentacoes.github.io`, por isso o endereço não tem nada depois da barra).
 
 Pronto: o app já abre em modo demonstração.
 
