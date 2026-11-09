@@ -170,6 +170,17 @@ Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da t
 - **Vendas** (antiga aba Pedidos): os pedidos da empresa ativa, com busca por cliente, CNPJ ou número.
 - **Histórico do cliente:** em **Relatórios**, escolha o **Cliente (histórico)** e o período (o atalho **Tudo** pega desde o início). Aparece a ficha, total comprado, ticket médio, último pedido e a lista de pedidos. Atalho: abra a loja e toque em **Ver histórico completo** (administrador).
 
+## Perfil Criador, dados da representação e e-mail de envio
+
+- **Perfil Criador** (coluna Perfil da aba Usuarios = `Criador`): tem tudo do Administrador e, só ele, a tela **Configurações do app** (toque no seu nome lá em cima):
+  - **Empresas:** editar e-mail dos pedidos, comissão, pedido mínimo, desconto máximo e formas de pagamento; **+ Nova empresa** (o código dela aparece para usar na aba Produtos).
+  - **Usuários:** criar, editar nome, perfil, e-mail, telefone, comissão, trocar a senha e tirar o acesso. Você não consegue tirar o seu próprio acesso de Criador.
+  - **E-mail de envio:** de qual e-mail saem os pedidos e avisos (veja abaixo).
+  - Menu da planilha **Pedidos > Proteger aba Empresas**: só o dono da planilha edita a aba.
+- **Meus dados e da representação** (todos têm "Meus dados"; o administrador também a representação): seu e-mail (recebe os avisos) e telefone; **CNPJ** (com consulta), nome, **e-mail** e **contato/telefone** da representação. Esses dados aparecem no PDF do pedido, no WhatsApp e no e-mail para a marca, que responde para o e-mail da representação.
+- **Enviar os e-mails pelo e-mail do André:** no Gmail da conta dona da planilha (nunnezfreela@gmail.com), **Configurações > Contas e importação > Enviar e-mail como > Adicionar outro endereço de e-mail**, coloque o e-mail do André e confirme o código que chega para ele. Depois, em **Configurações do app > E-mail de envio**, digite esse e-mail e salve. Se não estiver liberado, o app avisa e continua enviando pela conta da planilha.
+- Ao colar o Code.gs novo, o Google pede autorização de novo (agora inclui o Gmail): **Avançado > Acessar > Permitir**.
+
 ## Ritmo de compra do cliente
 
 Mostra se o cliente está comprando como sempre, esfriando ou parado (só da empresa escolhida ao entrar).
