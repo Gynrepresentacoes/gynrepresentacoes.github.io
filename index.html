@@ -804,9 +804,9 @@ async function carregarCatalogo(avisar){
   if(DEMO) return true;
   try{
     const j = await api({acao:'catalogo'});
-    DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes, grupos:j.grupos || []};
+    DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes, grupos:j.grupos || [], rep: j.rep || {}};
     LS.set('catalogo', DATA); LS.set('catalogoEm', new Date().toISOString());
-    if(j.voce && sessao){ sessao.nome = j.voce.nome; sessao.perfil = j.voce.perfil || 'vendedor'; LS.set('sessao', sessao); mostrarUsuario(); }
+    if(j.voce && sessao){ sessao.nome = j.voce.nome; sessao.perfil = j.voce.perfil || 'vendedor'; sessao.criador = !!j.voce.criador; sessao.email = j.voce.email || ''; sessao.telefone = j.voce.telefone || ''; LS.set('sessao', sessao); mostrarUsuario(); }
     if(!st.empresa) st.empresa = empAtiva();
     mostrarEmpresa(); renderTudo(); if(avisar) toast('Catálogo atualizado');
     // Primeira vez (ou depois do login): pergunta a empresa assim que o catálogo chega.
@@ -885,7 +885,7 @@ async function entrar(ev){
   try{
     const j = await api({acao:'login', usuario, senha});
     const outro = !sessao || sessao.usuario !== j.usuario;
-    sessao = {token:j.token, usuario:j.usuario, nome:j.nome, perfil:j.perfil || 'vendedor'}; LS.set('sessao', sessao);
+    sessao = {token:j.token, usuario:j.usuario, nome:j.nome, perfil:j.perfil || 'vendedor', criador: !!j.criador}; LS.set('sessao', sessao);
     if(outro){ remotos = []; LS.set('pedidosServidor', null); }
     $('#login-senha').value = ''; $('#pin-erro').textContent = ''; $('#pin').hidden = true;
     mostrarUsuario(); toast('Olá, ' + j.nome);
@@ -905,13 +905,19 @@ function abrirConta(){
   const pend = pedidos.filter(p => p.sync === 'pendente' && (!p.usuario || p.usuario === sessao.usuario)).length;
   abrirSheet(`
     <div class="sheet-head"><h2>Sua conta</h2><button class="x" data-close aria-label="Fechar">×</button></div>
-    <p class="meta">Conectado como <b>${esc(sessao.nome)}</b><br>Usuário: ${esc(sessao.usuario)}<br>Perfil: ${ehAdmin() ? 'Administrador' : 'Vendedor'}</p>
+    <p class="meta">Conectado como <b>${esc(sessao.nome)}</b><br>Usuário: ${esc(sessao.usuario)}<br>Perfil: ${sessao.criador ? 'Criador' : ehAdmin() ? 'Administrador' : 'Vendedor'}</p>
+    <div class="btns" style="margin:0 0 16px">
+      ${sessao.criador ? '<button class="btn primary" id="btn-config-criador">Configurações do app (Criador)</button>' : ''}
+      <button class="btn sec" id="btn-meus-dados">${ehAdmin() ? 'Meus dados e da representação' : 'Meus dados'}</button>
+    </div>
     <span class="lbl">Aparência</span>
     <div class="tema-op" role="group" aria-label="Tema">${[['auto','Automático'],['light','☀ Claro'],['dark','☾ Escuro']].map(([v,t]) =>
       `<button type="button" data-tema="${v}" aria-pressed="${(LS.get('tema', 'auto')) === v}">${t}</button>`).join('')}</div>
     <p class="dica-preco" style="margin:0 0 4px">Automático segue o modo claro/escuro do celular.</p>
     ${pend ? `<p class="note">Você tem ${pend} pedido${pend > 1 ? 's' : ''} aguardando internet. Eles serão enviados quando você entrar de novo.</p>` : ''}
     <div class="btns"><button class="btn sec" id="btn-sair">Sair</button></div>`);
+  $('#btn-config-criador')?.addEventListener('click', abrirConfigCriador);
+  $('#btn-meus-dados').addEventListener('click', abrirMeusDados);
   document.querySelector('#sheet-body .tema-op').addEventListener('click', e => {
     const b = e.target.closest('[data-tema]'); if(!b) return;
     const t = b.dataset.tema; LS.set('tema', t);
@@ -926,6 +932,173 @@ function abrirConta(){
   });
 }
 $('#rep').addEventListener('click', abrirConta);
+
+/* ---------- Só o Criador: empresas e e-mail de envio ---------- */
+async function abrirConfigCriador(){
+  if(!navigator.onLine){ toast('Sem internet.'); return; }
+  abrirSheet('<div class="sheet-head"><h2>Configurações</h2><button class="x" data-close aria-label="Fechar">×</button></div><p class="meta">Carregando…</p>');
+  let cfg, us;
+  try{ [cfg, us] = await Promise.all([api({acao:'config'}), api({acao:'usuarios'})]); }
+  catch(e){ if(e.login) return sessaoCaiu(e.message); fecharSheet(); toast(e.message.includes('Ação desconhecida') ? 'Cole o Code.gs novo na planilha para usar esta tela.' : e.message); return; }
+  const nr = n => n ? String(n).replace('.', ',') : '';
+  const PERFIS = {criador: 'Criador', admin: 'Administrador', vendedor: 'Vendedor'};
+  usuariosCache = us.usuarios;
+  abrirSheet(`
+    <div class="sheet-head"><h2>Configurações</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="note">Só você (Criador) vê e muda esta tela.</p>
+    <h2 class="sub-h">Empresas</h2>
+    <ul class="orders">${cfg.empresas.map(e => `<li><button class="order" data-emp-edit="${esc(e.id)}">
+      <span class="num">${esc(e.id)}${e.email.length ? ' · ' + esc(e.email.join(', ')) : ' · <b style="color:var(--bad)">sem e-mail</b>'}</span>
+      <span class="cli">${esc(e.nome)}</span>
+      <span class="emp">${[e.comissao && 'comissão ' + nr(e.comissao) + '%', e.pedidoMinimo && 'mínimo ' + brl(e.pedidoMinimo), e.descontoMax && 'desconto até ' + nr(e.descontoMax) + '%'].filter(Boolean).join(' · ') || 'sem regras'}</span>
+      <span class="tot">Editar ›</span></button></li>`).join('')}</ul>
+    <div class="btns"><button class="btn sec" id="cfg-nova">+ Nova empresa</button></div>
+    <h2 class="sub-h" style="margin-top:22px">Usuários</h2>
+    <ul class="orders">${us.usuarios.map(u => `<li><button class="order" data-usu-edit="${esc(u.usuario)}">
+      <span class="num">${esc(u.usuario)}${u.email ? ' · ' + esc(u.email) : ''}</span>
+      <span class="cli">${esc(u.nome)}</span>
+      <span class="emp">${PERFIS[u.perfil] || 'Vendedor'}${u.comissao ? ' · comissão ' + nr(u.comissao) + '%' : ''}</span>
+      ${u.ativo ? '' : '<span class="badge canc">Sem acesso</span>'}
+      <span class="tot">Editar ›</span></button></li>`).join('')}</ul>
+    <div class="btns"><button class="btn sec" id="cfg-novo-usu">+ Novo usuário</button></div>
+    <h2 class="sub-h" style="margin-top:22px">Representação</h2>
+    <div class="btns" style="margin-top:0"><button class="btn sec" id="cfg-rep">Dados da representação e meus dados</button></div>
+    <h2 class="sub-h" style="margin-top:22px">E-mail de envio</h2>
+    <p class="meta">Os pedidos e avisos saem ${cfg.remetente ? `de <b>${esc(cfg.remetente)}</b>` : `da conta <b>${esc(cfg.conta)}</b>`}.
+      Para sair do e-mail do André, ele precisa estar liberado no Gmail de ${esc(cfg.conta)}: <b>Configurações > Contas e importação > Enviar e-mail como > Adicionar outro endereço</b> (o André recebe um código para confirmar).</p>
+    ${cfg.aliases.length ? `<p class="meta">Liberados nessa conta: ${cfg.aliases.map(esc).join(', ')}</p>` : ''}
+    <form id="cfg-rem" class="form-loja" novalidate>
+      <label class="field"><span class="lbl">E-mail remetente (deixe vazio para usar ${esc(cfg.conta)})</span>
+        <input id="cfg-rem-email" type="email" inputmode="email" autocomplete="off" value="${esc(cfg.remetente)}" placeholder="ex.: andre@gynrepresentacoes.com.br"></label>
+      <button class="btn primary" type="submit">Salvar e-mail de envio</button>
+    </form>`);
+  document.querySelectorAll('#sheet-body [data-emp-edit]').forEach(b => b.addEventListener('click', () => abrirEmpresaForm(cfg.empresas.find(e => e.id === b.dataset.empEdit))));
+  $('#cfg-nova').addEventListener('click', () => abrirEmpresaForm(null));
+  document.querySelectorAll('#sheet-body [data-usu-edit]').forEach(b => b.addEventListener('click', () => abrirUsuarioForm(us.usuarios.find(u => u.usuario === b.dataset.usuEdit))));
+  $('#cfg-novo-usu').addEventListener('click', () => abrirUsuarioForm(null));
+  $('#cfg-rep').addEventListener('click', abrirMeusDados);
+  $('#cfg-rem').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    try{ const j = await api({acao:'remetenteSalvar', remetente: $('#cfg-rem-email').value}); toast(j.remetente ? 'Os e-mails vão sair de ' + j.remetente : 'Os e-mails vão sair da conta da planilha'); abrirConfigCriador(); }
+    catch(e){ if(e.login) sessaoCaiu(e.message); else toast(e.message, 9000); }
+  });
+}
+let usuariosCache = [];
+// Usuário novo ou edição (só o Criador). A senha só muda se for digitada.
+function abrirUsuarioForm(u){
+  const v = k => esc(u?.[k] ?? ''), eu = u && u.usuario === sessao?.usuario;
+  abrirSheet(`
+    <div class="sheet-head"><h2>${u ? 'Editar ' + esc(u.nome) : 'Novo usuário'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <form class="form-loja" id="form-usu" novalidate>
+      <div class="duas">
+        <label class="field"><span class="lbl">Usuário (login) *</span><input id="fu-usu" value="${v('usuario')}" ${u ? 'readonly' : ''} autocapitalize="none" autocomplete="off" placeholder="ex.: joao"></label>
+        <label class="field"><span class="lbl">Nome *</span><input id="fu-nome" value="${v('nome')}"></label>
+      </div>
+      <div class="duas">
+        <label class="field"><span class="lbl">Perfil</span><select id="fu-perfil" ${eu ? 'disabled' : ''}>
+          ${[['vendedor','Vendedor'],['admin','Administrador'],['criador','Criador']].map(([k,t]) => `<option value="${k}"${(u?.perfil || 'vendedor') === k ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label class="field"><span class="lbl">Comissão %</span><input id="fu-com" inputmode="decimal" value="${u?.comissao ? String(u.comissao).replace('.', ',') : ''}" placeholder="0"></label>
+      </div>
+      <label class="field"><span class="lbl">E-mail (recebe os avisos do app)</span><input id="fu-email" type="email" inputmode="email" value="${v('email')}" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Telefone</span><input id="fu-tel" type="tel" inputmode="tel" value="${v('telefone')}"></label>
+      <label class="field"><span class="lbl">${u ? 'Nova senha (deixe vazio para manter)' : 'Senha *'}</span><input id="fu-senha" type="password" autocomplete="new-password"></label>
+      ${eu ? '' : `<label class="field" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="fu-ativo" ${!u || u.ativo ? 'checked' : ''} style="width:20px;height:20px"> <span>Com acesso ao app</span></label>`}
+      <p class="dica-preco">Administrador: aprova pedidos e vê relatórios. Criador: tudo isso e também esta tela de configurações.</p>
+      <button class="btn primary" id="fu-salvar" type="submit">${u ? 'Salvar' : 'Criar usuário'}</button>
+      <button class="btn ghost" type="button" id="fu-voltar">Voltar</button>
+    </form>`);
+  $('#fu-voltar').addEventListener('click', abrirConfigCriador);
+  $('#form-usu').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const dados = {novo: !u, usuario: $('#fu-usu').value.trim(), nome: $('#fu-nome').value.trim(), perfil: eu ? 'criador' : $('#fu-perfil').value,
+      comissao: numBR($('#fu-com').value || '0') || 0, email: $('#fu-email').value.trim(), telefone: $('#fu-tel').value.trim(),
+      senha: $('#fu-senha').value, ativo: eu ? true : $('#fu-ativo').checked};
+    const b = $('#fu-salvar'); b.disabled = true;
+    try{ await api({acao:'usuarioSalvar', usuario: dados}); toast(u ? 'Usuário salvo' : 'Usuário criado'); abrirConfigCriador(); }
+    catch(e){ b.disabled = false; if(e.login) sessaoCaiu(e.message); else toast(e.message, 6000); }
+  });
+}
+// Meus dados (todos) e dados da representação (administrador): aparecem no PDF, no WhatsApp e no e-mail para a marca.
+function abrirMeusDados(){
+  if(DEMO || !sessao) return;
+  const r = DATA?.rep || {}, v = x => esc(x || '');
+  abrirSheet(`
+    <div class="sheet-head"><h2>${ehAdmin() ? 'Meus dados e da representação' : 'Meus dados'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <form class="form-loja" id="form-dados" novalidate>
+      <h3>Seus dados</h3>
+      <label class="field"><span class="lbl">Seu e-mail (recebe os avisos do app)</span><input id="md-email" type="email" inputmode="email" value="${v(sessao.email)}" autocomplete="email"></label>
+      <label class="field"><span class="lbl">Seu telefone / WhatsApp</span><input id="md-tel" type="tel" inputmode="tel" value="${v(sessao.telefone)}"></label>
+      ${ehAdmin() ? `<h3>Representação</h3>
+      <label class="field"><span class="lbl">CNPJ</span><span class="cnpj-linha"><input id="rp-cnpj" inputmode="numeric" value="${v(r.cnpj)}" placeholder="só números"><button class="mini" type="button" id="rp-consultar">Consultar</button></span></label>
+      <label class="field"><span class="lbl">Nome / razão social</span><input id="rp-nome" value="${v(r.nome)}" placeholder="GYN Representações"></label>
+      <label class="field"><span class="lbl">E-mail da representação <small>(a marca responde para ele)</small></span><input id="rp-email" type="email" inputmode="email" value="${v(r.email)}"></label>
+      <div class="duas">
+        <label class="field"><span class="lbl">Telefone</span><input id="rp-tel" type="tel" inputmode="tel" value="${v(r.telefone)}"></label>
+        <label class="field"><span class="lbl">Contato</span><input id="rp-contato" value="${v(r.contato)}" placeholder="ex.: André"></label>
+      </div>
+      <p class="dica-preco">Estes dados aparecem no PDF do pedido, na mensagem do WhatsApp e no e-mail que vai para a marca.</p>` : ''}
+      <button class="btn primary" id="md-salvar" type="submit">Salvar</button>
+    </form>`);
+  $('#rp-consultar')?.addEventListener('click', async () => {
+    const n = soDigitos($('#rp-cnpj').value);
+    if(n.length !== 14){ toast('Digite os 14 números do CNPJ'); return; }
+    try{
+      const res = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + n); if(!res.ok) throw new Error();
+      const d = await res.json();
+      $('#rp-nome').value = d.razao_social || $('#rp-nome').value;
+      if(!$('#rp-tel').value && d.ddd_telefone_1) $('#rp-tel').value = String(d.ddd_telefone_1).replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
+      if(!$('#rp-email').value && d.email) $('#rp-email').value = String(d.email).toLowerCase();
+      toast('Dados da Receita preenchidos');
+    }catch(e){ toast('A consulta não respondeu. Preencha à mão.'); }
+  });
+  $('#form-dados').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    if(!navigator.onLine){ toast('Sem internet.'); return; }
+    const b = $('#md-salvar'); b.disabled = true;
+    try{
+      const j = await api({acao:'meusDados', dados: {email: $('#md-email').value.trim(), telefone: $('#md-tel').value.trim()}});
+      sessao.email = j.email; sessao.telefone = j.telefone; LS.set('sessao', sessao);
+      if(ehAdmin()){
+        const k = await api({acao:'rep', rep: {cnpj: $('#rp-cnpj').value, nome: $('#rp-nome').value, email: $('#rp-email').value.trim(),
+          telefone: $('#rp-tel').value.trim(), contato: $('#rp-contato').value.trim()}});
+        DATA.rep = k.rep; LS.set('catalogo', DATA);
+      }
+      toast('Dados salvos'); fecharSheet();
+    }catch(e){ b.disabled = false; if(e.login) sessaoCaiu(e.message); else toast(e.message.includes('Ação desconhecida') ? 'Cole o Code.gs novo na planilha para salvar.' : e.message, 6000); }
+  });
+}
+function abrirEmpresaForm(e){
+  const v = k => esc(e?.[k] ?? ''), nr = n => n ? String(n).replace('.', ',') : '';
+  abrirSheet(`
+    <div class="sheet-head"><h2>${e ? 'Editar ' + esc(e.nome) : 'Nova empresa'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <form class="form-loja" id="form-emp" novalidate>
+      <label class="field"><span class="lbl">Nome *</span><input id="fe-nome" value="${v('nome')}" required></label>
+      <label class="field"><span class="lbl">E-mail para onde vão os pedidos <small>(mais de um: separe com ;)</small></span><input id="fe-email" inputmode="email" value="${esc((e?.email || []).join('; '))}"></label>
+      <div class="duas">
+        <label class="field"><span class="lbl">Comissão %</span><input id="fe-com" inputmode="decimal" value="${nr(e?.comissao)}" placeholder="0"></label>
+        <label class="field"><span class="lbl">Desconto máx %</span><input id="fe-desc" inputmode="decimal" value="${nr(e?.descontoMax)}" placeholder="0"></label>
+      </div>
+      <label class="field"><span class="lbl">Pedido mínimo (R$)</span><input id="fe-min" inputmode="decimal" value="${nr(e?.pedidoMinimo)}" placeholder="0"></label>
+      <label class="field"><span class="lbl">Formas de pagamento <small>(separe com ;)</small></span><input id="fe-pag" value="${esc((e?.pagamentos || []).join('; '))}" placeholder="À vista; 28 dias; 28/56 dias"></label>
+      ${e ? `<p class="dica-preco">Código da empresa: <b>${esc(e.id)}</b> (não muda; os produtos usam este código na coluna Empresa).</p>` : '<p class="dica-preco">Depois de criar, cadastre os produtos na aba Produtos da planilha com o código que aparecer aqui.</p>'}
+      <button class="btn primary" id="fe-salvar" type="submit">${e ? 'Salvar' : 'Criar empresa'}</button>
+      <button class="btn ghost" type="button" id="fe-voltar">Voltar</button>
+    </form>`);
+  $('#fe-voltar').addEventListener('click', abrirConfigCriador);
+  $('#form-emp').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const n = id => { const x = numBR($(id).value || '0'); return isNaN(x) ? 0 : x; };
+    const dados = {id: e?.id || '', nome: $('#fe-nome').value.trim(), email: $('#fe-email').value, comissao: n('#fe-com'),
+      descontoMax: n('#fe-desc'), pedidoMinimo: n('#fe-min'), pagamentos: $('#fe-pag').value};
+    if(dados.nome.length < 2){ toast('Digite o nome'); return; }
+    const b = $('#fe-salvar'); b.disabled = true;
+    try{
+      const j = await api({acao:'empresaSalvar', empresa: dados});
+      toast(e ? 'Empresa salva' : 'Empresa criada: código ' + j.empresa.id, 5000);
+      await carregarCatalogo(false); abrirConfigCriador();
+    }catch(err){ b.disabled = false; if(err.login) sessaoCaiu(err.message); else toast(err.message, 6000); }
+  });
+}
 
 /* ---------- Novo pedido ---------- */
 function renderEmpresas(){
@@ -1889,7 +2062,9 @@ function texto(p){
   if(p.desconto) t += `\n\nSubtotal: ${brl(p.bruto)}\nDesconto: ${String(p.desconto).replace('.', ',')}%`;
   t += `\n\n*Total: ${brl(p.total)}*\nPagamento: ${p.pagamento}`;
   if(p.obs) t += `\nObs.: ${p.obs}`;
-  return t + `\n\nRepresentante: ${p.representante || CFG.REPRESENTANTE}`;
+  const rep = DATA?.rep || {};
+  return t + `\n\nRepresentante: ${p.representante || CFG.REPRESENTANTE}` +
+    ([rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).length ? '\n' + [rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join(' · ') : '');
 }
 function acoesHTML(p){
   return `<div class="btns">
@@ -1922,7 +2097,7 @@ fetch('logo-pdf.jpg')
 function gerarPdf(p){
   if(!window.jspdf || !window.PedidoPDF){ toast('Não deu para gerar o PDF. Abra o app uma vez com internet.'); return null; }
   try{
-    const doc = PedidoPDF.gerar(window.jspdf.jsPDF, p, p.representante || CFG.REPRESENTANTE, LOGO_PDF);
+    const doc = PedidoPDF.gerar(window.jspdf.jsPDF, Object.assign({}, p, {rep: DATA?.rep || {}}), p.representante || CFG.REPRESENTANTE, LOGO_PDF);
     return { blob: doc.output('blob'), nome: PedidoPDF.nomeArquivo(p) };
   }catch(e){ toast('Não deu para gerar o PDF'); return null; }
 }
