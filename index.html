@@ -2097,7 +2097,9 @@ fetch('logo-pdf.jpg')
 function gerarPdf(p){
   if(!window.jspdf || !window.PedidoPDF){ toast('Não deu para gerar o PDF. Abra o app uma vez com internet.'); return null; }
   try{
-    const doc = PedidoPDF.gerar(window.jspdf.jsPDF, Object.assign({}, p, {rep: DATA?.rep || {}}), p.representante || CFG.REPRESENTANTE, LOGO_PDF);
+    // Junto com o pedido: dados da representação, cadastro completo do cliente e e-mail da marca.
+    const doc = PedidoPDF.gerar(window.jspdf.jsPDF, Object.assign({}, p, {rep: DATA?.rep || {}, cli: cli(p.cliente) || {},
+      marcaEmail: emp(p.empresa)?.email || [], status: situacaoDe(p) || p.status}), p.representante || CFG.REPRESENTANTE, LOGO_PDF);
     return { blob: doc.output('blob'), nome: PedidoPDF.nomeArquivo(p) };
   }catch(e){ toast('Não deu para gerar o PDF'); return null; }
 }
