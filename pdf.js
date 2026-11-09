@@ -52,99 +52,74 @@
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
     doc.text(dataBR(p.data), W - M, 13, { align: 'right' });
     doc.text('Representante: ' + representante, W - M, 20, { align: 'right' });
-    // Dados da representação (preenchidos pelo administrador no app): CNPJ, e-mail e telefone.
-    var rep = p0.rep || {};
-    var repTxt = [rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join('  |  ');
-    if (repTxt) { doc.setFontSize(8.5); doc.text(limpa(repTxt), W - M, 26, { align: 'right' }); }
+    var rep = p0.rep || {};   // dados da representação: vão no rodapé, em letra pequena
 
-    // Dois quadros: CLIENTE (para quem é o pedido / a nota) e PEDIDO (marca, para onde foi, condições).
-    var y = 40;
+    // Duas colunas simples, sem caixas: PEDIDO e CLIENTE, só o essencial.
+    var y = 44;
     var c = p0.cli || {};
     var L = function (v) { return limpa(v == null ? '' : v); };
-    // linha: [rótulo, valor, negrito?]; sem rótulo = destaque (nome).
-    function quadro(x, w, titulo, linhas) {
-      var itens = [], alt = 9;
-      linhas.forEach(function (ln) {
-        if (!ln || !ln[1]) return;
-        var destaque = !ln[0];
-        doc.setFont('helvetica', destaque || ln[2] ? 'bold' : 'normal'); doc.setFontSize(destaque ? 12 : 9.5);
-        var txt = doc.splitTextToSize((ln[0] ? ln[0] + ': ' : '') + L(ln[1]), w - 8);
-        var h = txt.length * (destaque ? 5.6 : 4.4) + (destaque ? 1 : 0.6);
-        itens.push({ txt: txt, destaque: destaque, neg: ln[2], h: h }); alt += h;
-      });
-      return { desenhar: function (altura) {
-        doc.setFillColor(243, 246, 252); doc.roundedRect(x, y, w, altura, 2, 2, 'F');
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, azul);
-        doc.text(titulo, x + 4, y + 5.5);
-        var yy = y + 11;
-        itens.forEach(function (it) {
-          doc.setFont('helvetica', it.destaque || it.neg ? 'bold' : 'normal'); doc.setFontSize(it.destaque ? 12 : 9.5);
-          doc.setTextColor.apply(doc, it.destaque || it.neg ? tinta : cinza);
-          doc.text(it.txt, x + 4, yy); yy += it.h;
-        });
-      }, altura: alt + 2 };
-    }
-    var enviado = ['Enviado ao fornecedor', 'Faturado', 'Entregue'].indexOf(p0.status) >= 0;
-    var emailsMarca = (p0.marcaEmail || []).join(', ');
-    var unidades = p.itens.reduce(function (s, i) { return s + (Number(i.q) || 0); }, 0);
-    var qc = quadro(M, 88, 'CLIENTE', [
-      ['', p.clienteNome],
-      ['Razão social', c.razao && L(c.razao) !== p.clienteNome ? c.razao : ''],
-      ['CNPJ', (p.clienteCnpj || c.cnpj || '') + (c.ie ? '   IE ' + c.ie : ''), true],
-      ['Endereço', [c.endereco, c.cidade || p.clienteCidade].filter(Boolean).join(' - ')],
-      ['Contato', [c.contato, c.telefone].filter(Boolean).join(' - ')],
-      ['E-mail', c.emailCompra],
-      ['Enviar NF para', c.emailNotas],
-      ['Rede', p.clienteGrupo || c.grupo],
-      ['Entregar em', p0.enderecoEntrega, true]
-    ]);
     var dBR = function (s) { return s ? String(s).split('-').reverse().join('/') : ''; };
-    var qp = quadro(M + 92, 88, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', [
-      ['', p.empresaNome],
-      [enviado ? 'Enviado por e-mail para' : 'E-mail da marca', emailsMarca, true],
-      ['Pagamento', p.pagamento],
-      ['Prazo', c.prazo],
-      ['Frete', c.frete],
-      ['Entrega desejada', dBR(p0.entrega), true],
-      ['Transportadora', p0.transportadora],
-      ['Itens', p.itens.length + (p.itens.length === 1 ? ' produto' : ' produtos') + ', ' + unidades + (unidades === 1 ? ' unidade' : ' unidades')],
-      ['Situação', tipo === 'Orçamento' ? '' : (p0.status || '')],
-      ['Nota fiscal', p0.nf ? p0.nf + (p0.dataFat ? ' de ' + dBR(p0.dataFat) : '') + (p0.valorFat ? ' - ' + brl(p0.valorFat) : '') : '', true],
-      ['Vendedor', representante]
+    var curto = function (s) { return L(s).replace(/\s*\(.*\)\s*$/, ''); };   // "FOB (por conta do cliente)" -> "FOB"
+    var enviado = ['Enviado ao fornecedor', 'Faturado', 'Entregue'].indexOf(p0.status) >= 0;
+    var pag = [L(p.pagamento), c.frete ? curto(c.frete) : ''].filter(Boolean).join(' - ');
+    function coluna(x, w, titulo, nome, linhas) {
+      var yy = y;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, azul); doc.text(titulo, x, yy);
+      yy += 6;
+      doc.setFontSize(12); doc.setTextColor.apply(doc, tinta);
+      var n = doc.splitTextToSize(L(nome), w); doc.text(n, x, yy); yy += n.length * 5.4 + 0.6;
+      linhas.forEach(function (ln) {
+        if (!ln || !ln[0]) return;
+        doc.setFont('helvetica', ln[1] ? 'bold' : 'normal'); doc.setFontSize(9.5);
+        doc.setTextColor.apply(doc, ln[1] ? tinta : cinza);
+        var t = doc.splitTextToSize(L(ln[0]), w); doc.text(t, x, yy); yy += t.length * 4.5;
+      });
+      return yy;
+    }
+    var fimP = coluna(M, 84, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', p.empresaNome, [
+      [pag],
+      [p0.entrega || p0.transportadora ? 'Entrega: ' + [dBR(p0.entrega), p0.transportadora].filter(Boolean).join(' - ') : '', true],
+      [p0.nf ? 'NF ' + p0.nf + (p0.dataFat ? ' de ' + dBR(p0.dataFat) : '') : '', true],
+      [enviado && (p0.marcaEmail || []).length ? 'Enviado para ' + p0.marcaEmail.join(', ') : '']
     ]);
-    var hq = Math.max(qc.altura, qp.altura);
-    qc.desenhar(hq); qp.desenhar(hq);
-    y += hq + 12;
+    var fimC = coluna(M + 96, 84, 'CLIENTE', p.clienteNome, [
+      ['CNPJ ' + (p.clienteCnpj || c.cnpj || '-') + (c.ie ? '  -  IE ' + c.ie : ''), true],
+      [[c.cidade || p.clienteCidade, [c.contato, c.telefone].filter(Boolean).join(' ')].filter(Boolean).join(' - ')],
+      [p0.enderecoEntrega ? 'Entregar em: ' + p0.enderecoEntrega : '', true]
+    ]);
+    y = Math.max(fimP, fimC) + 6;
 
-    // Tabela
-    var col = { q: 27, prod: 32, un: 120, preco: 165, sub: W - M };
+    // Tabela: Produto | Un. | Qtd | Preço | Subtotal
+    var col = { prod: M, un: 118, q: 140, preco: 168, sub: W - M };
     function cabecalho() {
-      doc.setFillColor(227, 236, 255); doc.rect(M, y - 5.5, W - 2 * M, 8, 'F');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor.apply(doc, verde);
-      doc.text('Qtd.', col.q, y, { align: 'right' });
-      doc.text('Produto', col.prod, y);
-      doc.text('Unidade', col.un, y);
-      doc.text('Preço', col.preco, y, { align: 'right' });
-      doc.text('Subtotal', col.sub, y, { align: 'right' });
-      y += 8;
+      doc.setDrawColor.apply(doc, marinho); doc.setLineWidth(0.4); doc.line(M, y, W - M, y);
+      y += 5.5;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc, cinza);
+      doc.text('PRODUTO', col.prod, y);
+      doc.text('UN.', col.un, y);
+      doc.text('QTD', col.q, y, { align: 'right' });
+      doc.text('PREÇO', col.preco, y, { align: 'right' });
+      doc.text('SUBTOTAL', col.sub, y, { align: 'right' });
+      y += 3; doc.setLineWidth(0.2); doc.setDrawColor(215, 223, 238); doc.line(M, y, W - M, y);
+      y += 6;
     }
     cabecalho();
-    doc.setFontSize(10.5);
     p.itens.forEach(function (it) {
+      doc.setFontSize(10);
       var nome = doc.splitTextToSize(it.nome, col.un - col.prod - 4);
-      var alt = nome.length * 5 + 3;
-      if (y + alt > 262) { doc.addPage(); y = 22; cabecalho(); doc.setFontSize(10.5); }
-      doc.setTextColor.apply(doc, tinta);
-      doc.setFont('helvetica', 'bold'); doc.text(String(it.q), col.q, y, { align: 'right' });
-      doc.setFont('helvetica', 'normal'); doc.text(nome, col.prod, y);
+      var alt = nome.length * 4.6;
+      if (y + alt > 262) { doc.addPage(); y = 22; cabecalho(); }
+      doc.setFont('helvetica', 'normal'); doc.setTextColor.apply(doc, tinta); doc.text(nome, col.prod, y);
       doc.setTextColor.apply(doc, cinza); doc.text(String(it.un || ''), col.un, y);
       doc.setTextColor.apply(doc, tinta);
-      doc.text(brl(it.preco), col.preco, y, { align: 'right' });
+      doc.setFont('helvetica', 'bold'); doc.text(String(it.q), col.q, y, { align: 'right' });
+      doc.setFont('helvetica', 'normal'); doc.text(brl(it.preco), col.preco, y, { align: 'right' });
       doc.setFont('helvetica', 'bold'); doc.text(brl(it.q * it.preco), col.sub, y, { align: 'right' });
-      y += alt - 3;
-      doc.setDrawColor(215, 223, 238); doc.setLineWidth(0.2); doc.line(M, y, W - M, y);
-      y += 6;
+      y += alt + 1.5;
+      doc.setDrawColor(230, 235, 244); doc.setLineWidth(0.2); doc.line(M, y - 3.2, W - M, y - 3.2);
+      y += 3;
     });
+    y += 2;
 
     // Subtotal e desconto (quando houver)
     var desc = Number(p0.desconto) || 0;
@@ -174,12 +149,14 @@
       y += 10 + lo.length * 5;
     }
     // Condições e aceite do cliente (assinatura), no fim do documento.
-    if (y > 238) { doc.addPage(); y = 22; }
-    doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor.apply(doc, cinza);
-    doc.text(doc.splitTextToSize(tipo === 'Orçamento'
-      ? 'Orçamento válido por 7 dias. Preços e disponibilidade sujeitos a confirmação do fornecedor.'
-      : 'Preços e condições conforme combinado na data do pedido. Faturamento e entrega sujeitos à disponibilidade e à aprovação de crédito do fornecedor.', W - 2 * M), M, y + 2);
-    y += 16;
+    // (só o orçamento leva a frase de validade; no pedido fica só o aceite)
+    if (y > 245) { doc.addPage(); y = 22; }
+    doc.setTextColor.apply(doc, cinza);
+    if (tipo === 'Orçamento') {
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
+      doc.text('Orçamento válido por 7 dias. Preços e disponibilidade sujeitos a confirmação do fornecedor.', M, y + 2);
+      y += 10;
+    } else y += 4;
     doc.setDrawColor(150, 160, 180); doc.setLineWidth(0.3);
     doc.line(M, y + 10, M + 95, y + 10); doc.line(M + 110, y + 10, W - M, y + 10);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
@@ -190,8 +167,10 @@
     var tot = doc.getNumberOfPages();
     for (var i = 1; i <= tot; i++) {
       doc.setPage(i);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc, cinza);
-      doc.text(tipo + ' ' + p.num + ', ' + p.clienteNome, M, 287);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor.apply(doc, cinza);
+      var repTxt = [rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join('  -  ');
+      if (repTxt) doc.text(limpa(repTxt), M, 287);
+      else doc.text(tipo + ' ' + p.num + ', ' + p.clienteNome, M, 287);
       doc.text('Página ' + i + ' de ' + tot, W - M, 287, { align: 'right' });
     }
     return doc;
