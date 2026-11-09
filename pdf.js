@@ -52,6 +52,10 @@
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
     doc.text(dataBR(p.data), W - M, 13, { align: 'right' });
     doc.text('Representante: ' + representante, W - M, 20, { align: 'right' });
+    // Dados da representação (preenchidos pelo administrador no app): CNPJ, e-mail e telefone.
+    var rep = p0.rep || {};
+    var repTxt = [rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join('  |  ');
+    if (repTxt) { doc.setFontSize(8.5); doc.text(limpa(repTxt), W - M, 26, { align: 'right' }); }
 
     // Dados do pedido
     var y = 44;
