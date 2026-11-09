@@ -170,6 +170,14 @@ Cole na aba **Importar preços** o código (coluna A) e o preço (coluna B) da t
 - **Vendas** (antiga aba Pedidos): os pedidos da empresa ativa, com busca por cliente, CNPJ ou número.
 - **Histórico do cliente:** em **Relatórios**, escolha o **Cliente (histórico)** e o período (o atalho **Tudo** pega desde o início). Aparece a ficha, total comprado, ticket médio, último pedido e a lista de pedidos. Atalho: abra a loja e toque em **Ver histórico completo** (administrador).
 
+## Preços, entrega, faturamento (NF) e limpeza
+
+- **Preço do produto pelo pedido:** quando o **administrador** fecha um pedido com um produto que está sem preço na planilha, o preço cheio digitado vira o preço desse produto (coluna Preço da aba Produtos). Assim a tabela vai sendo preenchida aos poucos. Produtos que já têm preço não mudam.
+- **Entrega (opcional):** no resumo do pedido, em **Entrega (opcional)**: data desejada, transportadora e "entregar em outro endereço". Vai para a planilha (colunas Entrega desejada, Transportadora, Endereço de entrega), para o e-mail da marca, o PDF e o WhatsApp.
+- **PDF:** quadros CLIENTE e PEDIDO, nota fiscal (quando faturado), condições e linhas para o **aceite do cliente** (nome, assinatura e data).
+- **Faturamento:** no pedido, **Registrar faturamento (NF)**: número da NF, data, **valor faturado** (o app mostra se faltou ou veio a mais em relação ao pedido), **chave de acesso** (44 números, com botão Copiar) e o **arquivo da NF** (PDF ou XML que a marca mandou). O arquivo fica na pasta **"NFs - Pedidos André"** do Drive, com link no pedido. Marque **Enviar a NF por e-mail** para mandar o arquivo ao "E-mail para envio de notas" do cliente. Dá para corrigir depois (**Corrigir dados da NF**).
+- **Limpeza:** menu da planilha **Pedidos > Apagar pedidos de teste** apaga pedidos feitos para um "Cliente Exemplo" ou para uma empresa que não existe, com os itens deles. Mostra a lista e pede confirmação.
+
 ## Perfil Criador, dados da representação e e-mail de envio
 
 - **Perfil Criador** (coluna Perfil da aba Usuarios = `Criador`): tem tudo do Administrador e, só ele, a tela **Configurações do app** (toque no seu nome lá em cima):
