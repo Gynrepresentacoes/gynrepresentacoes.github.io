@@ -231,6 +231,10 @@
         { t: 'Vendedor', w: 113 }, { t: 'Pedidos', w: 30, a: 'r' }, { t: 'Vendas', w: 45, a: 'r' }, { t: '%', w: 30, a: 'r' }, { t: 'Comissão', w: 55, a: 'r', b: 1 }],
         d.comissao.vendedores.map(function (x) { return [x.nome, x.pedidos, brl(x.vendas), pct(x), brl(x.comissao)]; }));
     }
+    if (d.ritmo && d.ritmo.length && d.ritmoPdf) tabela('Ritmo de compra (quem precisa de atenção primeiro)', [
+      { t: 'Cliente', w: 70 }, { t: 'Situação', w: 30, b: 1 }, { t: 'Última compra', w: 38 }, { t: 'Ritmo normal', w: 38, cinza: 1 },
+      { t: 'Próxima compra', w: 47 }, { t: 'Tendência', w: 50 }],
+      d.ritmo.map(function (s) { return d.ritmoPdf(s); }));
     tabela('Itens mais pedidos', [
       { t: 'Produto', w: 128 }, { t: 'Empresa', w: 45, cinza: 1 }, { t: 'Código', w: 30, cinza: 1 },
       { t: 'Pedidos', w: 20, a: 'r' }, { t: 'Qtd', w: 20, a: 'r', b: 1 }, { t: 'Valor', w: 30, a: 'r' }],
