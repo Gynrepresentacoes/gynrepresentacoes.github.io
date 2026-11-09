@@ -16,6 +16,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script>/* Tema escolhido na conta (claro/escuro); sem escolha, segue o celular. */
+try{ const t = JSON.parse(localStorage.getItem('pa-tema') || 'null'); if(t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; }catch(e){}</script>
 <style>
 :root{
   --paper:#F2F5FB; --surface:#FFFFFF; --ink:#0B1630; --muted:#56627D; --line:#D7DFEE;
@@ -296,6 +298,122 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 }
 @media (prefers-reduced-motion: reduce){.sheet-bg,.sheet-panel{transition:none}}
 
+/* ================= Layout novo: cartões, passos, nota, cores de situação, botão flutuante ================= */
+:root{
+  --ok:#1E8E5A; --ok-soft:#E2F6EC; --warn:#8A5A00; --warn-soft:#FFF2D6; --bad:#C2412B; --bad-soft:#FDE8E4;
+  --info:#1F5FD6; --info-soft:#E6EEFF; --roxo:#6B3FD1; --roxo-soft:#EFE8FF;
+  --sombra:0 1px 2px rgba(10,24,56,.06),0 4px 14px rgba(10,24,56,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ok:#4CD08F; --ok-soft:#0F3324; --warn:#F2C14E; --warn-soft:#3A2E10; --bad:#FF8A73; --bad-soft:#3D1610;
+    --info:#7FAEFF; --info-soft:#13244A; --roxo:#B9A0FF; --roxo-soft:#271A4A; --sombra:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --ok:#4CD08F; --ok-soft:#0F3324; --warn:#F2C14E; --warn-soft:#3A2E10; --bad:#FF8A73; --bad-soft:#3D1610;
+  --info:#7FAEFF; --info-soft:#13244A; --roxo:#B9A0FF; --roxo-soft:#271A4A; --sombra:0 1px 2px rgba(0,0,0,.3);
+}
+body{font-variant-numeric:tabular-nums}
+/* Passos do pedido */
+.passos{list-style:none;display:flex;gap:6px;margin:-8px 0 18px;padding:0}
+.passos li{flex:1;font-size:12px;font-weight:600;color:var(--muted);text-align:center}
+.passos li::before{content:"";display:block;height:4px;border-radius:4px;background:var(--line);margin-bottom:5px}
+.passos li.ok{color:var(--ok)} .passos li.ok::before{background:var(--ok)}
+.passos li.agora{color:var(--ipe)} .passos li.agora::before{background:var(--ipe)}
+/* Marcas em cartões */
+#empresas{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+#empresas .chip{border-radius:14px;padding:10px 6px;text-align:center;line-height:1.15}
+#empresas .chip b{display:block;font-family:"Barlow Semi Condensed","Barlow",sans-serif;font-size:17px;letter-spacing:.3px}
+#empresas .chip small{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:3px}
+#empresas .chip[aria-pressed="true"]{background:var(--leaf-soft);border-color:var(--ipe);color:var(--ink);box-shadow:0 0 0 3px rgba(47,123,255,.15)}
+/* Cliente escolhido */
+.cli-card{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px}
+.cli-card[hidden],#cli-escolha[hidden]{display:none}
+.cli-card .ic{width:38px;height:38px;border-radius:10px;background:var(--leaf-soft);color:var(--ipe);display:grid;place-items:center;flex:none}
+.cli-card .ic svg{width:20px;height:20px}
+.cli-card .txt{flex:1;min-width:0;line-height:1.25}
+.cli-card .txt b{display:block}
+.cli-card .txt small{display:block;color:var(--muted);font-size:13px}
+.cli-card .trocar{border:0;background:none;color:var(--ipe);font-weight:700;cursor:pointer;padding:6px}
+/* Busca e categorias */
+#busca{padding-left:40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237C8AA5' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center}
+.busca-campo{margin-bottom:10px}
+.cat-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.cat-chips::-webkit-scrollbar{display:none}
+.cat-chips .chip{flex:none;padding:7px 12px;font-size:13.5px}
+.cat-chips .chip small{font-weight:500;opacity:.7;margin-left:3px}
+.cat-chips .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+/* Produtos em cartões */
+.prod-list{background:none;border:0;border-radius:0;overflow:visible;display:grid;gap:8px}
+.prod-list .prod{background:var(--surface);border:1.5px solid transparent;border-radius:14px;padding:8px 10px 8px 8px;box-shadow:var(--sombra)}
+.prod-list .prod.on{background:var(--surface);border-color:var(--ipe)}
+.thumb{width:62px;height:62px;border-radius:10px;padding:4px;background:#fff;border:1px solid #E6EAF2}
+.prod-nome{font-size:15px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prod-sub{margin-top:2px}
+.prod-sub strong{font-weight:700;font-size:15.5px}
+.prod-list .grupo{background:none;border:0;padding:10px 2px 0;list-style:none}
+.prod-list .empty{background:var(--surface);border:1.5px dashed var(--line);border-radius:14px}
+.step button{border:0;background:var(--leaf-soft);color:var(--ipe)}
+.step button.add{background:var(--ipe);color:#fff;border:0}
+.step button.mais10{background:none;border:1.5px solid var(--line);color:var(--ipe)}
+.step input.qtd{border:1.5px solid var(--line);background:var(--surface)}
+.cat-sec .prod-list{padding:8px;background:var(--paper)}
+.esq{height:80px;border-radius:14px;list-style:none;background:linear-gradient(90deg,var(--surface) 0%,var(--leaf-soft) 50%,var(--surface) 100%);background-size:200% 100%;animation:brilho 1.2s infinite linear}
+@keyframes brilho{to{background-position:-200% 0}}
+.orders .empty{background:var(--surface);border:1.5px dashed var(--line);border-radius:14px}
+/* Carrinho */
+.cart-in{background:var(--marinho);color:#fff;padding:10px 10px 10px 12px;border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 28px rgba(10,24,56,.35)}
+.bolha{position:relative;width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.12);display:grid;place-items:center;flex:none}
+.bolha svg{width:22px;height:22px}
+.bolha b{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:var(--ipe);color:#fff;font-size:11.5px;display:grid;place-items:center;padding:0 5px;transition:transform .18s}
+.bolha b.pula{transform:scale(1.4)}
+.cart-info small{font-size:13px;opacity:.8;font-weight:500}
+.cart-info strong{font-size:24px}
+.cart-limpar{text-decoration:none;opacity:.7;padding:8px;display:grid;place-items:center;color:#fff}
+.cart-limpar svg{width:20px;height:20px}
+.cart-in .btn{background:var(--ipe);color:#fff;padding:12px 18px}
+/* Botão flutuante "Novo pedido" */
+.fab{position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 16px);z-index:6;border:0;background:var(--ipe);color:#fff;font-weight:700;font-size:15px;
+  border-radius:999px;padding:13px 20px 13px 16px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 24px rgba(47,123,255,.45);cursor:pointer}
+.fab span{font-size:24px;line-height:1;font-weight:500}
+.fab[hidden]{display:none}
+/* Resumo tipo nota: preço e desconto abrem ao tocar no item */
+.resumo{border-top:0;background:var(--surface);border-radius:14px;padding:2px 12px;box-shadow:var(--sombra)}
+.resumo li,.resumo li.editavel{display:block;padding:10px 0;border-bottom:1px dashed var(--line)}
+.resumo li:last-child{border-bottom:0}
+.r1{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:15px;line-height:1.3}
+.r1 .v{white-space:nowrap}
+.r2{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:13px;margin-top:2px}
+.tag-desc{background:var(--ok-soft);color:var(--ok);font-weight:700;border-radius:6px;padding:0 6px;font-size:12px;margin-left:4px}
+.r-aviso{color:var(--terra);font-weight:600}
+.resumo li.editavel{cursor:pointer}
+.resumo li.editavel .preco-linha{display:none;margin-top:8px}
+.resumo li.aberta{background:var(--leaf-soft);margin:0 -12px;padding:10px 12px;border-radius:12px;border-bottom-color:transparent}
+.resumo li.aberta .preco-linha{display:flex}
+.resumo li.aberta .preco-item,.resumo li.aberta .desc-item{border-color:var(--ipe)}
+.fechar-fixo{position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom,0px));margin:16px -18px calc(-22px - env(safe-area-inset-bottom,0px));
+  padding:12px 18px calc(16px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--line);z-index:2}
+.btn.fechar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+/* Cores de situação: barra lateral nos cartões e etiquetas suaves */
+.order{position:relative;overflow:hidden;border:0;box-shadow:var(--sombra);padding:12px 14px 12px 18px}
+.order::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,var(--line))}
+.order:has(.badge.espera){--c:var(--warn)} .order:has(.badge.aprov),.order:has(.badge.env){--c:var(--info)}
+.order:has(.badge.fat),.order:has(.badge.ent){--c:var(--ok)} .order:has(.badge.rec){--c:var(--bad)}
+.order:has(.badge.canc){--c:var(--muted)} .order:has(.badge.orc){--c:var(--roxo)} .order:has(.badge.pend){--c:var(--terra)}
+.badge.espera,.situacao.espera,.aviso-min{background:var(--warn-soft);color:var(--warn)}
+.badge.aprov,.badge.env,.situacao.aprov,.situacao.env{background:var(--info-soft);color:var(--info)}
+.badge.fat,.badge.ent,.situacao.fat,.situacao.ent{background:var(--ok-soft);color:var(--ok)}
+.badge.rec,.situacao.rec{background:var(--bad-soft);color:var(--bad)}
+.badge.orc{background:var(--roxo-soft);color:var(--roxo)}
+.badge{padding:3px 10px}
+.field input[type=text]:not(.preco-item):not(.desc-item):not(.lote-q){width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink)}
+/* Tema na conta */
+.tema-op{display:flex;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:3px;margin:0 0 6px}
+.tema-op button{flex:1;border:0;background:none;padding:9px 6px;border-radius:999px;font-weight:600;color:var(--muted);cursor:pointer}
+.tema-op button[aria-pressed="true"]{background:var(--ipe);color:#fff}
+@media (max-width: 420px){ .thumb{width:54px;height:54px} .prod-list .prod{padding:8px} }
+
 /* ---------- Computador (tela com 1000px ou mais). No celular nada disto vale. ---------- */
 .painel{display:none}
 @media (min-width: 1000px){
@@ -318,6 +436,12 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
   .painel h2{margin-bottom:12px}
   .painel .btn:disabled{opacity:.45;cursor:not-allowed}
   .cart{display:none!important}
+  .fab{bottom:28px;right:32px}
+  .cat-chips{flex-wrap:wrap;overflow:visible}
+  #empresas{grid-template-columns:repeat(auto-fill,170px)}
+  .passos{max-width:680px}
+  .painel .resumo{box-shadow:none;border:1px solid var(--line)}
+  .painel .fechar-p{position:sticky;bottom:-20px;margin:14px -20px -20px;padding:12px 20px 20px;background:var(--surface);border-top:1px solid var(--line)}
 
   /* Listas em grade, aproveitando a largura. */
   .orders{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
@@ -354,6 +478,7 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
   <section id="v-novo" class="view">
    <div class="novo-col">
     <h1>Novo pedido</h1>
+    <ol class="passos" id="passos" aria-label="Etapas do pedido"></ol>
     <p class="demo" id="demo" hidden>Modo demonstração: produtos de exemplo. Ligue a planilha no arquivo config.js.</p>
     <div class="field">
       <span class="lbl">Empresa</span>
@@ -361,17 +486,20 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
     </div>
     <div class="field">
       <label class="lbl" for="cliente">Cliente (loja)</label>
-      <input id="cli-busca" class="cli-busca" type="search" placeholder="Buscar cliente, rede ou CNPJ" aria-label="Buscar cliente" autocomplete="off">
-      <div class="cli-linha"><select id="cliente"></select><button class="mini" id="btn-nova-loja" type="button">+ Nova loja</button></div>
+      <div class="cli-card" id="cli-card" hidden></div>
+      <div id="cli-escolha">
+        <input id="cli-busca" class="cli-busca" type="search" placeholder="Buscar cliente, rede ou CNPJ" aria-label="Buscar cliente" autocomplete="off">
+        <div class="cli-linha"><select id="cliente"></select><button class="mini" id="btn-nova-loja" type="button">+ Nova loja</button></div>
+      </div>
       <p class="cond-grupo" id="cond-grupo" hidden></p>
       <button class="mini repetir" id="btn-repetir" type="button" hidden></button>
     </div>
-    <label class="field" id="campo-cat" hidden>
-      <span class="lbl">Categoria</span>
-      <select id="categoria"></select>
-    </label>
-    <div class="field">
+    <div class="field busca-campo">
       <input id="busca" type="search" placeholder="Buscar produto pelo nome ou código" aria-label="Buscar produto">
+    </div>
+    <div class="field" id="campo-cat" hidden>
+      <div class="cat-chips" id="cat-chips" role="group" aria-label="Categoria"></div>
+      <select id="categoria" hidden aria-hidden="true" tabindex="-1"></select>
     </div>
     <ul id="produtos" class="prod-list"></ul>
    </div>
@@ -388,10 +516,10 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
         <input type="text" id="pag-outro-p" class="pag-outro" placeholder="Digite a forma de pagamento" autocomplete="off" hidden></label>
       <label class="field"><span class="lbl">Observação</span>
         <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
-      <button class="btn primary" id="btn-fechar-p" type="button">Fechar pedido</button>
       <button class="btn sec lote" id="btn-lote-p" type="button" hidden>Fechar para várias filiais da rede…</button>
       <button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
       <button class="btn ghost limpar" id="btn-limpar-p" type="button" hidden>Limpar pedido</button>
+      <div class="fechar-p"><button class="btn primary fechar" id="btn-fechar-p" type="button">Fechar pedido</button></div>
     </aside>
   </section>
 
@@ -463,10 +591,13 @@ input[type=date],input[type=number]{width:100%;background:var(--surface);border:
 </main>
 
 <div id="cart" class="cart" hidden><div class="cart-in">
+  <div class="bolha" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg><b id="cart-n">0</b></div>
   <div class="cart-info"><small id="cart-qtd"></small><strong id="cart-total"></strong></div>
-  <button class="cart-limpar" id="btn-limpar" type="button" aria-label="Limpar pedido">Limpar</button>
-  <button class="btn" id="btn-revisar">Revisar pedido</button>
+  <button class="cart-limpar" id="btn-limpar" type="button" aria-label="Limpar pedido" title="Limpar pedido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+  <button class="btn" id="btn-revisar">Revisar</button>
 </div></div>
+
+<button class="fab" id="fab-novo" type="button" hidden><span aria-hidden="true">+</span>Novo pedido</button>
 
 <nav class="nav" aria-label="Seções"><div class="nav-in">
   <button data-view="novo" aria-current="page">
@@ -711,8 +842,18 @@ function abrirConta(){
   abrirSheet(`
     <div class="sheet-head"><h2>Sua conta</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <p class="meta">Conectado como <b>${esc(sessao.nome)}</b><br>Usuário: ${esc(sessao.usuario)}<br>Perfil: ${ehAdmin() ? 'Administrador' : 'Vendedor'}</p>
+    <span class="lbl">Aparência</span>
+    <div class="tema-op" role="group" aria-label="Tema">${[['auto','Automático'],['light','☀ Claro'],['dark','☾ Escuro']].map(([v,t]) =>
+      `<button type="button" data-tema="${v}" aria-pressed="${(LS.get('tema', 'auto')) === v}">${t}</button>`).join('')}</div>
+    <p class="dica-preco" style="margin:0 0 4px">Automático segue o modo claro/escuro do celular.</p>
     ${pend ? `<p class="note">Você tem ${pend} pedido${pend > 1 ? 's' : ''} aguardando internet. Eles serão enviados quando você entrar de novo.</p>` : ''}
     <div class="btns"><button class="btn sec" id="btn-sair">Sair</button></div>`);
+  document.querySelector('#sheet-body .tema-op').addEventListener('click', e => {
+    const b = e.target.closest('[data-tema]'); if(!b) return;
+    const t = b.dataset.tema; LS.set('tema', t);
+    if(t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+    document.querySelectorAll('#sheet-body [data-tema]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  });
   $('#btn-sair').addEventListener('click', () => {
     const u = sessao.usuario;
     sessao = null; LS.set('sessao', null);
@@ -724,8 +865,11 @@ $('#rep').addEventListener('click', abrirConta);
 
 /* ---------- Novo pedido ---------- */
 function renderEmpresas(){
-  $('#empresas').innerHTML = (DATA?.empresas || []).map(e =>
-    `<button class="chip" data-emp="${esc(e.id)}" aria-pressed="${st.empresa===e.id}">${esc(e.nome)}</button>`).join('');
+  // Cartão por marca, com o pedido mínimo embaixo do nome.
+  $('#empresas').innerHTML = (DATA?.empresas || []).map(e => {
+    const min = Number(e.pedidoMinimo) || 0, curto = e.nome.split(/\s+/)[0];
+    return `<button class="chip" data-emp="${esc(e.id)}" aria-pressed="${st.empresa===e.id}" title="${esc(e.nome)}"><b>${esc(curto)}</b><small>${min ? 'mín. ' + brl(min).replace(/,00$/, '') : 'sem mínimo'}</small></button>`;
+  }).join('');
 }
 // Lista de clientes: as redes aparecem agrupadas (um título por rede, com cada CNPJ embaixo).
 // A busca acima da lista filtra por nome, rede, cidade ou CNPJ.
@@ -745,7 +889,9 @@ function renderClientes(){
     (grupos.length && soltas.length ? `<optgroup label="Outras lojas">${soltas.map(c => opt(c)).join('')}</optgroup>` : soltas.map(c => opt(c)).join(''));
   $('#cliente').value = atual;
   // Busca que achou um cliente só: já deixa escolhido.
-  if(termos.length && !atual && lista.length === 1){ $('#cliente').value = lista[0].id; aoTrocarCliente(); }
+  // (ao "Trocar" o cliente, vale também quando já havia um escolhido)
+  const achados = termos.length ? todos.filter(bateCli) : [];
+  if(achados.length === 1 && (!atual || (st.trocandoCli && achados[0].id !== atual))){ $('#cliente').value = achados[0].id; aoTrocarCliente(); }
 }
 $('#cli-busca').addEventListener('input', renderClientes);
 // Ao escolher o cliente: mostra a condição da rede, se houver, e já aplica o pagamento combinado.
@@ -753,12 +899,24 @@ function mostrarCondGrupo(){
   const g = condGrupo($('#cliente').value), c = cli($('#cliente').value), cg = $('#cond-grupo');
   const n = c && grupoDe(c) ? lojasDoGrupo(grupoDe(c)).length : 0;
   cg.hidden = !c || !grupoDe(c);
-  if(!cg.hidden) cg.innerHTML = `🏢 <b>${esc(grupoDe(c))}</b> ·${n} CNPJ${n > 1 ? 's' : ''}${c.cnpj ? ` · este: ${esc(c.cnpj)}` : ''}` +
+  if(!cg.hidden) cg.innerHTML = `🏢 <b>${esc(grupoDe(c))}</b> · ${n} CNPJ${n > 1 ? 's' : ''}` +
     (g && (g.desconto || g.pagamento) ? `<br>Condição da rede: ${[g.desconto ? `desconto de até ${String(g.desconto).replace('.', ',')}%` : '', g.pagamento ? `pagamento ${esc(g.pagamento)}` : ''].filter(Boolean).join(', ')}` : '') +
     (g?.obs ? `<br><small>${esc(g.obs)}</small>` : '');
+  // Cliente escolhido vira um cartão com "Trocar"; a busca e a lista voltam ao tocar em Trocar.
+  const card = $('#cli-card'), mostrarCard = !!c && !st.trocandoCli;
+  card.hidden = !mostrarCard; $('#cli-escolha').hidden = mostrarCard;
+  if(mostrarCard) card.innerHTML = `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v7h14v-7M10 20v-4h4v4"/></svg></span>
+    <span class="txt"><b>${esc(c.nome)}</b><small>${[c.cidade, c.cnpj].filter(Boolean).map(esc).join(' · ') || 'sem CNPJ'}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</small></span>
+    <button class="trocar" type="button" id="btn-trocar-cli">Trocar</button>`;
 }
+$('#cli-card').addEventListener('click', e => {
+  if(!e.target.closest('#btn-trocar-cli')) return;
+  st.trocandoCli = true; mostrarCondGrupo();
+  $('#cli-busca').focus();
+});
 function aoTrocarCliente(){
   const g = condGrupo($('#cliente').value);
+  if($('#cliente').value){ st.trocandoCli = false; if($('#cli-busca').value){ $('#cli-busca').value = ''; renderClientes(); } }
   // Pagamento combinado com a rede: vira a opção escolhida (as listas são refeitas no renderCart).
   if(g?.pagamento){ $('#pag-p').innerHTML = ''; $('#pag-outro-p').value = ''; }
   // Desconto combinado com a rede entra sozinho se o campo estiver vazio (e só vale enquanto for o mesmo cliente).
@@ -776,7 +934,16 @@ function renderCategorias(){
   const total = prodsDe(st.empresa).length;
   $('#categoria').innerHTML = `<option value="">Todas as categorias (${total})</option>` +
     cats.map(([c,n]) => `<option value="${esc(c)}"${c === st.cat ? ' selected' : ''}>${esc(c)} (${n})</option>`).join('');
+  // Categorias em botões que rolam para o lado (no computador, quebram linha).
+  $('#cat-chips').innerHTML = `<button class="chip" type="button" data-cat="" aria-pressed="${!st.cat}">Todas<small>${total}</small></button>` +
+    cats.map(([c,n]) => `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${c === st.cat}">${esc(c)}<small>${n}</small></button>`).join('');
 }
+$('#cat-chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-cat]'); if(!b) return;
+  st.cat = b.dataset.cat; $('#categoria').value = st.cat;
+  st.busca = ''; $('#busca').value = '';
+  renderCategorias(); renderProdutos();
+});
 const LIMITE_LISTA = 80;
 // Fotos: a lista completa vem junto com o app (fotos.json, ligada pelo ID do produto).
 // A coluna Foto da planilha (ou a aba Fotos) continua valendo e tem prioridade, para trocar uma foto específica.
@@ -817,7 +984,7 @@ function bate(p, termos){
 }
 function renderProdutos(){
   const ul = $('#produtos');
-  if(!DATA){ ul.innerHTML = '<li class="empty">Carregando o catálogo da planilha…</li>'; return; }
+  if(!DATA){ ul.innerHTML = '<li class="esq"></li>'.repeat(4) + '<li class="empty" style="border:0;background:none">Carregando o catálogo da planilha…</li>'; return; }
   const termos = normBusca(st.busca).split(/\s+/).filter(Boolean);
   const q = termos.length > 0;
   // Sem empresa escolhida: a busca procura nos produtos de todas as empresas.
@@ -912,12 +1079,26 @@ function renderCart(){
   const its = itensAtuais();
   const tot = its.reduce((s,i) => s + i.q*i.preco, 0), vol = its.reduce((s,i) => s + i.q, 0);
   $('#cart').hidden = !its.length || $('#v-novo').hidden;
-  $('#cart-qtd').textContent = `${its.length} ${its.length===1?'produto':'produtos'}, ${vol} ${vol===1?'volume':'volumes'}`;
+  $('#cart-qtd').textContent = `${its.length} ${its.length===1?'produto':'produtos'} · ${vol} ${vol===1?'volume':'volumes'}`;
   $('#cart-total').textContent = brl(tot);
+  // Número de produtos no carrinho "pula" quando muda.
+  const n = $('#cart-n');
+  if(n.textContent !== String(its.length)){ n.textContent = its.length; n.classList.add('pula'); setTimeout(() => n.classList.remove('pula'), 180); }
+  // Botão flutuante "Novo pedido": aparece fora da tela de Novo pedido.
+  $('#fab-novo').hidden = !$('#v-novo').hidden;
   renderPainel(its, tot);
   renderRepetir();
   mostrarCondGrupo();
+  renderPassos(its);
 }
+// Faixa Empresa → Cliente → Produtos → Revisar.
+function renderPassos(its){
+  const feito = [!!st.empresa, !!$('#cliente').value, its.length > 0];
+  const atual = feito.indexOf(false);   // -1: tudo pronto, falta revisar
+  $('#passos').innerHTML = ['Empresa', 'Cliente', 'Produtos', 'Revisar'].map((t, i) =>
+    `<li class="${i < 3 && feito[i] ? 'ok' : (i === atual || (atual === -1 && i === 3)) ? 'agora' : ''}">${t}</li>`).join('');
+}
+$('#fab-novo').addEventListener('click', () => irPara('novo'));
 // Totais com desconto: bruto, desconto e líquido.
 function contas(bruto, desc){
   const d = Math.max(0, Math.min(100, Number(desc) || 0));
@@ -995,6 +1176,7 @@ function renderPainel(its, tot){
   av.hidden = !(its.length && min && tot < min);
   if(!av.hidden) av.textContent = `Pedido mínimo de ${e.nome}: ${brl(min)}. Faltam ${brl(min - tot)}.` + (ehAdmin() ? ' (Você pode fechar mesmo assim.)' : '');
   $('#btn-fechar-p').disabled = !its.length;
+  $('#btn-fechar-p').innerHTML = its.length ? `<span>Fechar pedido</span><span>${brl(cc.total)}</span>` : 'Fechar pedido';
   $('#btn-lote-p').hidden = !its.length || !temFiliais();
   $('#btn-orc-p').disabled = !its.length;
   $('#btn-limpar-p').hidden = !its.length;
@@ -1069,23 +1251,38 @@ $('#btn-revisar').addEventListener('click', () => {
 
 // Lista de itens do resumo. Com "editavel", cada item tem o campo do preço de venda.
 function resumoHTML(itens, editavel){
-  return '<ul class="resumo">' + itens.map(i => editavel
-    // Produto sem preço na planilha: o campo R$ mostra o preço cheio digitado; o desconto do item sai dele.
-    ? `<li class="editavel"><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}${!i.semTabela && i.preco !== i.tabela ? ` · tabela ${brl(i.tabela)}` : ''}</small>
-        <span class="preco-linha"><label>R$ <input class="preco-item${!i.semTabela && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.semTabela ? i.tabela : i.preco)}" aria-label="${i.semTabela ? 'Preço cheio' : 'Preço de venda'} de ${esc(i.nome)}"> cada</label>
-        <label class="desc-linha">desc. <input class="desc-item${pctItem(i) ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${pctItem(i)}" aria-label="Desconto em % de ${esc(i.nome)}">%</label>
-        ${i.semTabela && !(i.tabela > 0) ? '<span class="sem-tabela">sem preço na planilha: digite o preço</span>'
-          : i.semTabela && pctItem(i) ? `<span class="com-desc">com desconto: <b>${brl(i.preco)}</b> cada</span>` : ''}</span></span>
-        <span class="v">${brl(i.q*i.preco)}</span></li>`
-    : `<li><span class="q">${i.q}×</span><span>${esc(i.nome)}<small>${esc(i.un)}, ${brl(i.preco)}</small></span><span class="v">${brl(i.q*i.preco)}</span></li>`).join('') + '</ul>';
+  // Tipo nota: nome e subtotal; embaixo "quantidade × preço" e a etiqueta do desconto do item.
+  // Na versão editável, tocar no item abre os campos de preço e desconto (%).
+  return '<ul class="resumo">' + itens.map(i => {
+    const pct = editavel ? pctItem(i) : '', semPreco = editavel && i.semTabela && !(i.tabela > 0);
+    const ref = editavel && i.preco !== i.tabela && i.tabela > 0 ? `${i.semTabela ? 'cheio' : 'tabela'} ${brl(i.tabela)}` : '';
+    const linhas = `<div class="r1"><span>${esc(i.nome)}</span><span class="v">${brl(i.q*i.preco)}</span></div>
+      <div class="r2"><span>${i.q} ${esc(i.un || '')} × ${brl(i.preco)}${pct ? `<span class="tag-desc">−${pct}%</span>` : ''}</span>
+        <span>${semPreco ? '<span class="r-aviso">sem preço: toque para digitar</span>' : ref || (editavel && st.aberto !== i.id ? '<span class="r-dica">mudar</span>' : '')}</span></div>`;
+    if(!editavel) return `<li>${linhas}</li>`;
+    const aberta = st.aberto === i.id || semPreco;
+    return `<li class="editavel${aberta ? ' aberta' : ''}" data-item="${esc(i.id)}">${linhas}
+      <span class="preco-linha"><label>R$ <input class="preco-item${!i.semTabela && i.preco !== i.tabela ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" value="${numFmt(i.semTabela ? i.tabela : i.preco)}" aria-label="${i.semTabela ? 'Preço cheio' : 'Preço de venda'} de ${esc(i.nome)}"> cada</label>
+        <label class="desc-linha">desc. <input class="desc-item${pct ? ' alterado' : ''}" data-id="${esc(i.id)}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${pct}" aria-label="Desconto em % de ${esc(i.nome)}">%</label></span></li>`;
+  }).join('') + '</ul>';
 }
+// Tocar num item do resumo abre (ou fecha) os campos de preço e desconto dele.
+document.addEventListener('click', e => {
+  const li = e.target.closest('.resumo li.editavel'); if(!li || e.target.closest('input, label')) return;
+  st.aberto = st.aberto === li.dataset.item ? null : li.dataset.item;
+  const its = itensAtuais();
+  if($('#painel-itens').contains(li)) $('#painel-itens').innerHTML = resumoHTML(its, true); else atualizarRevisao();
+  if(st.aberto) document.querySelector(`.resumo li[data-item="${CSS.escape(st.aberto)}"] .preco-item`)?.focus();
+});
 // Atualiza itens, totais e aviso de mínimo da janela de revisão (celular) depois de mudar um preço.
 function atualizarRevisao(){
   if(!$('#rev-itens')) return;
   const its = itensAtuais(), tot = its.reduce((s,i) => s + i.q*i.preco, 0), e = emp(st.empresa), min = minimoDe(st.empresa);
   $('#rev-itens').innerHTML = resumoHTML(its, true);
   const d = $('#desc') ? numBR($('#desc').value || '0') : 0;
-  $('#rev-totais').innerHTML = totaisHTML(contas(tot, isNaN(d) ? 0 : d));
+  const cc = contas(tot, isNaN(d) ? 0 : d);
+  $('#rev-totais').innerHTML = totaisHTML(cc);
+  if($('#btn-fechar')) $('#btn-fechar').innerHTML = `<span>Fechar pedido</span><span>${brl(cc.total)}</span>`;
   $('#rev-min').innerHTML = min && tot < min ? `<p class="aviso-min">Pedido mínimo de ${esc(e.nome)}: ${brl(min)}. Faltam ${brl(min - tot)}.${ehAdmin() ? ' (Você pode fechar mesmo assim.)' : ''}</p>` : '';
 }
 function abrirRevisao(){
@@ -1094,8 +1291,8 @@ function abrirRevisao(){
   const totAtual = () => itensAtuais().reduce((s,i) => s + i.q*i.preco, 0);
   abrirSheet(`
     <div class="sheet-head"><h2>Revisar pedido</h2><button class="x" data-close aria-label="Fechar">×</button></div>
-    <p class="meta"><b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}<br>${esc(e.nome)}</p>
-    <p class="dica-preco">Toque no preço de um item para mudar o valor de venda.</p>
+    <p class="meta"><b>${esc(c.nome)}</b>${c.cidade ? ', '+esc(c.cidade) : ''}${c.cnpj ? ' · ' + esc(c.cnpj) : ''}<br>${esc(e.nome)}</p>
+    <p class="dica-preco">Toque num item para mudar o preço ou dar desconto só nele.</p>
     <div id="rev-itens"></div>
     ${max ? `<label class="field" style="margin-top:14px"><span class="lbl">Desconto (%)${ehAdmin() ? '' : ' · até ' + String(max).replace('.', ',') + '%'}</span>
       <input type="text" inputmode="decimal" id="desc" placeholder="0" autocomplete="off"></label>` : ''}
@@ -1105,10 +1302,10 @@ function abrirRevisao(){
       <input type="text" id="pag-outro" class="pag-outro" placeholder="Digite a forma de pagamento" autocomplete="off" hidden></label>
     <label class="field"><span class="lbl">Observação</span>
       <textarea id="obs" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
-    <button class="btn primary" id="btn-fechar">Fechar pedido</button>
     ${temFiliais() ? '<button class="btn sec lote" id="btn-lote">Fechar para várias filiais da rede…</button>' : ''}
     <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>
-    <button class="btn ghost limpar" id="btn-limpar-rev">Limpar pedido</button>`);
+    <button class="btn ghost limpar" id="btn-limpar-rev">Limpar pedido</button>
+    <div class="fechar-fixo"><button class="btn primary fechar" id="btn-fechar">Fechar pedido</button></div>`);
   ligarOutro($('#pag'), $('#pag-outro'));
   if($('#desc') && $('#desc-p').value) $('#desc').value = $('#desc-p').value;   // ex.: desconto combinado com a rede
   atualizarRevisao();
@@ -1277,7 +1474,7 @@ function carregarNoPedido(origem, msgOk){
   st.empresa = origem.empresa; st.cat = ''; st.busca = ''; $('#busca').value = ''; st.itens = {}; st.precos = {}; st.base = {};
   let fora = 0, abaixo = 0;
   (origem.itens || []).forEach(i => { if(ativos.has(i.id)) st.itens[i.id] = (st.itens[i.id] || 0) + Number(i.q); else fora++; });
-  if(cli(origem.cliente)){ $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = origem.cliente; }
+  if(cli(origem.cliente)){ $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = origem.cliente; st.trocandoCli = false; }
   // Orçamento e "repetir pedido" voltam com os preços de venda que foram usados (o que foi digitado no resumo).
   // Preço que hoje ficaria abaixo do mínimo do vendedor (a tabela subiu) volta para o preço da tabela.
   (origem.itens || []).forEach(i => { const p = ativos.get(i.id), v = Number(i.preco);
