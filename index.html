@@ -149,13 +149,53 @@ textarea{resize:vertical}
 .recusa[hidden]{display:none}
 /* Relatórios */
 input[type=date],input[type=month],input[type=number]{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;color:var(--ink)}
-.rel-filtros{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
-.rel-filtros .field:nth-child(n+3){grid-column:1 / -1}
-.rel-atalhos{grid-column:1 / -1;margin:-4px 0 16px}
-.rel-atalhos .chip{padding:7px 12px;font-size:14px}
-.rel-botoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
-.rel-botoes .primary{grid-column:1 / -1}
-.rel-botoes .btn:disabled{opacity:.45;cursor:not-allowed}
+/* Barra de filtros do relatório: compacta no celular (3 linhas), em uma faixa no computador. */
+.rel-barra{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px;margin-bottom:14px}
+.rel-barra .field{margin:0;flex:1 1 calc(50% - 5px);min-width:0}
+.rel-barra .lbl{font-size:12px;margin-bottom:3px}
+.rel-barra select,.rel-barra input[type=month]{padding:9px 10px;min-height:42px}
+.rel-mes-nav{display:flex;gap:6px;flex:1 1 100%;align-items:center}
+.rel-mes-nav input{flex:1;min-width:0;text-align:center;font-weight:700}
+.rel-seta{flex:none;width:42px;height:42px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;font-size:22px;line-height:1;cursor:pointer}
+.rel-acoes{display:flex;justify-content:space-between;align-items:center;flex:1 1 100%;gap:10px}
+.rel-acoes .btn{width:auto;padding:9px 16px;font-size:15px}
+.rel-acoes .btn:disabled{opacity:.45;cursor:not-allowed}
+.rel-exp{position:relative}
+.rel-exp-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:30;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:6px;gap:6px;min-width:180px;box-shadow:var(--sombra,0 6px 20px rgba(0,0,0,.2))}
+.rel-exp-menu.aberto{display:grid}
+.rel-exp-menu .btn{width:100%;border:0;text-align:left}
+.rel-mais-box{display:none;flex:1 1 100%;grid-template-columns:1fr 1fr 1fr;gap:8px 10px}
+.rel-mais-box.aberto{display:grid}
+.rel-mais-box .field{flex:none}
+@media (max-width:699px){ .rel-mais-box.aberto{grid-template-columns:1fr 1fr} }
+/* Resultado: resumo no topo e abas */
+.rel-resumo{margin-bottom:12px;gap:8px}
+.rel-resumo .rel-card{padding:10px 12px}
+.rel-resumo .rel-card strong{font-size:21px}
+.rel-abas{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;scrollbar-width:thin}
+.rel-abas .chip{flex:none;padding:8px 14px;font-size:14px}
+.rel-painel{display:none}
+.rel-painel.on{display:block}
+.rel-carregando{opacity:.55;pointer-events:none;transition:opacity .15s}
+.rel-var{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-top:2px}
+.rel-var.up{color:var(--ok)}
+.rel-var.down{color:var(--bad)}
+.rel-oculto{display:none!important}
+.rel-busca{margin-bottom:10px}
+.rel-busca input{padding:9px 12px;min-height:42px}
+/* Tabelas viram cartões no celular */
+@media (max-width:699px){
+  .tabela-wrap.cartoes{border:0;background:none;overflow:visible}
+  .cartoes .tabela{min-width:0!important}
+  .cartoes .tabela thead{display:none}
+  .cartoes .tabela tbody,.cartoes .tabela tr,.cartoes .tabela td{display:block}
+  .cartoes .tabela tr{border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;margin-bottom:8px}
+  .cartoes .tabela td{border:0;padding:2px 0;display:flex;justify-content:space-between;gap:12px;text-align:right;white-space:normal}
+  .cartoes .tabela td:first-child{display:block;text-align:left;font-weight:700;padding-bottom:4px}
+  .cartoes .tabela td[data-l]::before{content:attr(data-l);color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:600;text-align:left;flex:none}
+  .cartoes .tabela td:first-child::before{content:none}
+  .rel-scroll{max-height:none}
+}
 .rel-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
 .rel-card{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px}
 .rel-card small{display:block;color:var(--muted);font-size:13px;font-weight:600}
@@ -442,6 +482,11 @@ body{font-variant-numeric:tabular-nums}
 /* Histórico do cliente nos relatórios */
 .hist-cli{background:var(--surface);border-radius:14px;padding:14px;box-shadow:var(--sombra);margin-bottom:18px}
 .hist-cli h2{margin-bottom:4px}
+.mat{min-width:560px}
+.mat th.mes{text-align:center;border-left:1px solid rgba(128,128,128,.3)}
+.mat td:nth-child(even),.mat thead tr:nth-child(2) th:nth-child(odd){border-left:1px solid rgba(128,128,128,.3)}
+.mat th:first-child,.mat td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;min-width:130px}
+.mat-n{display:inline-flex;gap:6px;align-items:center;font-size:13px;margin:4px 0 8px}
 /* Celular: campos com menos de 16px fazem o iPhone dar zoom ao tocar; e nada pode passar da largura da tela. */
 @media (max-width: 999px){
   input, select, textarea{font-size:16px!important}
@@ -505,11 +550,12 @@ body{font-variant-numeric:tabular-nums}
   .order:hover{border-color:var(--ipe)}
   #catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:24px}
   #catalogo .cat-group{margin:0}
-  .rel-filtros{grid-template-columns:200px minmax(220px,1fr) minmax(220px,1fr)}
-  .rel-filtros .field:nth-child(n+3){grid-column:auto}
-  .rel-botoes{grid-template-columns:auto auto auto;justify-content:start}
-  .rel-botoes .primary{grid-column:auto}
-  .rel-botoes .btn{width:auto;padding:12px 22px}
+  /* Computador: tudo numa faixa só (os filtros de marca, vendedor e rede ficam visíveis) */
+  .rel-mes-nav{flex:0 0 300px}
+  .rel-barra .field{flex:1 1 150px}
+  .rel-acoes{flex:0 0 auto;margin-left:auto}
+  #rel-mais{display:none}
+  .rel-mais-box,.rel-mais-box.aberto{display:contents}
   .rel-cards{grid-template-columns:repeat(4,1fr)}
   .rel-duas{display:grid;grid-template-columns:1fr 1fr;gap:24px}
   .note,#btn-atualizar{max-width:720px}
@@ -645,27 +691,36 @@ body{font-variant-numeric:tabular-nums}
 
   <section id="v-relatorios" class="view" hidden>
     <h1>Relatórios</h1>
-    <div class="rel-filtros">
-      <label class="field"><span class="lbl">Mês</span><input type="month" id="rel-mes"></label>
-      <label class="field rel-cli-campo"><span class="lbl">Cliente</span><select id="rel-cli"></select></label>
-      <label class="field"><span class="lbl">Situação</span><select id="rel-sit">
-        <option value="aprov">Aprovados (inclui enviados, faturados e entregues)</option>
-        <option value="faturados">Só faturados e entregues</option>
-        <option value="ativos">Aprovados e em aprovação</option>
-        <option value="todos">Todos (inclusive recusados e cancelados)</option>
-      </select></label>
-      <div hidden>
-        <input type="date" id="rel-de"><input type="date" id="rel-ate">
-        <label class="field"><select id="rel-emp"></select></label>
-        <label class="field"><select id="rel-vend"></select></label>
-        <label class="field"><select id="rel-grupo"></select></label>
-        <div class="rel-atalhos chips" id="rel-atalhos"></div>
+    <div class="rel-barra">
+      <div class="rel-mes-nav" role="group" aria-label="Mês do relatório">
+        <button class="rel-seta" id="rel-mes-ant" type="button" aria-label="Mês anterior">‹</button>
+        <input type="month" id="rel-mes" aria-label="Mês">
+        <button class="rel-seta" id="rel-mes-prox" type="button" aria-label="Próximo mês">›</button>
+        <button class="rel-seta" id="rel-gerar" type="button" aria-label="Atualizar relatório" title="Atualizar">↻</button>
       </div>
-    </div>
-    <div class="rel-botoes">
-      <button class="btn primary" id="rel-gerar" type="button">Gerar relatório</button>
-      <button class="btn sec" id="rel-pdf" type="button" disabled>Baixar PDF</button>
-      <button class="btn sec" id="rel-xlsx" type="button" disabled>Baixar Excel</button>
+      <label class="field rel-cli-campo"><span class="lbl">Cliente</span><select id="rel-cli"></select></label>
+      <label class="field rel-sit-campo"><span class="lbl">Situação</span><select id="rel-sit">
+        <option value="aprov">Aprovados</option>
+        <option value="faturados">Faturados e entregues</option>
+        <option value="ativos">Em aprovação + aprovados</option>
+        <option value="todos">Todos (com cancelados)</option>
+      </select></label>
+      <div class="rel-acoes">
+        <button class="mini" id="rel-mais" type="button" aria-expanded="false">Mais filtros</button>
+        <div class="rel-exp">
+          <button class="btn sec" id="rel-exportar" type="button" aria-haspopup="true" aria-expanded="false" disabled>Exportar ▾</button>
+          <div class="rel-exp-menu" id="rel-exp-menu" role="menu">
+            <button class="btn sec" id="rel-pdf" type="button" disabled>Baixar PDF</button>
+            <button class="btn sec" id="rel-xlsx" type="button" disabled>Baixar Excel</button>
+          </div>
+        </div>
+      </div>
+      <div class="rel-mais-box" id="rel-mais-box">
+        <label class="field"><span class="lbl">Marca</span><select id="rel-emp"></select></label>
+        <label class="field"><span class="lbl">Vendedor</span><select id="rel-vend"></select></label>
+        <label class="field"><span class="lbl">Rede</span><select id="rel-grupo"></select></label>
+      </div>
+      <div hidden><input type="date" id="rel-de"><input type="date" id="rel-ate"></div>
     </div>
     <div id="rel-resultado"><p class="empty">Escolha o mês e o cliente.</p></div>
   </section>
@@ -818,7 +873,21 @@ const condGrupo = clienteId => { const g = grupoDe(cli(clienteId)); return g ? (
 const nomesGrupos = () => [...new Map((DATA?.clientes || []).filter(grupoDe).map(c => [norm(grupoDe(c)), grupoDe(c)])).values()].sort((a,b) => a.localeCompare(b, 'pt-BR'));
 const minimoDe = e => Number(emp(e)?.pedidoMinimo) || 0;
 const numBR = s => { const t = String(s ?? '').trim().replace(/\./g, '').replace(',', '.'); const n = Number(t); return isFinite(n) ? n : NaN; };
+// Orçamentos: ficam guardados na planilha (situação "Orçamento"). Esta lista é só o que ainda não subiu (sem internet) e o modo demonstração.
 let orcamentos = LS.get('orcamentos', []);
+const ORCAMENTO = 'Orçamento';
+// Orçamentos do usuário: os da planilha + os que ainda esperam internet.
+function listaOrcamentos(){
+  const daEmpresa = o => !empAtiva() || o.empresa === empAtiva();
+  const meus = o => DEMO || !o.usuario || o.usuario === sessao?.usuario;
+  const locais = orcamentos.filter(meus);
+  const ids = new Set(locais.map(o => o.id));
+  // Orçamento que virou pedido neste aparelho ainda aparece na planilha como orçamento até subir: não mostra.
+  const viraramPedido = new Set(pedidos.map(p => p.id));
+  const remotosOrc = DEMO ? [] : remotos.filter(r => r.status === ORCAMENTO && !ids.has(r.id) && !viraramPedido.has(r.id))
+    .map(r => Object.assign({}, r, {tipo: 'orcamento', sync: 'ok'}));
+  return [...locais, ...remotosOrc].filter(daEmpresa).sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : 0);
+}
 let resumoLojas = LS.get('resumoLojas', {});
 let filtroLojas = 'todas';
 // Pedidos vindos da planilha (do usuário conectado, ou de todos se for administrador).
@@ -885,6 +954,13 @@ async function sincronizar(){
     }
     catch(e){ if(e.login) sessaoCaiu(e.message); break; }
   }
+  // Orçamentos guardados só neste aparelho (sem internet na hora de salvar, ou de antes desta versão) sobem para a planilha.
+  for(const o of orcamentos.filter(o => !o.usuario || o.usuario === sessao.usuario).slice().reverse()){
+    try{
+      await api({acao:'pedido', pedido: Object.assign({}, o, {tipo:'orcamento'})});
+      orcamentos = orcamentos.filter(x => x.id !== o.id); LS.set('orcamentos', orcamentos); enviou = true;
+    }catch(e){ if(e.login) sessaoCaiu(e.message); break; }
+  }
   sincronizando = false;
   // Preço digitado pelo administrador virou o preço do produto na planilha: traz o catálogo atualizado.
   if(precosMudaram){ precosMudaram = false; carregarCatalogo(false); }
@@ -902,7 +978,8 @@ async function carregarPedidos(avisar){
     LS.set('pedidosServidor', {usuario: sessao.usuario, lista: remotos});
     // Leva a situação da planilha para as cópias guardadas no celular.
     const porId = new Map(remotos.map(r => [r.id, r]));
-    pedidos.forEach(p => { const r = porId.get(p.id); if(r){ p.status = r.status; p.sync = 'ok'; } });
+    // (um orçamento com o mesmo id ainda não é o pedido: só a planilha trocar a situação conta)
+    pedidos.forEach(p => { const r = porId.get(p.id); if(r && r.status !== ORCAMENTO){ p.status = r.status; p.sync = 'ok'; } });
     LS.set('pedidos', pedidos);
     acertarContador();
     if(avisar) toast('Lista atualizada');
@@ -1265,7 +1342,7 @@ function ultimosValores(){
   const cid = $('#cliente')?.value, mapa = {};
   if(!cid) return mapa;
   const fonte = [...listaPedidos().filter(p => ![CANCELADO, RECUSADO].includes(situacaoDe(p))),
-      ...orcamentos.filter(o => (DEMO || !o.usuario || o.usuario === sessao?.usuario) && (!empAtiva() || o.empresa === empAtiva()))]
+      ...listaOrcamentos()]
     .filter(p => p.cliente === cid).sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : 0);
   fonte.forEach(p => (p.itens || []).forEach(i => { const v = Number(i.preco);
     if(v > 0 && !mapa[i.id]) mapa[i.id] = {preco: v, tabela: Number(i.tabela) || 0, data: p.data}; }));
@@ -1410,7 +1487,11 @@ function renderCart(){
   const n = $('#cart-n');
   if(n.textContent !== String(its.length)){ n.textContent = its.length; n.classList.add('pula'); setTimeout(() => n.classList.remove('pula'), 180); }
   // Botão flutuante "Novo pedido": aparece fora da tela de Novo pedido.
-  $('#fab-novo').hidden = !$('#v-novo').hidden;
+  // Na aba Lojas o botão vira "+ Nova loja".
+  const fab = $('#fab-novo'), naLojas = !$('#v-lojas').hidden;
+  fab.hidden = !$('#v-novo').hidden || !$('#v-relatorios').hidden;   // nos Relatórios o botão cobria as tabelas
+  fab.dataset.modo = naLojas ? 'loja' : 'pedido';
+  fab.innerHTML = `<span aria-hidden="true">+</span>${naLojas ? 'Nova loja' : 'Novo pedido'}`;
   renderPainel(its, tot);
   renderRepetir();
   mostrarCondGrupo();
@@ -1424,7 +1505,7 @@ function renderPassos(its){
   $('#passos').innerHTML = [...etapas, ['Revisar', false]].map(([t, ok], i) =>
     `<li class="${i < etapas.length && ok ? 'ok' : (i === atual || (atual === -1 && i === etapas.length)) ? 'agora' : ''}">${t}</li>`).join('');
 }
-$('#fab-novo').addEventListener('click', () => irPara('novo'));
+$('#fab-novo').addEventListener('click', () => { if($('#fab-novo').dataset.modo === 'loja') abrirNovaLoja(); else irPara('novo'); });
 // Totais com desconto: bruto, desconto e líquido.
 function contas(bruto, desc){
   const d = Math.max(0, Math.min(100, Number(desc) || 0));
@@ -1735,6 +1816,8 @@ function fecharPedido(pag, obs, desc, deOrcamento){
   deOrcamento = deOrcamento || st.orcamento;
   LS.set('ultPag', pag);
   const p = montarPedido(cli($('#cliente').value), itensAtuais(), pag, obs, desc);
+  // Orçamento que vira pedido continua sendo o MESMO registro na planilha (muda de "Orçamento" para "Em aprovação"), com número de pedido novo.
+  if(deOrcamento) p.id = deOrcamento;
   pedidos.unshift(p); LS.set('pedidos', pedidos);
   // Orçamento que virou pedido sai da lista de orçamentos.
   if(deOrcamento){ orcamentos = orcamentos.filter(o => o.id !== deOrcamento); LS.set('orcamentos', orcamentos); }
@@ -1802,7 +1885,12 @@ function fecharLote(pag, obs, desc, lista){
   LS.set('ultPag', pag);
   const feitos = lista.map(x => montarPedido(x.c, x.itens, pag, obs, desc));
   pedidos.unshift(...feitos.slice().reverse()); LS.set('pedidos', pedidos);
-  if(st.orcamento){ orcamentos = orcamentos.filter(o => o.id !== st.orcamento); LS.set('orcamentos', orcamentos); }
+  if(st.orcamento){
+    const idOrc = st.orcamento;
+    orcamentos = orcamentos.filter(o => o.id !== idOrc); LS.set('orcamentos', orcamentos);
+    // Vários pedidos nascem do orçamento: o orçamento da planilha é apagado (best effort; se falhar, continua como orçamento).
+    if(!DEMO && remotos.some(r => r.id === idOrc)) api({acao:'orcamentoExcluir', id: idOrc}).then(() => { remotos = remotos.filter(r => r.id !== idOrc); renderPedidos(); }).catch(() => {});
+  }
   st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
@@ -1822,26 +1910,27 @@ function salvarOrcamento(pag, obs, desc){
   const erroDesc = isNaN(desc) || desc < 0 || desc > max ? (conferirRegras(0, desc) || 'Desconto inválido.') : conferirRegras(Number.MAX_VALUE, desc);
   if(erroDesc){ toast(erroDesc, 6000); return; }
   const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
-  const antigo = st.orcamento && orcamentos.find(o => o.id === st.orcamento);
+  const antigo = st.orcamento && listaOrcamentos().find(o => o.id === st.orcamento);
+  // Número ORC-n: continua depois do maior que já existe (neste aparelho ou na planilha).
+  const maiorOrc = Math.max(LS.get('ultimoOrc', 100), ...listaOrcamentos().map(x => +(/^ORC-(\d+)$/.exec(String(x.num)) || [0, 0])[1]));
   const o = {
     tipo: 'orcamento', id: antigo ? antigo.id : 'O' + Date.now().toString(36),
-    num: antigo ? antigo.num : 'ORC-' + (LS.get('ultimoOrc', 100) + 1),
+    num: antigo ? antigo.num : 'ORC-' + (maiorOrc + 1),
     data: new Date().toISOString(), empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
     clienteCnpj: c.cnpj || '', clienteGrupo: grupoDe(c),
     pagamento: pag, obs: (obs || '').trim(), itens: its, bruto: cc.bruto, desconto: cc.desc, total: cc.total,
     entrega: st.entrega.data, transportadora: st.entrega.transp, enderecoEntrega: st.entrega.endereco,
     usuario: sessao?.usuario || '', representante: nomeAtual()
   };
-  if(!antigo) LS.set('ultimoOrc', LS.get('ultimoOrc', 100) + 1);
-  orcamentos = [o, ...orcamentos.filter(x => x.id !== o.id)]; LS.set('orcamentos', orcamentos);
+  if(!antigo) LS.set('ultimoOrc', maiorOrc + 1);
+  orcamentos = [o, ...orcamentos.filter(x => x.id !== o.id)]; LS.set('orcamentos', orcamentos);   // sobe para a planilha em seguida
   st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.orcamento = null; $('#obs-p').value = ''; $('#desc-p').value = ''; renderProdutos(); renderCart(); renderPedidos();
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Orçamento ${esc(o.num)} salvo</h2>
-      <p class="meta"><b>${esc(o.clienteNome)}</b><br>${brl(o.total)}, ${esc(o.pagamento)}<br>Ele fica na aba Vendas, em <b>Em negociação</b>.</p></div>
-    ${acoesHTML(o)}
+      <p class="meta"><b>${esc(o.clienteNome)}</b><br>${brl(o.total)}, ${esc(o.pagamento)}<br>Ele fica guardado na planilha, na aba Vendas, em <b>Em negociação</b>. Orçamento não é enviado ao cliente.</p></div>
     <button class="btn ghost" data-close style="margin-top:8px">Fechar</button>`);
-  ligarAcoes(o);
+  sincronizar();
 }
 // Carrega itens (de um orçamento ou de um pedido anterior) no Novo pedido.
 function carregarNoPedido(origem, msgOk){
@@ -1876,20 +1965,24 @@ function carregarNoPedido(origem, msgOk){
     (abaixo ? ` ${abaixo} item${abaixo > 1 ? 's' : ''} voltou${abaixo > 1 ? 'aram' : ''} ao preço da tabela, porque o preço antigo ficou abaixo do mínimo.` : ''), 6000);
 }
 function abrirOrcamento(id){
-  const o = orcamentos.find(x => x.id === id); if(!o) return;
+  const o = listaOrcamentos().find(x => x.id === id); if(!o) return;
   abrirSheet(`
     <div class="sheet-head"><h2>Orçamento ${esc(o.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <p class="meta"><b>${esc(o.clienteNome)}</b>${o.clienteCidade ? ', '+esc(o.clienteCidade) : ''}<br>${esc(o.empresaNome)}<br>${dataBR(o.data)}</p>
     ${resumoHTML(o.itens)}
     ${totaisHTML({bruto:o.bruto ?? o.total, desc:o.desconto || 0, total:o.total})}
     <p class="meta">Pagamento: <b>${esc(o.pagamento)}</b>${o.obs ? `<br>Obs.: ${esc(o.obs)}` : ''}</p>
+    <p class="dica-preco">Orçamento é só para você e o André: não dá para enviar ao cliente por WhatsApp, e-mail ou PDF. Para fechar, toque em <b>Transformar em pedido</b>.</p>
     <div class="btns"><button class="btn primary" id="btn-orc-virar">Transformar em pedido</button></div>
-    ${acoesHTML(o)}
     <div class="btns"><button class="btn perigo" id="btn-orc-excluir">Excluir orçamento</button></div>`);
-  ligarAcoes(o);
   $('#btn-orc-virar').addEventListener('click', () => { carregarNoPedido(o, `Orçamento ${o.num} carregado no Novo pedido.`); st.orcamento = o.id; });
-  $('#btn-orc-excluir').addEventListener('click', () => {
+  $('#btn-orc-excluir').addEventListener('click', async () => {
     if(!confirm(`Excluir o orçamento ${o.num}?`)) return;
+    // Se já está na planilha, apaga lá primeiro (sem internet não dá para excluir).
+    if(!DEMO && remotos.some(r => r.id === id)){
+      try{ await api({acao:'orcamentoExcluir', id}); remotos = remotos.filter(r => r.id !== id); }
+      catch(e){ if(e.login) sessaoCaiu(e.message); else toast('Não deu para excluir agora. Tente de novo com internet.', 5000); return; }
+    }
     orcamentos = orcamentos.filter(x => x.id !== id); LS.set('orcamentos', orcamentos); fecharSheet(); renderPedidos(); toast('Orçamento excluído');
   });
 }
@@ -2204,6 +2297,7 @@ function texto(p){
     ([rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).length ? '\n' + [rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join(' · ') : '');
 }
 function acoesHTML(p){
+  if(p.tipo === 'orcamento' || situacaoDe(p) === ORCAMENTO) return '';   // orçamento nunca é enviado ao cliente
   return `<div class="btns">
     <a class="btn zap" href="https://wa.me/?text=${encodeURIComponent(texto(p))}" target="_blank" rel="noopener">Enviar no WhatsApp</a>
     <button class="btn sec" id="btn-pdf-abrir">Abrir ou imprimir PDF</button>
@@ -2211,6 +2305,7 @@ function acoesHTML(p){
     <button class="btn sec" id="btn-copiar">Copiar pedido</button></div>`;
 }
 function ligarAcoes(p){
+  if(!$('#btn-copiar')) return;
   $('#btn-copiar').addEventListener('click', async () => {
     const t = texto(p);
     try{ await navigator.clipboard.writeText(t); toast('Pedido copiado'); }
@@ -2320,8 +2415,19 @@ function prepararRelatorio(){
   $('#rel-grupo').innerHTML = '<option value="">Todas as lojas</option><option value="__sem">Só lojas sem rede</option>' +
     nomesGrupos().map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
   $('#rel-grupo').value = [...$('#rel-grupo').options].some(o => o.value === gAtual) ? gAtual : '';
-  if(!REL && navigator.onLine && !DEMO && sessao) gerarRelatorio();   // abre já com o mês atual
+  // Primeira vez nesta abertura do app: volta aos filtros da última vez.
+  if(!relRestaurado){
+    relRestaurado = true; const f = LS.get('relFiltros', {});
+    if(f.sit && [...$('#rel-sit').options].some(o => o.value === f.sit)) $('#rel-sit').value = f.sit;
+    if(f.vend && [...$('#rel-vend').options].some(o => o.value === f.vend)) $('#rel-vend').value = f.vend;
+    if(f.grupo && [...$('#rel-grupo').options].some(o => o.value === f.grupo)) $('#rel-grupo').value = f.grupo;
+  }
+  contarMais();
+  // Abre já com o mês atual; ao voltar para a aba depois de um minuto, atualiza sozinho.
+  if((!REL || Date.now() - (REL.em || 0) > 60000) && navigator.onLine && !DEMO && sessao) gerarRelatorio();
+  else if(REL) renderRelatorio();
 }
+let relRestaurado = false;
 $('#rel-mes').addEventListener('change', () => { if(aplicarMes()) gerarRelatorio(); });
 
 async function gerarRelatorio(){
@@ -2330,20 +2436,46 @@ async function gerarRelatorio(){
   if(!de || !ate){ toast('Escolha o mês'); return; }
   if(de > ate){ toast('A data De precisa ser antes da data Até'); return; }
   if(!navigator.onLine){ toast('Sem internet. O relatório vem da planilha.'); return; }
-  const b = $('#rel-gerar'); b.disabled = true; b.textContent = 'Gerando…';
+  const b = $('#rel-gerar'); b.disabled = true; $('#rel-resultado').classList.add('rel-carregando');
   try{
     // A saúde dos clientes olha o histórico inteiro, não só o período escolhido: busca os dois juntos.
     const hoje = isoDia(new Date()), inteiro = de <= '2020-01-01' && ate >= hoje;
     const [j, t] = await Promise.all([api({acao:'relatorio', de, ate}), inteiro ? null : api({acao:'relatorio', de: '2020-01-01', ate: hoje})]);
-    REL = {de, ate, pedidos: j.pedidos || [], comissoes: j.comissoes, todos: (t || j).pedidos || []};
+    REL = {de, ate, pedidos: j.pedidos || [], comissoes: j.comissoes, todos: (t || j).pedidos || [], em: Date.now()};
     opcoesVendedores(); renderRelatorio();
   }catch(e){
     if(e.login) sessaoCaiu(e.message);
     else toast(e instanceof TypeError ? 'Não deu para falar com a planilha' : e.message);
-  }finally{ b.disabled = false; b.textContent = 'Gerar relatório'; }
+  }finally{ b.disabled = false; $('#rel-resultado').classList.remove('rel-carregando'); }
 }
 $('#rel-gerar').addEventListener('click', gerarRelatorio);
-['#rel-emp','#rel-vend','#rel-sit','#rel-grupo','#rel-cli'].forEach(s => $(s).addEventListener('change', () => { if(REL) renderRelatorio(); }));
+// Mês anterior / próximo (as setas ao lado do mês).
+function mudarMes(delta){
+  const m = $('#rel-mes').value; if(!/^\d{4}-\d{2}$/.test(m)) return;
+  const [a, mm] = m.split('-').map(Number), d = new Date(a, mm - 1 + delta, 1);
+  $('#rel-mes').value = isoDia(d).slice(0, 7); if(aplicarMes()) gerarRelatorio();
+}
+$('#rel-mes-ant').addEventListener('click', () => mudarMes(-1));
+$('#rel-mes-prox').addEventListener('click', () => mudarMes(1));
+// "Mais filtros" (marca, vendedor, rede): no celular abre e fecha; no computador ficam sempre visíveis.
+function contarMais(){
+  const n = (!empAtiva() && $('#rel-emp').value ? 1 : 0) + ($('#rel-vend').value ? 1 : 0) + ($('#rel-grupo').value ? 1 : 0);
+  $('#rel-mais').textContent = n ? `Mais filtros · ${n}` : 'Mais filtros';
+}
+$('#rel-mais').addEventListener('click', () => {
+  const box = $('#rel-mais-box'), abrir = !box.classList.contains('aberto');
+  box.classList.toggle('aberto', abrir); $('#rel-mais').setAttribute('aria-expanded', abrir);
+});
+// Exportar ▾ (PDF e Excel)
+function fecharExportar(){ $('#rel-exp-menu').classList.remove('aberto'); $('#rel-exportar').setAttribute('aria-expanded', 'false'); }
+$('#rel-exportar').addEventListener('click', e => { e.stopPropagation(); const abrir = !$('#rel-exp-menu').classList.contains('aberto'); $('#rel-exp-menu').classList.toggle('aberto', abrir); $('#rel-exportar').setAttribute('aria-expanded', abrir); });
+document.addEventListener('click', e => { if(!e.target.closest('.rel-exp')) fecharExportar(); });
+$('#rel-pdf').addEventListener('click', fecharExportar); $('#rel-xlsx').addEventListener('click', fecharExportar);
+// Os filtros escolhidos ficam guardados (situação, vendedor e rede) para a próxima vez.
+['#rel-emp','#rel-vend','#rel-sit','#rel-grupo','#rel-cli'].forEach(s => $(s).addEventListener('change', () => {
+  LS.set('relFiltros', {sit: $('#rel-sit').value, vend: $('#rel-vend').value, grupo: $('#rel-grupo').value});
+  contarMais(); if(REL) renderRelatorio();
+}));
 
 /* ---------- Ritmo de compra do cliente ----------
    Compara o tempo desde a última compra com o ritmo normal do cliente (intervalo médio entre as compras)
@@ -2415,6 +2547,42 @@ function barrasMeses(v, larg, alt){
     return `<rect x="${(i * w + 1).toFixed(1)}" y="${alt - hh}" width="${(w - 2).toFixed(1)}" height="${hh}" rx="1.5" class="${x ? '' : 'zero'}"/>`; }).join('')}</svg>`;
 }
 
+// Histórico de compra por mês (modelo: produto nas linhas; para cada mês, quantidade e ticket médio).
+// Ticket médio = valor (já com o desconto do pedido) ÷ quantidade, igual ao "Histórico de compra dos itens".
+let MAT_N = LS.get('matMeses', 6);
+const MESES_ABREV = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function matrizMeses(lista, filtro){
+  const h = new Date(), meses = [];
+  for(let k = MAT_N - 1; k >= 0; k--){ const d = new Date(h.getFullYear(), h.getMonth() - k, 1);
+    meses.push({chave: d.getFullYear() * 12 + d.getMonth(), rot: `${MESES_ABREV[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`}); }
+  const valido = new Set(meses.map(m => m.chave)), mapa = new Map();
+  (lista || []).filter(p => p.status !== ORCAMENTO && filtro(p)).forEach(p => {
+    const dt = new Date(p.data), ch = dt.getFullYear() * 12 + dt.getMonth(); if(!valido.has(ch)) return;
+    const f = 1 - (Number(p.desconto) || 0) / 100;
+    (p.itens || []).forEach(i => {
+      const k = p.empresa + '|' + i.id;
+      const x = mapa.get(k) || mapa.set(k, {produto: i.nome, empresa: p.empresaNome, codigo: i.id, por: {}, q: 0, total: 0}).get(k);
+      const m = x.por[ch] || (x.por[ch] = {q: 0, total: 0}), q = Number(i.q) || 0, v = q * (Number(i.preco) || 0) * f;
+      m.q += q; m.total += v; x.q += q; x.total += v; });
+  });
+  return {meses, linhas: [...mapa.values()].sort((a, b) => b.q - a.q)};
+}
+function matrizHTML(mx, titulo){
+  const tk = c => c && c.q ? brl(c.total / c.q) : '';
+  const seletor = `<label class="mat-n">Meses: <select id="mat-n">${[3, 6, 12].map(n => `<option value="${n}"${n === MAT_N ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`;
+  if(!mx.linhas.length) return `<section class="rel-sec"><h2>Histórico de compra por mês</h2>${seletor}<p class="empty">Nenhuma compra nestes meses com esses filtros.</p></section>`;
+  return `<section class="rel-sec"><h2>Histórico de compra por mês</h2>${seletor}
+    <p class="meta">Quantidade e ticket médio (valor ÷ quantidade) de cada produto, mês a mês. Mostra o histórico inteiro, sem o período escolhido acima.</p>
+    <div class="tabela-wrap rel-scroll"><table class="tabela mat">
+      <thead><tr><th rowspan="2">${esc(titulo)}</th>${mx.meses.map(m => `<th colspan="2" class="mes">${m.rot}</th>`).join('')}<th colspan="2" class="mes">Total</th></tr>
+        <tr>${[...mx.meses, 0].map(() => '<th class="n">quant</th><th class="n">ticket médio</th>').join('')}</tr></thead>
+      <tbody>${mx.linhas.map(x => `<tr data-q="${esc(norm(x.produto + ' ' + x.codigo))}"><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)}</div></td>${mx.meses.map(m => {
+        const c = x.por[m.chave]; return `<td class="n${c ? '' : ' zero'}">${c ? c.q.toLocaleString('pt-BR') : ''}</td><td class="n${c ? '' : ' zero'}">${tk(c)}</td>`; }).join('')}
+        <td class="n"><b>${x.q.toLocaleString('pt-BR')}</b></td><td class="n"><b>${tk(x)}</b></td></tr>`).join('')}</tbody>
+    </table></div></section>`;
+}
+$('#rel-resultado').addEventListener('change', e => { if(e.target.id === 'mat-n'){ MAT_N = +e.target.value; LS.set('matMeses', MAT_N); renderRelatorio(); } });
+
 // Aplica os filtros e devolve as linhas de item (uma por produto de cada pedido) e os resumos.
 function dadosRelatorio(){
   const fEmp = $('#rel-emp').value, vend = $('#rel-vend').value, sit = $('#rel-sit').value, fGrupo = $('#rel-grupo').value;
@@ -2449,7 +2617,7 @@ function dadosRelatorio(){
     return [...m.values()].map(x => Object.assign(x, {pedidos: x.pedidos.size})); };
   const porProduto = somar(l => l.empresa + '|' + l.codigo, l => ({empresa:l.empresa, codigo:l.codigo, produto:l.produto})).sort((a,b) => b.q - a.q);
   // Por loja: cada CNPJ separado (filiais com o mesmo nome não se misturam).
-  const porLoja = somar(l => l.clienteId || l.loja, l => ({loja:l.loja, cidade:l.cidade, rede:l.rede, cnpj:l.cnpj})).sort((a,b) => b.total - a.total);
+  const porLoja = somar(l => l.clienteId || l.loja, l => ({id:l.clienteId, loja:l.loja, cidade:l.cidade, rede:l.rede, cnpj:l.cnpj})).sort((a,b) => b.total - a.total);
   // Por rede: soma das filiais; quem não tem rede aparece como a própria loja.
   const chaveRede = l => l.rede ? 'R|' + norm(l.rede) : 'L|' + (l.clienteId || l.loja);
   const cnpjsPor = new Map();
@@ -2465,7 +2633,13 @@ function dadosRelatorio(){
     `Situação: ${$('#rel-sit').selectedOptions[0].textContent.toLowerCase()}`];
   // Ritmo de compra: histórico inteiro, com os mesmos filtros de empresa, vendedor, rede e cliente (sem período e situação).
   const ritmo = ritmoClientes(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && okGrupo(p) && (!fCli || p.cliente === fCli));
-  return {peds, linhas, porProduto, porLoja, porRede, temRede: porRede.some(r => r.ehRede), filtros, comissao, ritmo,
+  // Histórico de compra por mês: produto x mês (quantidade e ticket médio), histórico inteiro, mesmos filtros (sem o período).
+  const matriz = matrizMeses(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli));
+  // Mês anterior (para as setas ↑ ↓ do resumo): mesmos filtros, histórico inteiro.
+  const dIni = new Date(REL.de + 'T12:00:00'), ini = new Date(dIni.getFullYear(), dIni.getMonth() - 1, 1), fim = new Date(dIni.getFullYear(), dIni.getMonth(), 1);
+  const pAnt = (REL.todos || REL.pedidos).filter(p => { const t = new Date(p.data); return t >= ini && t < fim && (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli); });
+  const anterior = {pedidos: pAnt.length, valor: pAnt.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(pAnt.map(p => p.cliente)).size};
+  return {peds, linhas, porProduto, porLoja, porRede, temRede: porRede.some(r => r.ehRede), filtros, comissao, ritmo, matriz, anterior,
     totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: peds.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(peds.map(p => p.cliente)).size,
       comissaoMarcas: comissao.marcas.reduce((s,x) => s + x.comissao, 0), comissaoVendedores: comissao.vendedores.reduce((s,x) => s + x.comissao, 0)}};
 }
@@ -2473,37 +2647,49 @@ $('#rel-resultado').addEventListener('click', e => {
   const b = e.target.closest('[data-id]'); if(b) return abrirPedido(b.dataset.id);
   const r = e.target.closest('[data-ritmo-cli]'); if(r && cli(r.dataset.ritmoCli)) abrirLoja(r.dataset.ritmoCli);   // linha do ritmo abre a ficha da loja
 });
+/* Resultado do relatório: resumo no topo (com comparação ao mês anterior), busca e abas.
+   Todas as abas são montadas de uma vez e só a escolhida aparece (trocar de aba é instantâneo). */
+const REL_ABAS_TXT = {cliente:'Cliente', itens:'Itens', mes:'Por mês', lojas:'Lojas', comissao:'Comissão', ritmo:'Ritmo', detalhe:'Detalhado'};
+let REL_ABA = LS.get('relAba', 'itens'), REL_BUSCA = '';
+const varPct = (a, b) => b > 0 ? Math.round((a - b) / b * 100) : null;
+const varHTML = (a, b) => { const v = varPct(a, b);
+  return v === null ? '' : `<small class="rel-var ${v > 0 ? 'up' : v < 0 ? 'down' : ''}">${v > 0 ? '↑' : v < 0 ? '↓' : '→'} ${Math.abs(v)}% vs mês anterior</small>`; };
+// Esconde as linhas que não batem com a busca (produto, loja, rede, CNPJ).
+function aplicarBuscaRel(){
+  const q = norm(REL_BUSCA || '').trim();
+  document.querySelectorAll('#rel-resultado tr[data-q]').forEach(tr => tr.classList.toggle('rel-oculto', !!q && !tr.dataset.q.includes(q)));
+}
 function renderRelatorio(){
   const d = dadosRelatorio();
-  $('#rel-pdf').disabled = $('#rel-xlsx').disabled = !d.linhas.length;
-  const dt = s => new Date(s).toLocaleDateString('pt-BR');
+  $('#rel-pdf').disabled = $('#rel-xlsx').disabled = $('#rel-exportar').disabled = !d.linhas.length;
+  const dt = s => new Date(s).toLocaleDateString('pt-BR'), nBR = x => x.toLocaleString('pt-BR');
   const fCli = $('#rel-cli').value, c = fCli && cli(fCli);
-  // Ritmo de compra de todos os clientes (quem precisa de atenção primeiro), ou o quadro do cliente escolhido.
-  const ritmoHTML = !d.ritmo.length || c ? '' : (() => {
+  const vazio = '<p class="empty">Nenhum pedido neste período com esses filtros.</p>';
+  const dq = s => `data-q="${esc(norm(s))}"`;
+  const ticket = x => x.q ? x.total / x.q : 0;
+  const pctTxt = x => x.pct ? String(x.pct).replace('.', ',') + '%' : '<span class="sub">definir</span>';
+
+  // Ritmo de compra de todos os clientes (quem precisa de atenção primeiro).
+  const ritmoHTML = !d.ritmo.length ? '<p class="empty">Ainda não há histórico de compra para mostrar.</p>' : (() => {
     const cont = Object.fromEntries(ORDEM_RITMO.map(k => [k, d.ritmo.filter(s => s.st === k).length]));
     return `<section class="rel-sec"><h2>Ritmo de compra</h2>
-      <p class="meta">Quem está comprando como sempre, quem está esfriando e quem parou. Usa o histórico inteiro do cliente.</p>
+      <p class="meta">Quem está comprando como sempre, quem está esfriando e quem parou. Usa o histórico inteiro do cliente. Toque numa loja para abrir a ficha.</p>
       <div class="ritmo-resumo">${ORDEM_RITMO.filter(k => cont[k]).map(k => `<span class="badge ${RITMO[k][1]}">${RITMO[k][0]}: ${cont[k]}</span>`).join('')}</div>
-      <div class="tabela-wrap"><table class="tabela" style="min-width:860px">
+      <div class="tabela-wrap cartoes"><table class="tabela" style="min-width:860px">
         <thead><tr><th>Cliente</th><th>Situação</th><th>Última compra</th><th>Ritmo normal</th><th>Próxima compra</th><th>Tendência</th><th>12 meses</th><th class="n">Total 12 meses</th></tr></thead>
-        <tbody>${d.ritmo.map(s => `<tr data-ritmo-cli="${esc(s.id)}"><td>${esc(s.nome)}<div class="sub">${esc(s.cidade)}${s.cidade ? ' · ' : ''}${s.pedidos} pedido${s.pedidos > 1 ? 's' : ''} desde ${dt(s.primeira)}</div></td>
-          <td><span class="badge ${RITMO[s.st][1]}">${RITMO[s.st][0]}</span></td><td>${dt(s.ultima)}<div class="sub">${textoDias(s.dias)}</div></td>
-          <td>${textoRitmo(s)}</td><td class="${s.proxima && s.proxima < Date.now() - 86400000 ? 'tend-down' : ''}">${textoProxima(s)}</td>
-          <td class="${classeTend(s)}">${textoTend(s)}</td><td>${barrasMeses(s.meses, 108, 26)}</td><td class="n">${brl(s.total12)}</td></tr>`).join('')}</tbody>
+        <tbody>${d.ritmo.map(s => `<tr data-ritmo-cli="${esc(s.id)}" ${dq(s.nome + ' ' + s.cidade)}><td>${esc(s.nome)}<div class="sub">${esc(s.cidade)}${s.cidade ? ' · ' : ''}${s.pedidos} pedido${s.pedidos > 1 ? 's' : ''} desde ${dt(s.primeira)}</div></td>
+          <td data-l="Situação"><span class="badge ${RITMO[s.st][1]}">${RITMO[s.st][0]}</span></td><td data-l="Última compra">${dt(s.ultima)}<div class="sub">${textoDias(s.dias)}</div></td>
+          <td data-l="Ritmo normal">${textoRitmo(s)}</td><td data-l="Próxima compra" class="${s.proxima && s.proxima < Date.now() - 86400000 ? 'tend-down' : ''}">${textoProxima(s)}</td>
+          <td data-l="Tendência" class="${classeTend(s)}">${textoTend(s)}</td><td data-l="12 meses">${barrasMeses(s.meses, 108, 26)}</td><td data-l="Total 12 meses" class="n">${brl(s.total12)}</td></tr>`).join('')}</tbody>
       </table></div></section>`;
   })();
-  const ritmoCli = c ? quadroRitmo(d.ritmo.find(s => s.id === fCli)) : '';
-  if(!d.linhas.length){
-    $('#rel-resultado').innerHTML = (c ? `<section class="hist-cli"><h2>Histórico: ${esc(c.nome)}</h2>${ritmoCli}</section>` : '') + ritmoHTML +
-      '<p class="empty">Nenhum pedido neste período com esses filtros.</p>';
-    return;
-  }
+
   // Histórico de um cliente: ficha, ritmo, resumo e a lista de pedidos dele (toque para abrir).
-  const hist = c ? (() => {
+  const clienteHTML = c ? (() => {
     const ps = [...d.peds].sort((a,b) => a.data < b.data ? 1 : -1), tot = ps.reduce((s,p) => s + (Number(p.total) || 0), 0);
-    return `<section class="hist-cli"><h2>Histórico: ${esc(c.nome)}</h2>
+    return `<section class="hist-cli"><h2>${esc(c.nome)}</h2>
       <p class="meta">${[c.razao, c.cnpj && 'CNPJ ' + c.cnpj, c.cidade].filter(Boolean).map(esc).join(' · ')}</p>
-      ${ritmoCli}
+      ${quadroRitmo(d.ritmo.find(s => s.id === fCli))}
       <h2 class="sub-h" style="margin-top:14px">No período escolhido</h2>
       <div class="rel-cards" style="margin-bottom:12px">
         <div class="rel-card"><small>Pedidos</small><strong>${ps.length}</strong></div>
@@ -2513,56 +2699,73 @@ function renderRelatorio(){
       </div>
       <ul class="orders" id="hist-pedidos">${ps.map(cartaoPedido).join('')}</ul></section>`;
   })() : '';
-  const ticket = x => x.q ? x.total / x.q : 0;
-  const itensTabela = `<section class="rel-sec"><h2>Histórico de compra dos itens</h2>
-    <div class="tabela-wrap rel-scroll"><table class="tabela" style="min-width:420px">
+
+  const itensHTML = !d.linhas.length ? vazio : `<section class="rel-sec"><h2>Histórico de compra dos itens</h2>
+    <div class="tabela-wrap rel-scroll cartoes"><table class="tabela" style="min-width:420px">
       <thead><tr><th>Produto</th><th class="n">Quantidade</th><th class="n">Ticket médio</th><th class="n">Valor total</th></tr></thead>
-      <tbody>${d.porProduto.map(x => `<tr><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)} · ${x.pedidos} pedido${x.pedidos > 1 ? 's' : ''}</div></td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(ticket(x))}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+      <tbody>${d.porProduto.map(x => `<tr ${dq(x.produto + ' ' + x.codigo)}><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)} · ${x.pedidos} pedido${x.pedidos > 1 ? 's' : ''}</div></td><td data-l="Quantidade" class="n">${nBR(x.q)}</td><td data-l="Ticket médio" class="n">${brl(ticket(x))}</td><td data-l="Valor total" class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
     </table></div></section>`;
-  $('#rel-resultado').innerHTML = `
-    <p class="meta">${d.filtros.map(esc).join(' · ')}</p>
-    ${itensTabela}
-    <section class="rel-sec"><h2>Resumo</h2><div class="rel-cards">
-      <div class="rel-card"><small>Pedidos</small><strong>${d.totais.pedidos}</strong></div>
-      <div class="rel-card"><small>Itens (unidades)</small><strong>${d.totais.itens.toLocaleString('pt-BR')}</strong></div>
-      <div class="rel-card"><small>Valor total</small><strong>${brl(d.totais.valor)}</strong></div>
-      <div class="rel-card"><small>Lojas atendidas</small><strong>${d.totais.lojas}</strong></div>
-    </div></section>
-    <details class="rel-det"><summary>Ver detalhes</summary>
-    ${hist}
-    <div class="rel-cards">
+
+  const fEmpR = $('#rel-emp').value, mesHTML = matrizHTML(d.matriz, fEmpR ? (emp(fEmpR)?.nome || fEmpR) : 'Produto');
+
+  const lojasHTML = !d.linhas.length ? vazio : `<section class="rel-sec"><h2>Por loja</h2><p class="meta">Toque numa loja para abrir a ficha.</p><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
+      <thead><tr><th>Loja</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
+      <tbody>${d.porLoja.map(x => `<tr ${x.id ? `data-ritmo-cli="${esc(x.id)}"` : ''} ${dq(x.loja + ' ' + x.rede + ' ' + x.cnpj + ' ' + x.cidade)}><td>${esc(x.loja)}<div class="sub">${[x.rede && '🏢 ' + x.rede, x.cnpj, x.cidade].filter(Boolean).map(esc).join(' · ')}</div></td><td data-l="Pedidos" class="n">${x.pedidos}</td><td data-l="Itens" class="n">${nBR(x.q)}</td><td data-l="Valor" class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+    </table></div></section>
+    ${d.temRede ? `<section class="rel-sec"><h2>Por rede (soma das filiais)</h2><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
+      <thead><tr><th>Rede / loja</th><th class="n">CNPJs</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
+      <tbody>${d.porRede.map(x => `<tr ${dq(x.rede)}><td>${x.ehRede ? '🏢 <b>' + esc(x.rede) + '</b>' : esc(x.rede) + '<div class="sub">loja sem rede</div>'}</td><td data-l="CNPJs" class="n">${x.cnpjs}</td><td data-l="Pedidos" class="n">${x.pedidos}</td><td data-l="Itens" class="n">${nBR(x.q)}</td><td data-l="Valor" class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+    </table></div></section>` : ''}`;
+
+  const comissaoHTML = !d.linhas.length ? vazio : `<div class="rel-cards">
       <div class="rel-card"><small>Comissão a receber (marcas)</small><strong>${brl(d.totais.comissaoMarcas)}</strong></div>
       <div class="rel-card"><small>Comissão a pagar (vendedores)</small><strong>${brl(d.totais.comissaoVendedores)}</strong></div>
     </div>
-    ${ritmoHTML}
     <div class="rel-duas">
-      <section class="rel-sec"><h2>Comissão por marca</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
+      <section class="rel-sec"><h2>Comissão por marca</h2><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
         <thead><tr><th>Marca</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
-        <tbody>${d.comissao.marcas.map(x => `<tr><td>${esc(x.nome)}</td><td class="n">${x.pedidos}</td><td class="n">${brl(x.vendas)}</td><td class="n">${x.pct ? String(x.pct).replace('.', ',') + '%' : '<span class="sub">definir</span>'}</td><td class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
+        <tbody>${d.comissao.marcas.map(x => `<tr><td>${esc(x.nome)}</td><td data-l="Pedidos" class="n">${x.pedidos}</td><td data-l="Vendas" class="n">${brl(x.vendas)}</td><td data-l="%" class="n">${pctTxt(x)}</td><td data-l="Comissão" class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
       </table></div></section>
-      <section class="rel-sec"><h2>Comissão por vendedor</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
+      <section class="rel-sec"><h2>Comissão por vendedor</h2><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
         <thead><tr><th>Vendedor</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
-        <tbody>${d.comissao.vendedores.map(x => `<tr><td>${esc(x.nome)}</td><td class="n">${x.pedidos}</td><td class="n">${brl(x.vendas)}</td><td class="n">${x.pct ? String(x.pct).replace('.', ',') + '%' : '<span class="sub">definir</span>'}</td><td class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
+        <tbody>${d.comissao.vendedores.map(x => `<tr><td>${esc(x.nome)}</td><td data-l="Pedidos" class="n">${x.pedidos}</td><td data-l="Vendas" class="n">${brl(x.vendas)}</td><td data-l="%" class="n">${pctTxt(x)}</td><td data-l="Comissão" class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
       </table></div></section>
     </div>
-    ${d.comissao.marcas.some(x => !x.pct) || d.comissao.vendedores.some(x => !x.pct) ? '<p class="note">Onde aparece "definir", falta o percentual na planilha: coluna <b>Comissão %</b> da aba Empresas (marcas) ou da aba Usuarios (vendedores).</p>' : ''}
-    <div>
-      <section class="rel-sec"><h2>Por loja</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
-        <thead><tr><th>Loja</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
-        <tbody>${d.porLoja.map(x => `<tr><td>${esc(x.loja)}<div class="sub">${[x.rede && '🏢 ' + x.rede, x.cnpj, x.cidade].filter(Boolean).map(esc).join(' · ')}</div></td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
-      </table></div></section>
-    </div>
-    ${d.temRede ? `<section class="rel-sec"><h2>Por rede (soma das filiais)</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
-      <thead><tr><th>Rede / loja</th><th class="n">CNPJs</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
-      <tbody>${d.porRede.map(x => `<tr><td>${x.ehRede ? '🏢 <b>' + esc(x.rede) + '</b>' : esc(x.rede) + '<div class="sub">loja sem rede</div>'}</td><td class="n">${x.cnpjs}</td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
-    </table></div></section>` : ''}
-    <section class="rel-sec"><h2>Histórico detalhado</h2><div class="tabela-wrap"><table class="tabela" style="min-width:860px">
+    ${d.comissao.marcas.some(x => !x.pct) || d.comissao.vendedores.some(x => !x.pct) ? '<p class="note">Onde aparece "definir", falta o percentual na planilha: coluna <b>Comissão %</b> da aba Empresas (marcas) ou da aba Usuarios (vendedores).</p>' : ''}`;
+
+  const detalheHTML = !d.linhas.length ? vazio : `<section class="rel-sec"><h2>Histórico detalhado</h2><div class="tabela-wrap rel-scroll cartoes"><table class="tabela" style="min-width:860px">
       <thead><tr><th>Produto</th><th class="n">Quantidade</th><th class="n">Ticket médio</th><th class="n">Total</th><th>Data</th><th>Pedido</th><th>Loja</th><th>Vendedor</th><th>Situação</th></tr></thead>
-      <tbody>${d.linhas.map(l => `<tr><td>${esc(l.produto)}<div class="sub">${esc(l.empresa)}</div></td><td class="n">${l.q.toLocaleString('pt-BR')}</td><td class="n">${brl(l.preco)}</td><td class="n">${brl(l.total)}</td>
-        <td>${dt(l.data)}</td><td>${esc(l.num)}</td><td>${esc(l.loja)}<div class="sub">${esc(l.cidade)}</div></td><td>${esc(l.vendedor)}</td><td>${esc(rotulo(l.status))}</td></tr>`).join('')}</tbody>
-    </table></div></section>
-    </details>`;
+      <tbody>${d.linhas.map(l => `<tr ${dq(l.produto + ' ' + l.codigo + ' ' + l.loja + ' ' + l.num + ' ' + l.cnpj)}><td>${esc(l.produto)}<div class="sub">${esc(l.empresa)}</div></td><td data-l="Quantidade" class="n">${nBR(l.q)}</td><td data-l="Ticket médio" class="n">${brl(l.preco)}</td><td data-l="Total" class="n">${brl(l.total)}</td>
+        <td data-l="Data">${dt(l.data)}</td><td data-l="Pedido">${esc(l.num)}</td><td data-l="Loja">${esc(l.loja)}<div class="sub">${esc(l.cidade)}</div></td><td data-l="Vendedor">${esc(l.vendedor)}</td><td data-l="Situação">${esc(rotulo(l.status))}</td></tr>`).join('')}</tbody>
+    </table></div></section>`;
+
+  const paineis = {cliente: clienteHTML, itens: itensHTML, mes: mesHTML, lojas: lojasHTML, comissao: comissaoHTML, ritmo: ritmoHTML, detalhe: detalheHTML};
+  const abas = [...(c ? ['cliente'] : []), 'itens', 'mes', 'lojas', 'comissao', ...(c ? [] : ['ritmo']), 'detalhe'];
+  if(!abas.includes(REL_ABA)) REL_ABA = abas[0];
+
+  const t = d.totais, a = d.anterior, tm = t.pedidos ? t.valor / t.pedidos : 0, tmA = a.pedidos ? a.valor / a.pedidos : 0;
+  $('#rel-resultado').innerHTML = `
+    <div class="rel-cards rel-resumo">
+      <div class="rel-card"><small>Pedidos</small><strong>${t.pedidos}</strong>${varHTML(t.pedidos, a.pedidos)}</div>
+      <div class="rel-card"><small>Valor total</small><strong>${brl(t.valor)}</strong>${varHTML(t.valor, a.valor)}</div>
+      <div class="rel-card"><small>Ticket médio</small><strong>${brl(tm)}</strong>${varHTML(tm, tmA)}</div>
+      <div class="rel-card"><small>Lojas atendidas</small><strong>${t.lojas}</strong>${varHTML(t.lojas, a.lojas)}</div>
+    </div>
+    <div class="rel-busca"><input type="search" id="rel-busca" placeholder="Buscar produto ou loja nas tabelas" value="${esc(REL_BUSCA)}" aria-label="Buscar produto ou loja" autocomplete="off"></div>
+    <div class="rel-abas" role="tablist">${abas.map(k => `<button class="chip" type="button" role="tab" data-aba="${k}" aria-pressed="${k === REL_ABA}">${REL_ABAS_TXT[k]}</button>`).join('')}</div>
+    ${abas.map(k => `<div class="rel-painel${k === REL_ABA ? ' on' : ''}" data-painel="${k}">${paineis[k]}</div>`).join('')}`;
+  aplicarBuscaRel(); rolarMatriz();
 }
+// No celular a tabela por mês abre mostrando os meses mais recentes (à direita).
+function rolarMatriz(){ const w = document.querySelector('#rel-resultado .rel-painel.on table.mat')?.closest('.tabela-wrap'); if(w) w.scrollLeft = w.scrollWidth; }
+$('#rel-resultado').addEventListener('click', e => {
+  const b = e.target.closest('[data-aba]'); if(!b) return;
+  REL_ABA = b.dataset.aba; LS.set('relAba', REL_ABA); setTimeout(rolarMatriz, 0);
+  document.querySelectorAll('#rel-resultado [data-aba]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  document.querySelectorAll('#rel-resultado [data-painel]').forEach(p => p.classList.toggle('on', p.dataset.painel === REL_ABA));
+});
+$('#rel-resultado').addEventListener('input', e => { if(e.target.id === 'rel-busca'){ REL_BUSCA = e.target.value; aplicarBuscaRel(); } });
+
 const nomeRelatorio = ext => `Relatorio-pedidos-${REL.de}-a-${REL.ate}.${ext}`;
 
 $('#rel-pdf').addEventListener('click', async () => {
@@ -2607,6 +2810,11 @@ $('#rel-xlsx').addEventListener('click', async () => {
     const wb = X.utils.book_new();
     X.utils.book_append_sheet(wb, folha(['Produto','Quantidade','Ticket médio','Valor total','Pedidos','Empresa','Código'],
       d.porProduto.map(x => [x.produto, x.q, x.q ? x.total / x.q : 0, x.total, x.pedidos, x.empresa, x.codigo]), [55,12,16,16,10,20,14], {2:moeda, 3:moeda}), 'Histórico dos itens');
+    // Histórico por mês: Produto | (quant, ticket médio) de cada mês | Total
+    { const mx = d.matriz, cab = ['Produto', 'Empresa', ...mx.meses.flatMap(m => [m.rot + ' quant', m.rot + ' ticket médio']), 'Total quant', 'Total ticket médio'];
+      const fmt = {}; cab.forEach((t, i) => { if(/ticket/.test(t)) fmt[i] = moeda; });
+      X.utils.book_append_sheet(wb, folha(cab, mx.linhas.map(x => [x.produto, x.empresa, ...mx.meses.flatMap(m => { const c = x.por[m.chave];
+        return [c ? c.q : '', c && c.q ? c.total / c.q : '']; }), x.q, x.q ? x.total / x.q : 0]), [50, 18, ...cab.slice(2).map(() => 14)], fmt), 'Histórico por mês'); }
     X.utils.book_append_sheet(wb, folha(
       ['Produto','Quantidade','Ticket médio','Total (c/ desconto)','Data','Pedido','Situação','NF','Loja','CNPJ','Rede','Cidade','Vendedor','Empresa','Código','Unidade'],
       d.linhas.map(l => [l.produto, l.q, l.preco, l.total, new Date(l.data), String(l.num), l.status, l.nf, l.loja, l.cnpj, l.rede, l.cidade, l.vendedor, l.empresa, l.codigo, l.un]),
@@ -2640,9 +2848,11 @@ function listaPedidos(){
   const daEmpresa = p => !empAtiva() || p.empresa === empAtiva();
   if(DEMO) return pedidos.filter(daEmpresa);
   const meus = p => !sessao || !p.usuario || p.usuario === sessao.usuario;
-  const porId = new Map(remotos.map(r => [r.id, r]));
-  const locais = pedidos.filter(p => meus(p) && !porId.has(p.id) && (p.sync === 'pendente' || p.sync === 'cancelado' || !remotos.length));
-  return [...remotos, ...locais].filter(daEmpresa).sort((a,b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
+  // Orçamentos (situação "Orçamento" na planilha) não são pedidos: ficam só em Vendas > Em negociação.
+  const remP = remotos.filter(r => r.status !== ORCAMENTO);
+  const porId = new Map(remP.map(r => [r.id, r]));
+  const locais = pedidos.filter(p => meus(p) && !porId.has(p.id) && (p.sync === 'pendente' || p.sync === 'cancelado' || !remP.length));
+  return [...remP, ...locais].filter(daEmpresa).sort((a,b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0));
 }
 const situacaoDe = p => p.sync === 'cancelado' ? CANCELADO : (p.status || '');
 const CLASSE = {[AGUARDANDO]:'espera', [APROVADO]:'aprov', [ENVIADO]:'env', [FATURADO]:'fat', [ENTREGUE]:'ent', [RECUSADO]:'rec', [CANCELADO]:'canc'};
@@ -2670,7 +2880,7 @@ function renderPedidos(){
   const todos = listaPedidos();
   $('#pedidos-topo').hidden = false;
   $('#btn-atualizar-pedidos').hidden = DEMO;
-  const meusOrc = orcamentos.filter(o => (DEMO || !o.usuario || o.usuario === sessao?.usuario) && (!empAtiva() || o.empresa === empAtiva()));
+  const meusOrc = listaOrcamentos();
   // Busca por cliente (nome, rede, CNPJ) ou número do pedido.
   const q = norm($('#vendas-busca').value || '').trim(), qNum = soDigitos($('#vendas-busca').value);
   const bateVenda = p => !q || norm(`${p.clienteNome} ${p.num} ${p.clienteGrupo || ''} ${p.clienteCnpj || cli(p.cliente)?.cnpj || ''}`).includes(q) ||
