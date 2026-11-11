@@ -208,6 +208,8 @@
       ['Valor total', brl(d.totais.valor)], ['Lojas atendidas', String(d.totais.lojas)]];
     if (d.comissao) quadros.push(['Comissão a receber', brl(d.totais.comissaoMarcas)], ['Comissão a pagar', brl(d.totais.comissaoVendedores)]);
     var y = 32, cw = (W - 2 * M - (quadros.length - 1) * 4) / quadros.length;
+    function desenharQuadros() {
+      if (y > H - 40) { doc.addPage(); y = 16; }
     quadros.forEach(function (c, i) {
       var x = M + i * (cw + 4);
       doc.setFillColor.apply(doc, claro); doc.roundedRect(x, y, cw, 16, 2, 2, 'F');
@@ -215,6 +217,7 @@
       doc.setTextColor.apply(doc, tinta); doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text(c[1], x + 4, y + 12.5);
     });
     y += 24;
+    }
 
     // Tabela com quebra de página, cabeçalho repetido e texto quebrado em até 3 linhas por célula.
     function tabela(titulo, cols, rows) {
@@ -249,6 +252,13 @@
     var n = function (v) { return Number(v).toLocaleString('pt-BR'); };
     var dt = function (s) { var x = new Date(s); return x.toLocaleDateString('pt-BR') + ' ' + x.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
 
+    // Primeiro o histórico de compra dos itens, depois o resumo.
+    tabela('Histórico de compra dos itens', [
+      { t: 'Produto', w: 110 }, { t: 'Empresa', w: 36, cinza: 1 }, { t: 'Código', w: 26, cinza: 1 }, { t: 'Pedidos', w: 18, a: 'r' },
+      { t: 'Quantidade', w: 25, a: 'r', b: 1 }, { t: 'Ticket médio', w: 28, a: 'r' }, { t: 'Valor total', w: 30, a: 'r' }],
+      d.porProduto.map(function (x) { return [x.produto, x.empresa, x.codigo, x.pedidos, n(x.q), brl(x.q ? x.total / x.q : 0), brl(x.total)]; }));
+    desenharQuadros();
+
     if (d.comissao) {
       var pct = function (x) { return x.pct ? String(x.pct).replace('.', ',') + '%' : 'definir'; };
       tabela('Comissão por marca (a receber)', [
@@ -262,10 +272,6 @@
       { t: 'Cliente', w: 70 }, { t: 'Situação', w: 30, b: 1 }, { t: 'Última compra', w: 38 }, { t: 'Ritmo normal', w: 38, cinza: 1 },
       { t: 'Próxima compra', w: 47 }, { t: 'Tendência', w: 50 }],
       d.ritmo.map(function (s) { return d.ritmoPdf(s); }));
-    tabela('Itens mais pedidos', [
-      { t: 'Produto', w: 128 }, { t: 'Empresa', w: 45, cinza: 1 }, { t: 'Código', w: 30, cinza: 1 },
-      { t: 'Pedidos', w: 20, a: 'r' }, { t: 'Qtd', w: 20, a: 'r', b: 1 }, { t: 'Valor', w: 30, a: 'r' }],
-      d.porProduto.map(function (x) { return [x.produto, x.empresa, x.codigo, x.pedidos, n(x.q), brl(x.total)]; }));
     tabela('Por loja', [
       { t: 'Loja', w: 82 }, { t: 'CNPJ', w: 38, cinza: 1 }, { t: 'Rede', w: 35, cinza: 1 }, { t: 'Cidade', w: 28, cinza: 1 },
       { t: 'Pedidos', w: 25, a: 'r' }, { t: 'Itens', w: 25, a: 'r' }, { t: 'Valor', w: 40, a: 'r', b: 1 }],
@@ -275,10 +281,9 @@
       { t: 'Pedidos', w: 25, a: 'r' }, { t: 'Itens', w: 25, a: 'r' }, { t: 'Valor', w: 40, a: 'r', b: 1 }],
       d.porRede.map(function (x) { return [x.rede, x.ehRede ? 'Rede' : 'Loja sem rede', x.cnpjs, x.pedidos, n(x.q), brl(x.total)]; }));
     tabela('Histórico detalhado', [
-      { t: 'Data', w: 26 }, { t: 'Pedido', w: 24 }, { t: 'Loja', w: 44 }, { t: 'Vendedor', w: 26, cinza: 1 },
-      { t: 'Empresa', w: 26, cinza: 1 }, { t: 'Produto', w: 69 }, { t: 'Qtd', w: 14, a: 'r', b: 1 },
-      { t: 'Total', w: 24, a: 'r' }, { t: 'Situação', w: 20, cinza: 1 }],
-      d.linhas.map(function (l) { return [dt(l.data), l.num, l.loja, l.vendedor, l.empresa, l.produto, n(l.q), brl(l.total), l.status]; }));
+      { t: 'Produto', w: 66 }, { t: 'Quantidade', w: 20, a: 'r', b: 1 }, { t: 'Ticket médio', w: 24, a: 'r' }, { t: 'Total', w: 24, a: 'r' },
+      { t: 'Data', w: 26 }, { t: 'Pedido', w: 22 }, { t: 'Loja', w: 42 }, { t: 'Vendedor', w: 25, cinza: 1 }, { t: 'Situação', w: 24, cinza: 1 }],
+      d.linhas.map(function (l) { return [l.produto, n(l.q), brl(l.preco), brl(l.total), dt(l.data), l.num, l.loja, l.vendedor, l.status]; }));
 
     // Rodapé
     var tot = doc.getNumberOfPages();
