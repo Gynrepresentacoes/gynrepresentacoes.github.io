@@ -1,6 +1,6 @@
 // Faz o app abrir sem internet. Arquivos do app: tenta a rede primeiro (para pegar
 // atualizações) e usa a cópia salva quando estiver offline.
-const CACHE = 'pedidos-v28';
+const CACHE = 'pedidos-v29';
 const ARQUIVOS = ['./', './index.html', './config.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
   './logo.png', './logo-pdf.jpg', './fotos.json',
