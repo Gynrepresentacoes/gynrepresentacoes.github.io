@@ -181,6 +181,13 @@ input[type=date],input[type=month],input[type=number]{width:100%;background:var(
 .rel-var.up{color:var(--ok)}
 .rel-var.down{color:var(--bad)}
 .rel-oculto{display:none!important}
+.imp-op{display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer}
+.imp-op input{margin-top:4px;flex:none}
+.imp-op small{display:block;color:var(--muted);font-size:13px}
+.imp-cards{margin:12px 0}
+.imp-lista{list-style:none;margin:0 0 10px;padding:0;font-size:14px}
+.imp-lista li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
+.imp-lista li span:first-child{min-width:0;overflow-wrap:anywhere}
 .rel-busca{margin-bottom:10px}
 .rel-busca input{padding:9px 12px;min-height:42px}
 /* Tabelas viram cartões no celular */
@@ -737,7 +744,8 @@ body{font-variant-numeric:tabular-nums}
   <section id="v-catalogo" class="view" hidden>
     <h1>Catálogo</h1>
     <p class="note" id="cat-info"></p>
-    <button class="btn sec" id="btn-atualizar" style="margin-bottom:20px">Atualizar catálogo</button>
+    <button class="btn sec" id="btn-atualizar" style="margin-bottom:10px">Atualizar catálogo</button>
+    <button class="btn sec" id="btn-importar-precos" style="margin-bottom:20px" hidden>Atualizar preços por planilha</button>
     <div id="catalogo"></div>
   </section>
 </main>
@@ -1350,22 +1358,25 @@ function ultimosValores(){
 }
 // Cartão do produto: foto, nome, e três campos (quantidade, valor e desconto do item). Só entra no pedido ao tocar em Adicionar.
 function linhaProduto(p){
-  const id = esc(p.id), n = st.itens[p.id] || 0, tab = p.preco > 0 ? p.preco : 0, u = ULT[p.id];
+  // livre: produto de "preço livre" visto pelo administrador (o valor digitado é o preço cheio e o último vale para todos).
+  const id = esc(p.id), n = st.itens[p.id] || 0, livre = livreAdm(p), tab = p.preco > 0 && !livre ? p.preco : 0, u = ULT[p.id];
   let valor = '', desc = '', dica = '';
   if(n){
     // Já está no pedido: mostra o que foi usado.
-    const base = tab || st.base[p.id] || 0, fin = st.precos[p.id] ?? base;
+    const base = tab || st.base[p.id] || (livre ? p.preco : 0), fin = st.precos[p.id] ?? base;
     if(tab) valor = fin; else { valor = base; desc = base > 0 && fin < base ? pctItem({tabela: base, preco: fin}) : ''; }
   } else if(u){
     // Último valor usado com este cliente (editável).
     if(tab) valor = u.preco;
+    else if(livre){ valor = p.preco; if(u.tabela > u.preco) desc = pctItem({tabela: u.tabela, preco: u.preco}); }
     else if(u.tabela > u.preco){ valor = u.tabela; desc = pctItem({tabela: u.tabela, preco: u.preco}); }
     else valor = u.preco;
     dica = `último: ${brl(u.preco)} em ${new Date(u.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}`;
   } else if(tab) valor = tab;
+  else if(livre) valor = p.preco;
   const f = v => v === '' ? '' : numFmt(v);
   return `<li class="prod pcard${n ? ' on' : ''}" data-pid="${id}">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
-    <div class="prod-sub">${esc(p.un)}${tab ? `, tabela <strong>${brl(tab)}</strong>` : ''}${dica ? ` · <span class="pc-hist">${esc(dica)}</span>` : ''}</div></div>
+    <div class="prod-sub">${esc(p.un)}${p.preco > 0 ? `, tabela <strong>${brl(p.preco)}</strong>${livre ? ' <span class="pc-hist">(preço livre: o último que você digitar vale para todos)</span>' : ''}` : ''}${dica ? ` · <span class="pc-hist">${esc(dica)}</span>` : ''}</div></div>
     <div class="pc-campos">
       <label class="pc-f pc-q"><span>Qtd</span><input class="pc-qtd" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" value="${n || ''}" aria-label="Quantidade de ${esc(p.nome)}"></label>
       <label class="pc-f pc-v"><span>Valor R$</span><input class="pc-val" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${f(valor)}" aria-label="Valor de ${esc(p.nome)}"></label>
@@ -1428,9 +1439,13 @@ function renderProdutos(){
   ul.innerHTML = lista.map(linhaProduto).join('');
 }
 // Itens do pedido. "preco" é o preço de venda (o digitado no resumo, ou o da tabela); "tabela" guarda o da planilha.
+// Produto de "preço livre" (veio sem preço e o André foi preenchendo): para o administrador o valor digitado é o
+// preço cheio, e o último que ele digitar vira o preço de tabela de todos. Vendedor vê só o preço de tabela.
+const livreAdm = p => ehAdmin() && !!p.livre && p.preco > 0;
+const semTabelaDe = p => !(p.preco > 0) || livreAdm(p);
 function itensAtuais(){
   return st.empresa ? prodsDe(st.empresa).filter(p => st.itens[p.id]).map(p => {
-    const semTabela = !(p.preco > 0), tab = semTabela ? (st.base[p.id] || 0) : p.preco;
+    const semTabela = semTabelaDe(p), tab = semTabela ? (st.base[p.id] || (livreAdm(p) ? p.preco : 0)) : p.preco;
     return {id:p.id, nome:p.nome, un:p.un, preco: st.precos[p.id] ?? tab, tabela: tab, semTabela, q:st.itens[p.id]};
   }) : [];
 }
@@ -1639,7 +1654,7 @@ function aplicarCartao(id, qtdTxt, valTxt, descTxt){
   if(!(v > 0)){ toast('Digite o valor do item'); return false; }
   const d = String(descTxt || '').trim() === '' ? 0 : numBR(descTxt);
   if(isNaN(d) || d < 0 || d >= 100){ toast('Digite um desconto entre 0 e 99%'); return false; }
-  const semTab = !(p.preco > 0), base = semTab ? Math.round(v * 100) / 100 : p.preco;
+  const semTab = semTabelaDe(p), base = semTab ? Math.round(v * 100) / 100 : p.preco;
   const fin = Math.round(v * (1 - d / 100) * 100) / 100;
   const min = precoMinimo(base);
   if(!(fin > 0) || fin < min - 0.004){
@@ -1795,7 +1810,9 @@ function montarPedido(c, its, pag, obs, desc){
   if(ehAdmin() && !DEMO){
     let mudou = false;
     its.forEach(i => { const pr = (DATA?.produtos || []).find(x => x.id === i.id);
-      if(pr && !(pr.preco > 0) && (i.tabela > 0 || i.preco > 0)){ pr.preco = Math.round((i.tabela > 0 ? i.tabela : i.preco) * 100) / 100; mudou = true; } });
+      if(!pr) return;
+      if(!(pr.preco > 0) && (i.tabela > 0 || i.preco > 0)){ pr.preco = Math.round((i.tabela > 0 ? i.tabela : i.preco) * 100) / 100; pr.livre = true; mudou = true; }
+      else if(pr.livre && i.tabela > 0 && Math.abs(i.tabela - pr.preco) > 0.004){ pr.preco = Math.round(i.tabela * 100) / 100; mudou = true; } });
     if(mudou) LS.set('catalogo', DATA);
   }
   const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
@@ -1948,7 +1965,7 @@ function carregarNoPedido(origem, msgOk){
     // Produto sem preço na planilha: volta o preço cheio (se ficou guardado) e o preço com desconto.
     // (a cópia da planilha não guarda o preço cheio; a cópia deste aparelho guarda)
     const loc = (pedidos.find(x => x.id === origem.id)?.itens || []).find(x => x.id === i.id);
-    if(!(p.preco > 0)){ const t = Number(i.tabela) || Number(loc?.tabela) || 0, b = t > 0 ? t : v; st.base[i.id] = b; if(v < b) st.precos[i.id] = v; return; }
+    if(semTabelaDe(p)){ const t = Number(i.tabela) || Number(loc?.tabela) || 0, b = t > 0 ? t : v; st.base[i.id] = b; if(v < b) st.precos[i.id] = v; return; }
     if(v < precoMinimo(p.preco)){ abaixo++; return; }
     st.precos[i.id] = v; });
   if(origem.pagamento) LS.set('ultPag', origem.pagamento);
@@ -3099,6 +3116,7 @@ function renderCatalogo(){
     : em ? `Catálogo da planilha, atualizado em ${dataBR(em)}. Mude produtos e preços na planilha e toque em Atualizar.`
          : 'O catálogo ainda não foi carregado da planilha.';
   $('#btn-atualizar').hidden = DEMO;
+  $('#btn-importar-precos').hidden = DEMO || !ehAdmin();   // só o administrador atualiza preços
   // Por empresa e, dentro dela, por categoria. Cada categoria abre e fecha; a lista só é montada ao abrir.
   $('#catalogo').innerHTML = (DATA?.empresas || []).filter(e => !empAtiva() || e.id === empAtiva()).map(e => {
     const ps = prodsDe(e.id);
@@ -3119,6 +3137,108 @@ function preencherSecao(d){
 }
 $('#catalogo').addEventListener('toggle', e => { if(e.target.open) preencherSecao(e.target); }, true);
 $('#btn-atualizar').addEventListener('click', () => carregarCatalogo(true));
+
+/* ---------- Atualizar preços por planilha (administrador) ----------
+   Arquivo Excel ou CSV com Código e Preço (e Empresa, se o código se repete entre marcas).
+   Primeiro mostra a prévia (nada é gravado); só grava depois da confirmação. */
+const ROT_ESTADO = {atualizar: 'Será atualizado', igual: 'Já está com esse preço', mantido: 'Mantido (já tem preço)', nao: 'Código não encontrado', varios: 'Código em mais de uma marca (informe a Empresa)', invalido: 'Preço inválido'};
+function precoDoArquivo(v){
+  if(typeof v === 'number') return v;
+  let s = String(v ?? '').replace(/[^\d,.\-]/g, '');
+  if(!s) return 0;
+  if(s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  const n = Number(s); return isFinite(n) ? n : 0;
+}
+// CSV: descobre o separador (; , ou tab), aceita aspas e arquivos do Excel em português (Windows-1252).
+function lerCsvPrecos(buf){
+  let txt = new TextDecoder('utf-8').decode(buf);
+  if(txt.includes('�')) txt = new TextDecoder('windows-1252').decode(buf);
+  txt = txt.replace(/^﻿/, '');
+  const primeira = txt.split(/\r?\n/).find(l => l.trim()) || '';
+  const sep = [';', '\t', ','].map(s => [s, primeira.split(s).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const linhas = []; let l = [], c = '', asp = false;
+  for(let i = 0; i < txt.length; i++){
+    const ch = txt[i];
+    if(asp){ if(ch === '"'){ if(txt[i + 1] === '"'){ c += '"'; i++; } else asp = false; } else c += ch; }
+    else if(ch === '"') asp = true;
+    else if(ch === sep){ l.push(c); c = ''; }
+    else if(ch === '\n' || ch === '\r'){ if(ch === '\r' && txt[i + 1] === '\n') i++; l.push(c); c = ''; linhas.push(l); l = []; }
+    else c += ch;
+  }
+  if(c !== '' || l.length){ l.push(c); linhas.push(l); }
+  return linhas;
+}
+// Acha as colunas pelo cabeçalho (sem ligar para acento); sem cabeçalho conhecido, usa A = código e B = preço.
+function lerPlanilhaPrecos(linhas){
+  const lim = linhas.filter(l => l.some(c => String(c ?? '').trim() !== ''));
+  if(!lim.length) return [];
+  const cab = lim[0].map(c => norm(String(c ?? '')).trim());
+  const acha = nomes => cab.findIndex(c => nomes.some(n => c === n || c.startsWith(n)));
+  let iCod = acha(['codigo', 'cod', 'sku', 'referencia', 'ref', 'id']), iPre = acha(['preco', 'valor', 'price', 'tabela']), iEmp = acha(['empresa', 'marca']);
+  let dados = lim;
+  if(iCod >= 0 && iPre >= 0) dados = lim.slice(1); else { iCod = 0; iPre = 1; iEmp = -1; }
+  return dados.map(l => ({codigo: String(l[iCod] ?? '').trim(), preco: precoDoArquivo(l[iPre]), empresa: iEmp >= 0 ? String(l[iEmp] ?? '').trim() : ''})).filter(x => x.codigo);
+}
+function abrirImportarPrecos(){
+  let itens = [], previa = null;
+  abrirSheet(`
+    <div class="sheet-head"><h2>Atualizar preços por planilha</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">Escolha um arquivo Excel (.xlsx) ou CSV com as colunas <b>Código</b> e <b>Preço</b>. Se o mesmo código existir em mais de uma marca, inclua também <b>Empresa</b>. Nada é gravado antes da sua confirmação.</p>
+    <label class="field"><span class="lbl">Arquivo</span><input type="file" id="imp-arq" accept=".xlsx,.xls,.csv,text/csv"></label>
+    <div class="field"><span class="lbl">O que atualizar</span>
+      <label class="imp-op"><input type="radio" name="imp-modo" value="vazios" checked> <span><b>Só os produtos sem preço</b><small>Quem já tem preço não muda. O preço preenchido continua valendo.</small></span></label>
+      <label class="imp-op"><input type="radio" name="imp-modo" value="todos"> <span><b>Atualizar todos os preços</b><small>Troca o preço de todos que estiverem no arquivo e deixa o preço fixo (o André deixa de mudá-lo pelos pedidos).</small></span></label></div>
+    <button class="btn primary" id="imp-conferir" disabled>Conferir</button>
+    <div id="imp-previa"></div>`);
+  const modo = () => document.querySelector('input[name="imp-modo"]:checked').value;
+  const reinicia = () => { previa = null; $('#imp-previa').innerHTML = ''; };
+  document.querySelectorAll('input[name="imp-modo"]').forEach(r => r.addEventListener('change', reinicia));
+  $('#imp-arq').addEventListener('change', async e => {
+    reinicia(); itens = []; const f = e.target.files[0]; $('#imp-conferir').disabled = true; if(!f) return;
+    try{
+      const buf = await f.arrayBuffer();
+      if(/\.(csv|txt)$/i.test(f.name) || f.type === 'text/csv') itens = lerPlanilhaPrecos(lerCsvPrecos(buf));
+      else {
+        const X = await carregarXLSX();
+        const wb = X.read(buf, {type: 'array'});
+        itens = lerPlanilhaPrecos(X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, defval: ''}));
+      }
+      if(!itens.length) toast('Não achei códigos e preços neste arquivo', 5000);
+      $('#imp-conferir').disabled = !itens.length;
+      if(itens.length) $('#imp-previa').innerHTML = `<p class="meta">${itens.length} linha${itens.length > 1 ? 's' : ''} lida${itens.length > 1 ? 's' : ''}. Toque em Conferir.</p>`;
+    }catch(err){ console.error(err); toast(err.message && err.message.length > 12 ? err.message : 'Não deu para ler este arquivo', 5000); }
+  });
+  const mostrar = (r, gravado) => {
+    const c = r.resumo, nome = x => esc(x.nome || x.codigo);
+    const lista = est => r.resultados.filter(x => x.estado === est).slice(0, 60);
+    const bloco = (est, tit, linha) => { const l = lista(est); return l.length ? `<h3 class="sub-h">${tit} (${c[est]})</h3><ul class="imp-lista">${l.map(linha).join('')}</ul>` : ''; };
+    $('#imp-previa').innerHTML = `
+      <div class="rel-cards imp-cards">
+        <div class="rel-card"><small>${gravado ? 'Atualizados' : 'Serão atualizados'}</small><strong>${c.atualizar}</strong></div>
+        <div class="rel-card"><small>Mantidos / iguais</small><strong>${c.mantido + c.igual}</strong></div>
+        <div class="rel-card"><small>Não encontrados</small><strong>${c.nao + c.varios}</strong></div>
+        <div class="rel-card"><small>Preço inválido</small><strong>${c.invalido}</strong></div>
+      </div>
+      ${bloco('atualizar', gravado ? 'Atualizados' : 'Serão atualizados', x => `<li><span>${nome(x)}</span><span>${x.de > 0 ? brl(x.de) + ' → ' : 'sem preço → '}<b>${brl(x.preco)}</b></span></li>`)}
+      ${bloco('nao', 'Código não encontrado', x => `<li><span>${esc(x.codigo)}</span><span></span></li>`)}
+      ${bloco('varios', 'Código em mais de uma marca (informe a Empresa)', x => `<li><span>${esc(x.codigo)}</span><span></span></li>`)}
+      ${bloco('invalido', 'Preço inválido', x => `<li><span>${esc(x.codigo)}</span><span>${esc(String(x.preco || '—'))}</span></li>`)}
+      ${gravado ? '<button class="btn ghost" data-close>Fechar</button>'
+        : (c.atualizar ? `<button class="btn primary" id="imp-gravar" style="margin-top:10px">Gravar ${c.atualizar} preço${c.atualizar > 1 ? 's' : ''}</button>` : '<p class="meta">Nada a atualizar com este arquivo e esta opção.</p>')}`;
+    $('#imp-gravar')?.addEventListener('click', async () => {
+      const b = $('#imp-gravar'); b.disabled = true; b.textContent = 'Gravando…';
+      try{ const g = await api({acao: 'precosImportar', itens, modo: modo(), simular: false}); mostrar(g, true); toast('Preços atualizados'); carregarCatalogo(false); }
+      catch(err){ b.disabled = false; b.textContent = 'Tentar de novo'; if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para gravar', 5000); }
+    });
+  };
+  $('#imp-conferir').addEventListener('click', async () => {
+    const b = $('#imp-conferir'); b.disabled = true; b.textContent = 'Conferindo…';
+    try{ previa = await api({acao: 'precosImportar', itens, modo: modo(), simular: true}); mostrar(previa, false); }
+    catch(err){ if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para conferir', 5000); }
+    finally{ b.disabled = false; b.textContent = 'Conferir'; }
+  });
+}
+$('#btn-importar-precos').addEventListener('click', abrirImportarPrecos);
 
 /* ---------- Navegação, sheet, toast, rede ---------- */
 function irPara(view){
