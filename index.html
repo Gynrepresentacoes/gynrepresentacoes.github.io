@@ -148,7 +148,7 @@ textarea{resize:vertical}
 .btn.aprovar{background:var(--ipe);color:var(--ipe-ink)}
 .recusa[hidden]{display:none}
 /* Relatórios */
-input[type=date],input[type=number]{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;color:var(--ink)}
+input[type=date],input[type=month],input[type=number]{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;color:var(--ink)}
 .rel-filtros{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .rel-filtros .field:nth-child(n+3){grid-column:1 / -1}
 .rel-atalhos{grid-column:1 / -1;margin:-4px 0 16px}
@@ -505,7 +505,7 @@ body{font-variant-numeric:tabular-nums}
   .order:hover{border-color:var(--ipe)}
   #catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:24px}
   #catalogo .cat-group{margin:0}
-  .rel-filtros{grid-template-columns:repeat(5,1fr)}
+  .rel-filtros{grid-template-columns:200px minmax(220px,1fr) minmax(220px,1fr)}
   .rel-filtros .field:nth-child(n+3){grid-column:auto}
   .rel-botoes{grid-template-columns:auto auto auto;justify-content:start}
   .rel-botoes .primary{grid-column:auto}
@@ -521,6 +521,46 @@ body{font-variant-numeric:tabular-nums}
   .sheet.open .sheet-panel{transform:translate(-50%,-50%);opacity:1}
   .toast{bottom:32px}
 }
+
+/* ---------- v28: catálogo em cartões com quantidade e valor; resumo embaixo no celular ---------- */
+.painel-sub{font-size:13px;font-weight:500;color:var(--muted)}
+.prod-list .prod.pcard{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 10px;padding:10px}
+.pcard .prod-info{flex:1 1 0;min-width:0}
+.pcard .pc-campos{flex:1 1 100%;display:flex;align-items:flex-end;gap:8px}
+.pc-f{display:flex;flex-direction:column;gap:2px;margin:0}
+.pc-f span{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.pc-f input{width:100%;height:40px;padding:0 8px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:600;text-align:right}
+.pc-f input:focus{outline:2px solid var(--ipe);outline-offset:0;border-color:var(--ipe)}
+.pc-q{flex:0 0 64px}.pc-v{flex:1 1 90px;min-width:78px}.pc-d{flex:0 0 66px}
+.pc-add{flex:0 0 auto;height:40px;padding:0 14px;border-radius:10px;border:0;background:var(--ipe);color:#fff;font-weight:700;cursor:pointer}
+.pcard.on .pc-add{background:var(--surface);color:var(--ipe);border:1.5px solid var(--ipe)}
+.pc-rem{flex:0 0 40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.pc-rem:hover{color:var(--bad);border-color:var(--bad)}
+.pc-hist{color:var(--ipe);font-weight:600}
+.conf-h{font-size:14px;margin:16px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.conf-ok{display:flex;align-items:center;gap:10px;margin:14px 0 6px;font-weight:600}
+.conf-ok input{width:20px;height:20px}
+/* Celular: o resumo vem logo abaixo do catálogo. */
+@media (max-width: 999px){
+  .painel{display:block;margin:22px 0 90px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:16px}
+  .painel h2{margin-bottom:10px}
+}
+/* Computador: catálogo em grade, aproveitando a largura; categorias numa linha só. */
+@media (min-width: 1000px){
+  main{max-width:1560px}
+  .top-in{max-width:1560px}
+  #v-novo:not([hidden]){grid-template-columns:minmax(0,1fr) 420px;gap:28px}
+  #produtos.prod-list{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+  #produtos.prod-list .grupo,#produtos.prod-list .empty{grid-column:1/-1}
+  .cat-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:6px}
+  .cat-chips::-webkit-scrollbar{display:block;height:6px}
+  .cat-chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+}
+/* Relatório simples */
+.rel-det{margin-top:18px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:0 14px}
+.rel-det>summary{cursor:pointer;font-weight:700;padding:14px 0;color:var(--ipe)}
+.rel-det[open]>summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+.rel-scroll{max-height:460px;overflow:auto}
 </style>
 </head>
 <body>
@@ -561,9 +601,9 @@ body{font-variant-numeric:tabular-nums}
     </div>
     <ul id="produtos" class="prod-list"></ul>
    </div>
-    <!-- Resumo fixo ao lado: só aparece no computador (tela com 1000px ou mais). -->
+    <!-- Resumo (carrinho): embaixo do catálogo no celular; fixo ao lado no computador (1000px ou mais). -->
     <aside class="painel" id="painel" aria-label="Resumo do pedido">
-      <h2>Resumo do pedido</h2>
+      <h2>Resumo do pedido <small class="painel-sub">(carrinho)</small></h2>
       <p class="meta" id="painel-cli"></p>
       <div id="painel-itens"></div>
       <label class="field desc-campo"><span class="lbl" id="desc-lbl-p">Desconto (%)</span>
@@ -606,25 +646,20 @@ body{font-variant-numeric:tabular-nums}
   <section id="v-relatorios" class="view" hidden>
     <h1>Relatórios</h1>
     <div class="rel-filtros">
-      <label class="field"><span class="lbl">De</span><input type="date" id="rel-de"></label>
-      <label class="field"><span class="lbl">Até</span><input type="date" id="rel-ate"></label>
-      <label class="field"><span class="lbl">Empresa</span><select id="rel-emp"></select></label>
-      <label class="field"><span class="lbl">Vendedor</span><select id="rel-vend"></select></label>
-      <label class="field"><span class="lbl">Rede / grupo</span><select id="rel-grupo"></select></label>
-      <label class="field rel-cli-campo"><span class="lbl">Cliente (histórico)</span><select id="rel-cli"></select></label>
+      <label class="field"><span class="lbl">Mês</span><input type="month" id="rel-mes"></label>
+      <label class="field rel-cli-campo"><span class="lbl">Cliente</span><select id="rel-cli"></select></label>
       <label class="field"><span class="lbl">Situação</span><select id="rel-sit">
         <option value="aprov">Aprovados (inclui enviados, faturados e entregues)</option>
         <option value="faturados">Só faturados e entregues</option>
-        <option value="ativos">Aprovados e aguardando</option>
+        <option value="ativos">Aprovados e em aprovação</option>
         <option value="todos">Todos (inclusive recusados e cancelados)</option>
       </select></label>
-      <div class="rel-atalhos chips" id="rel-atalhos">
-        <button class="chip" data-per="hoje" type="button">Hoje</button>
-        <button class="chip" data-per="7" type="button">7 dias</button>
-        <button class="chip" data-per="mes" type="button">Este mês</button>
-        <button class="chip" data-per="mesant" type="button">Mês passado</button>
-        <button class="chip" data-per="ano" type="button">Este ano</button>
-        <button class="chip" data-per="tudo" type="button">Tudo</button>
+      <div hidden>
+        <input type="date" id="rel-de"><input type="date" id="rel-ate">
+        <label class="field"><select id="rel-emp"></select></label>
+        <label class="field"><select id="rel-vend"></select></label>
+        <label class="field"><select id="rel-grupo"></select></label>
+        <div class="rel-atalhos chips" id="rel-atalhos"></div>
       </div>
     </div>
     <div class="rel-botoes">
@@ -632,7 +667,7 @@ body{font-variant-numeric:tabular-nums}
       <button class="btn sec" id="rel-pdf" type="button" disabled>Baixar PDF</button>
       <button class="btn sec" id="rel-xlsx" type="button" disabled>Baixar Excel</button>
     </div>
-    <div id="rel-resultado"><p class="empty">Escolha o período e toque em <b>Gerar relatório</b>.</p></div>
+    <div id="rel-resultado"><p class="empty">Escolha o mês e o cliente.</p></div>
   </section>
 
   <section id="v-aprovar" class="view" hidden>
@@ -656,7 +691,7 @@ body{font-variant-numeric:tabular-nums}
   <div class="bolha" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11h10.2L20 8H6.2"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg><b id="cart-n">0</b></div>
   <div class="cart-info"><small id="cart-qtd"></small><strong id="cart-total"></strong></div>
   <button class="cart-limpar" id="btn-limpar" type="button" aria-label="Limpar pedido" title="Limpar pedido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
-  <button class="btn" id="btn-revisar">Revisar</button>
+  <button class="btn" id="btn-revisar">Ver resumo</button>
 </div></div>
 
 <button class="fab" id="fab-novo" type="button" hidden><span aria-hidden="true">+</span>Novo pedido</button>
@@ -666,12 +701,12 @@ body{font-variant-numeric:tabular-nums}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Novo pedido</button>
   <button data-view="pedidos">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg>Vendas</button>
+  <button data-view="relatorios" id="nav-relatorios" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Relatórios</button>
   <button data-view="lojas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>Lojas</button>
   <button data-view="aprovar" id="nav-aprovar" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>Aprovar<span class="conta" id="conta-aprovar" hidden></span></button>
-  <button data-view="relatorios" id="nav-relatorios" hidden>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Relatórios</button>
   <button data-view="catalogo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Catálogo</button>
 </div></nav>
@@ -755,6 +790,10 @@ const AGUARDANDO = 'Aguardando aprovação', APROVADO = 'Aprovado', RECUSADO = '
 const ENVIADO = 'Enviado ao fornecedor', FATURADO = 'Faturado', ENTREGUE = 'Entregue';
 // Depois de aprovado, o pedido segue: enviado à marca -> faturado (NF) -> entregue. Tudo isso conta como "aprovado".
 const POS_APROVACAO = [APROVADO, ENVIADO, FATURADO, ENTREGUE];
+// Nomes que aparecem na tela (os nomes gravados na planilha continuam os mesmos).
+const ROTULO = {[AGUARDANDO]:'Em aprovação', [APROVADO]:'Aprovado', [ENVIADO]:'Enviado ao fornecedor', [FATURADO]:'Faturado · em entrega',
+  [ENTREGUE]:'Entregue', [RECUSADO]:'Recusado', [CANCELADO]:'Cancelado'};
+const rotulo = s => ROTULO[s] || s;
 // Regras de cada marca (vêm da aba Empresas).
 const pagamentosDe = e => (emp(e)?.pagamentos?.length ? emp(e).pagamentos : CFG.PAGAMENTOS);
 // Desconto máximo: o da marca, ou o combinado com a rede do cliente escolhido (aba Grupos), o que for maior.
@@ -873,6 +912,7 @@ async function carregarPedidos(avisar){
   }finally{
     carregandoPedidos = false;
     renderPedidos();
+    try{ if(!document.activeElement?.closest?.('.pcard') && JSON.stringify(ultimosValores()) !== JSON.stringify(ULT)) renderProdutos(); }catch(_){}
   }
 }
 
@@ -882,7 +922,7 @@ function mostrarUsuario(){
   $('#rep-nome').textContent = n;
   $('#rep-ini').textContent = (n || '?').trim().charAt(0).toUpperCase();
   // As abas Aprovar e Relatórios só existem para o administrador.
-  $('#nav-aprovar').hidden = !ehAdmin();
+  $('#nav-aprovar').hidden = true;   // em espera: volta com !ehAdmin() se o André tiver mais gente na equipe
   $('#nav-relatorios').hidden = !ehAdmin();
   if(!ehAdmin() && (!$('#v-aprovar').hidden || !$('#v-relatorios').hidden)) irPara('novo');
 }
@@ -1179,6 +1219,7 @@ function aoTrocarCliente(){
   if(d.dataset.daRede && d.value === d.dataset.daRede) d.value = '';
   delete d.dataset.daRede;
   if(g?.desconto && !d.value){ d.value = String(g.desconto).replace('.', ','); d.dataset.daRede = d.value; }
+  renderProdutos();
   renderCart();
 }
 function renderCategorias(){
@@ -1218,15 +1259,43 @@ document.addEventListener('click', e => {
   abrirSheet(`<div class="sheet-head"><h2 style="font-size:18px">${esc(t.dataset.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <img class="foto-grande" src="${esc(t.dataset.foto)}" alt="${esc(t.dataset.nome)}">`);
 });
+// Último valor de cada produto para o cliente escolhido (pedidos e orçamentos dele; o mais recente vale).
+let ULT = {};
+function ultimosValores(){
+  const cid = $('#cliente')?.value, mapa = {};
+  if(!cid) return mapa;
+  const fonte = [...listaPedidos().filter(p => ![CANCELADO, RECUSADO].includes(situacaoDe(p))),
+      ...orcamentos.filter(o => (DEMO || !o.usuario || o.usuario === sessao?.usuario) && (!empAtiva() || o.empresa === empAtiva()))]
+    .filter(p => p.cliente === cid).sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : 0);
+  fonte.forEach(p => (p.itens || []).forEach(i => { const v = Number(i.preco);
+    if(v > 0 && !mapa[i.id]) mapa[i.id] = {preco: v, tabela: Number(i.tabela) || 0, data: p.data}; }));
+  return mapa;
+}
+// Cartão do produto: foto, nome, e três campos (quantidade, valor e desconto do item). Só entra no pedido ao tocar em Adicionar.
 function linhaProduto(p){
-  const n = st.itens[p.id] || 0;
-  // Quantidade: − e + mudam de 1 em 1; o número pode ser digitado; +10 soma dez de uma vez.
-  const id = esc(p.id);
-  const step = n
-    ? `<button data-act="dec" data-id="${id}" aria-label="Tirar um">−</button><input class="qtd" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="${n}" data-id="${id}" aria-label="Quantidade de ${esc(p.nome)}"><button data-act="inc" data-id="${id}" aria-label="Pôr mais um">+</button><button class="mais10" data-act="inc10" data-id="${id}" aria-label="Pôr mais dez">+10</button>`
-    : `<button class="add" data-act="inc" data-id="${id}" aria-label="Adicionar ${esc(p.nome)}">+</button><button class="mais10" data-act="inc10" data-id="${id}" aria-label="Adicionar dez de ${esc(p.nome)}">+10</button>`;
-  return `<li class="prod${n?' on':''}">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
-    <div class="prod-sub">${esc(p.un)}, <strong>${brl(p.preco)}</strong></div></div><div class="step">${step}</div></li>`;
+  const id = esc(p.id), n = st.itens[p.id] || 0, tab = p.preco > 0 ? p.preco : 0, u = ULT[p.id];
+  let valor = '', desc = '', dica = '';
+  if(n){
+    // Já está no pedido: mostra o que foi usado.
+    const base = tab || st.base[p.id] || 0, fin = st.precos[p.id] ?? base;
+    if(tab) valor = fin; else { valor = base; desc = base > 0 && fin < base ? pctItem({tabela: base, preco: fin}) : ''; }
+  } else if(u){
+    // Último valor usado com este cliente (editável).
+    if(tab) valor = u.preco;
+    else if(u.tabela > u.preco){ valor = u.tabela; desc = pctItem({tabela: u.tabela, preco: u.preco}); }
+    else valor = u.preco;
+    dica = `último: ${brl(u.preco)} em ${new Date(u.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}`;
+  } else if(tab) valor = tab;
+  const f = v => v === '' ? '' : numFmt(v);
+  return `<li class="prod pcard${n ? ' on' : ''}" data-pid="${id}">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
+    <div class="prod-sub">${esc(p.un)}${tab ? `, tabela <strong>${brl(tab)}</strong>` : ''}${dica ? ` · <span class="pc-hist">${esc(dica)}</span>` : ''}</div></div>
+    <div class="pc-campos">
+      <label class="pc-f pc-q"><span>Qtd</span><input class="pc-qtd" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" value="${n || ''}" aria-label="Quantidade de ${esc(p.nome)}"></label>
+      <label class="pc-f pc-v"><span>Valor R$</span><input class="pc-val" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${f(valor)}" aria-label="Valor de ${esc(p.nome)}"></label>
+      <label class="pc-f pc-d"><span>Desc. %</span><input class="pc-dsc" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${desc}" aria-label="Desconto em % de ${esc(p.nome)}"></label>
+      <button class="pc-add" type="button" data-act="add" data-id="${id}">${n ? 'Atualizar' : 'Adicionar'}</button>
+      ${n ? `<button class="pc-rem" type="button" data-act="rem" data-id="${id}" aria-label="Tirar ${esc(p.nome)} do pedido" title="Tirar do pedido">×</button>` : ''}
+    </div></li>`;
 }
 // Busca: todas as palavras digitadas precisam aparecer no nome, código ou categoria (qualquer ordem, sem ligar para acento).
 const textoBusca = new WeakMap();
@@ -1239,6 +1308,7 @@ function bate(p, termos){
 }
 function renderProdutos(){
   const ul = $('#produtos');
+  ULT = ultimosValores();
   if(!DATA){ ul.innerHTML = '<li class="esq"></li>'.repeat(4) + '<li class="empty" style="border:0;background:none">Carregando o catálogo da planilha…</li>'; return; }
   const termos = normBusca(st.busca).split(/\s+/).filter(Boolean);
   const q = termos.length > 0;
@@ -1477,34 +1547,52 @@ $('#empresas').addEventListener('click', e => {
   renderEmpresas(); renderCategorias(); renderProdutos(); renderCart();
 });
 $('#categoria').addEventListener('change', e => { st.cat = e.target.value; renderProdutos(); });
+// Adicionar / Atualizar: confere quantidade, valor e desconto e coloca o item no resumo.
+// Valor final = valor × (1 − desconto). Produto sem preço na tabela: o valor digitado é o "preço cheio".
+function aplicarCartao(id, qtdTxt, valTxt, descTxt){
+  const p = (DATA?.produtos || []).find(x => x.id === id); if(!p) return false;
+  const qt = String(qtdTxt).trim().replace(',', '.');
+  const q = Math.floor(Number(qt));
+  if(!qt || !isFinite(q) || q < 1){ toast('Digite a quantidade'); return false; }
+  const v = numBR(valTxt);
+  if(!(v > 0)){ toast('Digite o valor do item'); return false; }
+  const d = String(descTxt || '').trim() === '' ? 0 : numBR(descTxt);
+  if(isNaN(d) || d < 0 || d >= 100){ toast('Digite um desconto entre 0 e 99%'); return false; }
+  const semTab = !(p.preco > 0), base = semTab ? Math.round(v * 100) / 100 : p.preco;
+  const fin = Math.round(v * (1 - d / 100) * 100) / 100;
+  const min = precoMinimo(base);
+  if(!(fin > 0) || fin < min - 0.004){
+    if(!(fin > 0) || ehAdmin()){ toast('O valor com desconto precisa ser maior que zero.'); return false; }
+    toast(`Para este item o máximo é ${String(descontoMaxDe(st.empresa || p.empresa)).replace('.', ',')}% de desconto: mínimo ${brl(min)} (${semTab ? 'preço cheio' : 'tabela'} ${brl(base)}).`, 5000); return false;
+  }
+  // Item achado na busca geral: escolhe a empresa dele automaticamente.
+  if(!st.empresa){ st.empresa = p.empresa; st.cat = ''; renderEmpresas(); renderCategorias(); }
+  st.itens[id] = Math.min(q, 99999);
+  if(semTab) st.base[id] = base;
+  if(fin === base) delete st.precos[id]; else st.precos[id] = fin;
+  return true;
+}
+function lerCartao(li){ return [li.querySelector('.pc-qtd').value, li.querySelector('.pc-val').value, li.querySelector('.pc-dsc').value]; }
 $('#produtos').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if(!b) return;
-  const id = b.dataset.id;
-  // Item achado na busca geral: escolhe a empresa dele automaticamente.
-  if(!st.empresa){
-    const p = (DATA?.produtos || []).find(x => x.id === id); if(!p) return;
-    st.empresa = p.empresa; st.cat = ''; renderEmpresas(); renderCategorias();
-  }
-  const n = st.itens[id] || 0, novo = n + ({inc: 1, inc10: 10, dec: -1}[b.dataset.act] || 0);
-  if(novo > 0) st.itens[id] = novo; else delete st.itens[id];
+  const id = b.dataset.id, li = b.closest('li');
+  if(b.dataset.act === 'rem'){
+    delete st.itens[id]; delete st.precos[id]; delete st.base[id];
+  } else if(!aplicarCartao(id, ...lerCartao(li))) return;
   renderProdutos(); renderCart();
 });
-// Quantidade digitada: vale quando sai do campo ou aperta Enter. Zero (ou vazio) tira o item do pedido.
-$('#produtos').addEventListener('change', e => {
-  const inp = e.target.closest('input.qtd'); if(!inp) return;
-  const txt = String(inp.value).trim().replace(',', '.');
-  // Texto que não é número: volta ao valor anterior em vez de tirar o item do pedido.
-  if(txt !== '' && !isFinite(Number(txt))){ inp.value = st.itens[inp.dataset.id] || 0; toast('Digite só números'); return; }
-  const v = Math.max(0, Math.min(99999, Math.floor(Number(txt) || 0)));
-  if(v > 0) st.itens[inp.dataset.id] = v; else delete st.itens[inp.dataset.id];
-  renderProdutos(); renderCart();
+// Enter em qualquer campo do cartão = Adicionar.
+$('#produtos').addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || !e.target.matches('.pcard input')) return;
+  e.preventDefault(); e.target.closest('li').querySelector('.pc-add').click();
 });
-$('#produtos').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('input.qtd')) e.target.blur(); });
-$('#produtos').addEventListener('focusin', e => { if(e.target.matches('input.qtd')) e.target.select(); });
+$('#produtos').addEventListener('focusin', e => { if(e.target.matches('.pcard input')) e.target.select(); });
+// Categorias numa linha só: a rodinha do mouse rola para o lado.
+$('#cat-chips').addEventListener('wheel', e => { if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){ $('#cat-chips').scrollLeft += e.deltaY; e.preventDefault(); } }, {passive:false});
 $('#busca').addEventListener('input', e => { st.busca = e.target.value; renderProdutos(); });
 $('#btn-revisar').addEventListener('click', () => {
   if(!$('#cliente').value){ toast('Escolha o cliente antes de revisar'); $('#cliente').focus(); return; }
-  abrirRevisao();
+  $('#painel').scrollIntoView({behavior:'smooth', block:'start'});
 });
 
 // Lista de itens do resumo. Com "editavel", cada item tem o campo do preço de venda.
@@ -1639,7 +1727,7 @@ function montarPedido(c, its, pag, obs, desc){
     bruto: cc.bruto, desconto: cc.desc, total: cc.total,
     entrega: st.entrega.data, transportadora: st.entrega.transp, enderecoEntrega: st.entrega.endereco,
     usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
-    status: DEMO ? '' : (ehAdmin() ? APROVADO : AGUARDANDO),
+    status: DEMO ? '' : AGUARDANDO,
     sync: DEMO ? 'demo' : 'pendente'
   };
 }
@@ -1655,7 +1743,7 @@ function fecharPedido(pag, obs, desc, deOrcamento){
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Pedido ${esc(p.num)} fechado</h2>
-      <p class="meta"><b>${esc(p.clienteNome)}</b><br>${brl(p.total)}, ${esc(p.pagamento)}</p></div>
+      <p class="meta"><b>${esc(p.clienteNome)}</b><br>${brl(p.total)}, ${esc(p.pagamento)}<br>Ele está <b>Em aprovação</b>: assim que o cliente aprovar, marque na aba Vendas.</p></div>
     ${acoesHTML(p)}
     <button class="btn ghost" data-close style="margin-top:8px">Começar outro pedido</button>`);
   ligarAcoes(p);
@@ -1750,7 +1838,7 @@ function salvarOrcamento(pag, obs, desc){
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Orçamento ${esc(o.num)} salvo</h2>
-      <p class="meta"><b>${esc(o.clienteNome)}</b><br>${brl(o.total)}, ${esc(o.pagamento)}<br>Ele fica na aba Pedidos, filtro <b>Orçamentos</b>.</p></div>
+      <p class="meta"><b>${esc(o.clienteNome)}</b><br>${brl(o.total)}, ${esc(o.pagamento)}<br>Ele fica na aba Vendas, em <b>Em negociação</b>.</p></div>
     ${acoesHTML(o)}
     <button class="btn ghost" data-close style="margin-top:8px">Fechar</button>`);
   ligarAcoes(o);
@@ -2197,6 +2285,13 @@ function periodo(tipo){
   if(tipo === 'tudo') de = new Date(2020, 0, 1);
   $('#rel-de').value = isoDia(de); $('#rel-ate').value = isoDia(ate);
 }
+// O relatório é por mês: o campo Mês preenche as datas De/Até que vão para a planilha.
+function aplicarMes(){
+  const m = $('#rel-mes').value; if(!/^\d{4}-\d{2}$/.test(m)) return false;
+  const [a, mm] = m.split('-').map(Number);
+  $('#rel-de').value = isoDia(new Date(a, mm - 1, 1)); $('#rel-ate').value = isoDia(new Date(a, mm, 0));
+  return true;
+}
 function opcoesVendedores(){
   const v = new Map();
   [...remotos, ...(REL?.pedidos || [])].forEach(p => { if(p.usuario) v.set(p.usuario, p.representante || p.usuario); });
@@ -2207,7 +2302,8 @@ function opcoesVendedores(){
 }
 const cliente_existe = id => !!id && !!cli(id);
 function prepararRelatorio(){
-  if(!$('#rel-de').value) periodo('mes');
+  if(!$('#rel-mes').value) $('#rel-mes').value = isoDia(new Date()).slice(0, 7);
+  aplicarMes();
   const atual = $('#rel-emp').value;
   $('#rel-emp').innerHTML = '<option value="">Todas</option>' + (DATA?.empresas || []).map(e => `<option value="${esc(e.id)}">${esc(e.nome)}</option>`).join('');
   $('#rel-emp').value = atual;
@@ -2224,12 +2320,14 @@ function prepararRelatorio(){
   $('#rel-grupo').innerHTML = '<option value="">Todas as lojas</option><option value="__sem">Só lojas sem rede</option>' +
     nomesGrupos().map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
   $('#rel-grupo').value = [...$('#rel-grupo').options].some(o => o.value === gAtual) ? gAtual : '';
+  if(!REL && navigator.onLine && !DEMO && sessao) gerarRelatorio();   // abre já com o mês atual
 }
-$('#rel-atalhos').addEventListener('click', e => { const b = e.target.closest('[data-per]'); if(b){ periodo(b.dataset.per); gerarRelatorio(); } });
+$('#rel-mes').addEventListener('change', () => { if(aplicarMes()) gerarRelatorio(); });
 
 async function gerarRelatorio(){
+  aplicarMes();
   const de = $('#rel-de').value, ate = $('#rel-ate').value;
-  if(!de || !ate){ toast('Escolha as datas De e Até'); return; }
+  if(!de || !ate){ toast('Escolha o mês'); return; }
   if(de > ate){ toast('A data De precisa ser antes da data Até'); return; }
   if(!navigator.onLine){ toast('Sem internet. O relatório vem da planilha.'); return; }
   const b = $('#rel-gerar'); b.disabled = true; b.textContent = 'Gerando…';
@@ -2358,11 +2456,12 @@ function dadosRelatorio(){
   linhas.forEach(l => { const k = chaveRede(l); (cnpjsPor.get(k) || cnpjsPor.set(k, new Set()).get(k)).add(l.clienteId || l.loja); });
   const porRede = somar(chaveRede, l => ({rede: l.rede || l.loja, ehRede: !!l.rede, cnpjs: cnpjsPor.get(chaveRede(l)).size}))
     .sort((a,b) => b.total - a.total);
-  const filtros = [`Período: ${diaBR(REL.de)} a ${diaBR(REL.ate)}`,
+  const mesTxt = new Date(REL.de + 'T12:00:00').toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+  const filtros = [`Mês: ${mesTxt}`,
     `Empresa: ${fEmp ? (emp(fEmp)?.nome || fEmp) : 'todas'}`,
-    `Vendedor: ${vend ? $('#rel-vend').selectedOptions[0].textContent : 'todos'}`,
+    ...(vend ? [`Vendedor: ${$('#rel-vend').selectedOptions[0].textContent}`] : []),
     ...(fGrupo ? [`Rede: ${fGrupo === '__sem' ? 'só lojas sem rede' : fGrupo}`] : []),
-    ...(fCli ? [`Cliente: ${cli(fCli)?.nome || fCli}`] : []),
+    `Cliente: ${fCli ? (cli(fCli)?.nome || fCli) : 'todos os clientes'}`,
     `Situação: ${$('#rel-sit').selectedOptions[0].textContent.toLowerCase()}`];
   // Ritmo de compra: histórico inteiro, com os mesmos filtros de empresa, vendedor, rede e cliente (sem período e situação).
   const ritmo = ritmoClientes(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && okGrupo(p) && (!fCli || p.cliente === fCli));
@@ -2414,13 +2513,24 @@ function renderRelatorio(){
       </div>
       <ul class="orders" id="hist-pedidos">${ps.map(cartaoPedido).join('')}</ul></section>`;
   })() : '';
-  $('#rel-resultado').innerHTML = hist + `
+  const ticket = x => x.q ? x.total / x.q : 0;
+  const itensTabela = `<section class="rel-sec"><h2>Histórico de compra dos itens</h2>
+    <div class="tabela-wrap rel-scroll"><table class="tabela" style="min-width:420px">
+      <thead><tr><th>Produto</th><th class="n">Quantidade</th><th class="n">Ticket médio</th><th class="n">Valor total</th></tr></thead>
+      <tbody>${d.porProduto.map(x => `<tr><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)} · ${x.pedidos} pedido${x.pedidos > 1 ? 's' : ''}</div></td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(ticket(x))}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
+    </table></div></section>`;
+  $('#rel-resultado').innerHTML = `
     <p class="meta">${d.filtros.map(esc).join(' · ')}</p>
-    <div class="rel-cards">
+    ${itensTabela}
+    <section class="rel-sec"><h2>Resumo</h2><div class="rel-cards">
       <div class="rel-card"><small>Pedidos</small><strong>${d.totais.pedidos}</strong></div>
       <div class="rel-card"><small>Itens (unidades)</small><strong>${d.totais.itens.toLocaleString('pt-BR')}</strong></div>
       <div class="rel-card"><small>Valor total</small><strong>${brl(d.totais.valor)}</strong></div>
       <div class="rel-card"><small>Lojas atendidas</small><strong>${d.totais.lojas}</strong></div>
+    </div></section>
+    <details class="rel-det"><summary>Ver detalhes</summary>
+    ${hist}
+    <div class="rel-cards">
       <div class="rel-card"><small>Comissão a receber (marcas)</small><strong>${brl(d.totais.comissaoMarcas)}</strong></div>
       <div class="rel-card"><small>Comissão a pagar (vendedores)</small><strong>${brl(d.totais.comissaoVendedores)}</strong></div>
     </div>
@@ -2436,11 +2546,7 @@ function renderRelatorio(){
       </table></div></section>
     </div>
     ${d.comissao.marcas.some(x => !x.pct) || d.comissao.vendedores.some(x => !x.pct) ? '<p class="note">Onde aparece "definir", falta o percentual na planilha: coluna <b>Comissão %</b> da aba Empresas (marcas) ou da aba Usuarios (vendedores).</p>' : ''}
-    <div class="rel-duas">
-      <section class="rel-sec"><h2>Itens mais pedidos</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
-        <thead><tr><th>Produto</th><th class="n">Qtd</th><th class="n">Valor</th></tr></thead>
-        <tbody>${d.porProduto.map(x => `<tr><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)} · ${x.pedidos} pedido${x.pedidos > 1 ? 's' : ''}</div></td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
-      </table></div></section>
+    <div>
       <section class="rel-sec"><h2>Por loja</h2><div class="tabela-wrap"><table class="tabela" style="min-width:420px">
         <thead><tr><th>Loja</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
         <tbody>${d.porLoja.map(x => `<tr><td>${esc(x.loja)}<div class="sub">${[x.rede && '🏢 ' + x.rede, x.cnpj, x.cidade].filter(Boolean).map(esc).join(' · ')}</div></td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
@@ -2450,11 +2556,12 @@ function renderRelatorio(){
       <thead><tr><th>Rede / loja</th><th class="n">CNPJs</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
       <tbody>${d.porRede.map(x => `<tr><td>${x.ehRede ? '🏢 <b>' + esc(x.rede) + '</b>' : esc(x.rede) + '<div class="sub">loja sem rede</div>'}</td><td class="n">${x.cnpjs}</td><td class="n">${x.pedidos}</td><td class="n">${x.q.toLocaleString('pt-BR')}</td><td class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
     </table></div></section>` : ''}
-    <section class="rel-sec"><h2>Histórico detalhado</h2><div class="tabela-wrap"><table class="tabela" style="min-width:820px">
-      <thead><tr><th>Data</th><th>Pedido</th><th>Loja</th><th>Vendedor</th><th>Produto</th><th class="n">Qtd</th><th class="n">Total</th><th>Situação</th></tr></thead>
-      <tbody>${d.linhas.map(l => `<tr><td>${dt(l.data)}</td><td>${esc(l.num)}</td><td>${esc(l.loja)}<div class="sub">${esc(l.cidade)}</div></td><td>${esc(l.vendedor)}</td>
-        <td>${esc(l.produto)}<div class="sub">${esc(l.empresa)}</div></td><td class="n">${l.q.toLocaleString('pt-BR')}</td><td class="n">${brl(l.total)}</td><td>${esc(l.status)}</td></tr>`).join('')}</tbody>
-    </table></div></section>`;
+    <section class="rel-sec"><h2>Histórico detalhado</h2><div class="tabela-wrap"><table class="tabela" style="min-width:860px">
+      <thead><tr><th>Produto</th><th class="n">Quantidade</th><th class="n">Ticket médio</th><th class="n">Total</th><th>Data</th><th>Pedido</th><th>Loja</th><th>Vendedor</th><th>Situação</th></tr></thead>
+      <tbody>${d.linhas.map(l => `<tr><td>${esc(l.produto)}<div class="sub">${esc(l.empresa)}</div></td><td class="n">${l.q.toLocaleString('pt-BR')}</td><td class="n">${brl(l.preco)}</td><td class="n">${brl(l.total)}</td>
+        <td>${dt(l.data)}</td><td>${esc(l.num)}</td><td>${esc(l.loja)}<div class="sub">${esc(l.cidade)}</div></td><td>${esc(l.vendedor)}</td><td>${esc(rotulo(l.status))}</td></tr>`).join('')}</tbody>
+    </table></div></section>
+    </details>`;
 }
 const nomeRelatorio = ext => `Relatorio-pedidos-${REL.de}-a-${REL.ate}.${ext}`;
 
@@ -2498,12 +2605,12 @@ $('#rel-xlsx').addEventListener('click', async () => {
       return ws;
     };
     const wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, folha(['Produto','Quantidade','Ticket médio','Valor total','Pedidos','Empresa','Código'],
+      d.porProduto.map(x => [x.produto, x.q, x.q ? x.total / x.q : 0, x.total, x.pedidos, x.empresa, x.codigo]), [55,12,16,16,10,20,14], {2:moeda, 3:moeda}), 'Histórico dos itens');
     X.utils.book_append_sheet(wb, folha(
-      ['Data','Pedido','Situação','NF','Loja','CNPJ','Rede','Cidade','Vendedor','Empresa','Código','Produto','Unidade','Qtd','Preço','Total (c/ desconto)'],
-      d.linhas.map(l => [new Date(l.data), String(l.num), l.status, l.nf, l.loja, l.cnpj, l.rede, l.cidade, l.vendedor, l.empresa, l.codigo, l.produto, l.un, l.q, l.preco, l.total]),
-      [16,14,20,10,30,20,20,16,18,20,14,50,8,8,12,16], {0:'dd/mm/yyyy hh:mm', 14:moeda, 15:moeda}), 'Histórico detalhado');
-    X.utils.book_append_sheet(wb, folha(['Empresa','Código','Produto','Qtd','Pedidos','Valor'],
-      d.porProduto.map(x => [x.empresa, x.codigo, x.produto, x.q, x.pedidos, x.total]), [20,14,55,10,10,14], {5:moeda}), 'Por produto');
+      ['Produto','Quantidade','Ticket médio','Total (c/ desconto)','Data','Pedido','Situação','NF','Loja','CNPJ','Rede','Cidade','Vendedor','Empresa','Código','Unidade'],
+      d.linhas.map(l => [l.produto, l.q, l.preco, l.total, new Date(l.data), String(l.num), l.status, l.nf, l.loja, l.cnpj, l.rede, l.cidade, l.vendedor, l.empresa, l.codigo, l.un]),
+      [50,12,14,18,16,14,20,10,30,20,20,16,18,20,14,8], {2:moeda, 3:moeda, 4:'dd/mm/yyyy hh:mm'}), 'Histórico detalhado');
     X.utils.book_append_sheet(wb, folha(['Loja','CNPJ','Rede','Cidade','Pedidos','Itens','Valor'],
       d.porLoja.map(x => [x.loja, x.cnpj, x.rede, x.cidade, x.pedidos, x.q, x.total]), [34,20,20,18,10,10,14], {6:moeda}), 'Por loja');
     X.utils.book_append_sheet(wb, folha(['Rede / loja','Tipo','CNPJs','Pedidos','Itens','Valor'],
@@ -2544,7 +2651,7 @@ function badge(p){
   if(p.sync === 'demo') return '<span class="badge demo">Só neste aparelho</span>';
   if(p.sync === 'pendente') return '<span class="badge pend">Aguardando internet</span>';
   const s = situacaoDe(p);
-  if(CLASSE[s]) return `<span class="badge ${CLASSE[s]}">${esc(s)}</span>`;
+  if(CLASSE[s]) return `<span class="badge ${CLASSE[s]}">${esc(rotulo(s))}</span>`;
   return '<span class="badge">Na planilha</span>';
 }
 function cartaoPedido(p){
@@ -2557,8 +2664,8 @@ function cartaoPedido(p){
     ${badge(p)}
     <span class="tot">${brl(p.total)}</span></button></li>`;
 }
-const FILTROS = [['todos','Todos'],[AGUARDANDO,'Aguardando'],['andamento','Aprovados / a enviar'],[ENVIADO,'Enviados'],[FATURADO,'Faturados'],
-  [ENTREGUE,'Entregues'],[RECUSADO,'Recusados'],[CANCELADO,'Cancelados'],['orc','Orçamentos']];
+const FILTROS = [['todos','Todos'],['orc','Em negociação'],[AGUARDANDO,'Em aprovação'],['aprovados','Aprovados'],['entrega','Entrega'],['encerrados','Cancelados / Recusados']];
+const GRUPOS_FILTRO = {aprovados:[APROVADO, ENVIADO], entrega:[FATURADO, ENTREGUE], encerrados:[CANCELADO, RECUSADO]};
 function renderPedidos(){
   const todos = listaPedidos();
   $('#pedidos-topo').hidden = false;
@@ -2573,12 +2680,12 @@ function renderPedidos(){
   let lista;
   if(filtro === 'orc') lista = meusOrc;
   else if(filtro === 'todos') lista = todos;
-  else if(filtro === 'andamento') lista = todos.filter(p => situacaoDe(p) === APROVADO && p.sync !== 'pendente');
+  else if(GRUPOS_FILTRO[filtro]) lista = todos.filter(p => GRUPOS_FILTRO[filtro].includes(situacaoDe(p)) && p.sync !== 'pendente');
   else lista = todos.filter(p => situacaoDe(p) === filtro && p.sync !== 'pendente');
   lista = lista.filter(bateVenda);
   const ul = $('#lista-pedidos');
   ul.innerHTML = lista.length ? lista.map(cartaoPedido).join('')
-    : `<li class="empty">${filtro === 'orc' ? 'Nenhum orçamento salvo. No Novo pedido, use "Salvar como orçamento".' : todos.length ? 'Nenhum pedido nesta situação.' : 'Nenhum pedido ainda. Toque em <b>+ Novo pedido</b> para começar.'}</li>`;
+    : `<li class="empty">${filtro === 'orc' ? 'Nada em negociação. No Novo pedido, use "Salvar como orçamento".' : todos.length ? 'Nenhum pedido nesta situação.' : 'Nenhum pedido ainda. Toque em <b>+ Novo pedido</b> para começar.'}</li>`;
   renderAprovar(todos);
 }
 function renderAprovar(todos){
@@ -2609,7 +2716,7 @@ function abrirPedido(id){
   const podeAprovar = ehAdmin() && s === AGUARDANDO && !pendente;
   const podeCancelar = !DEMO && ![CANCELADO, RECUSADO, ENTREGUE].includes(s) && (pendente ? dono : (ehAdmin() || (dono && s === AGUARDANDO)));
   const quando = p.atualizadoEm ? ' em ' + dataBR(p.atualizadoEm) : '';
-  const caixa = !DEMO && CLASSE[s] && !pendente ? `<div class="situacao ${CLASSE[s]}"><b>${esc(s)}</b>${
+  const caixa = !DEMO && CLASSE[s] && !pendente ? `<div class="situacao ${CLASSE[s]}"><b>${esc(rotulo(s))}</b>${
       p.atualizadoPor && s !== AGUARDANDO ? ` por ${esc(p.atualizadoPor)}${quando}` : ''}${
       p.nf ? `<br>Nota fiscal: <b>${esc(p.nf)}</b>${p.dataFat ? ' de ' + esc(diaBR(p.dataFat)) : ''}` : ''}${
       p.valorFat ? `<br>Valor faturado: <b>${brl(p.valorFat)}</b>${Math.abs(p.valorFat - p.total) >= 0.01 ? ` <span class="${p.valorFat < p.total ? 'tend-down' : 'tend-up'}">(${p.valorFat < p.total ? 'faltou' : 'a mais'} ${brl(Math.abs(p.valorFat - p.total))} do pedido)</span>` : ' (igual ao pedido)'}` : ''}${
@@ -2619,10 +2726,10 @@ function abrirPedido(id){
   // Etapas depois da aprovação (só administrador): enviar à marca, faturar (com NF), entregar.
   const temEmail = !!emp(p.empresa)?.temEmail;
   const etapas = !ehAdmin() || pendente ? '' : `<div class="acoes-admin">
-    ${s === APROVADO && temEmail ? '<button class="btn aprovar" id="ad-email">Enviar à marca por e-mail</button>' : ''}
+    ${s === APROVADO && temEmail ? '<button class="btn aprovar" id="ad-email">Conferir e enviar ao fornecedor</button>' : ''}
     ${s === APROVADO ? `<button class="btn sec" id="ad-enviado">Marcar como enviado${temEmail ? ' (sem e-mail)' : ''}</button>` : ''}
-    ${s === ENVIADO && temEmail ? '<button class="btn sec" id="ad-reenviar">Reenviar e-mail à marca</button>' : ''}
-    ${[APROVADO, ENVIADO].includes(s) ? '<button class="btn sec" id="ad-faturar">Registrar faturamento (NF)</button>' : ''}
+    ${s === ENVIADO && temEmail ? '<button class="btn sec" id="ad-reenviar">Conferir e reenviar ao fornecedor</button>' : ''}
+    ${[APROVADO, ENVIADO].includes(s) ? '<button class="btn sec" id="ad-faturar">Fornecedor faturou: registrar NF e mover para Entrega</button>' : ''}
     ${s === FATURADO || s === ENTREGUE ? '<button class="btn ghost" id="ad-faturar">Corrigir dados da NF</button>' : ''}
     ${[ENVIADO, FATURADO].includes(s) ? '<button class="btn sec" id="ad-entregue">Marcar como entregue</button>' : ''}
     ${s === APROVADO && !temEmail ? `<p class="meta" style="margin:0">A marca ${esc(p.empresaNome)} está sem e-mail na aba Empresas: envie o PDF pelo WhatsApp e marque como enviado.</p>` : ''}
@@ -2638,7 +2745,7 @@ function abrirPedido(id){
       p.enderecoEntrega ? `<br>Entregar em: ${esc(p.enderecoEntrega)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
     ${etapas}
     ${podeAprovar ? `<div class="btns">
-        <button class="btn aprovar" id="btn-aprovar">Aprovar pedido</button>
+        <button class="btn aprovar" id="btn-aprovar">Cliente aprovou</button>
         <button class="btn sec" id="btn-recusar">Recusar</button></div>
       <div class="recusa" id="recusa" hidden>
         <label class="field" style="margin-top:14px"><span class="lbl">Motivo da recusa (opcional)</span>
@@ -2655,12 +2762,51 @@ function abrirPedido(id){
   if(podeCancelar) $('#btn-cancelar').addEventListener('click', () => {
     if(confirm(`Cancelar o pedido ${p.num} de ${p.clienteNome}? Ele continua na planilha, marcado como cancelado.`)) mudarSituacao(p, CANCELADO);
   });
-  $('#ad-email')?.addEventListener('click', () => mudarSituacao(p, ENVIADO, '', {email: true}));
+  $('#ad-email')?.addEventListener('click', () => abrirConferencia(p));
   $('#ad-enviado')?.addEventListener('click', () => mudarSituacao(p, ENVIADO));
-  $('#ad-reenviar')?.addEventListener('click', () => mudarSituacao(p, 'reenviar'));
+  $('#ad-reenviar')?.addEventListener('click', () => abrirConferencia(p, true));
   $('#ad-entregue')?.addEventListener('click', () => mudarSituacao(p, ENTREGUE));
   $('#ad-faturar')?.addEventListener('click', () => abrirFaturamento(p));
   $('#ad-copiar-chave')?.addEventListener('click', async () => { try{ await navigator.clipboard.writeText(p.chaveNf); toast('Chave copiada'); }catch(e){ toast('Não deu para copiar'); } });
+}
+
+// Tela de conferência: o André confere os dados da marca, do cliente, da entrega e dos itens antes de o e-mail sair.
+function abrirConferencia(p, reenvio){
+  const e = emp(p.empresa) || {}, c = cli(p.cliente) || {}, rep = DATA?.rep || {};
+  const emails = (e.email || []).filter(Boolean);
+  const linha = (rot, v) => `<dt>${rot}</dt><dd>${v ? esc(v) : '<span class="sub">não informado</span>'}</dd>`;
+  const endereco = p.enderecoEntrega || c.endereco || '';
+  const falta = [];
+  if(!emails.length) falta.push('a marca está sem e-mail na aba Empresas');
+  if(!c.cnpj && !p.clienteCnpj) falta.push('o cliente está sem CNPJ');
+  if(!endereco) falta.push('falta o endereço de entrega');
+  abrirSheet(`
+    <div class="sheet-head"><h2>Conferir antes de enviar</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">Pedido <b>${esc(p.num)}</b> · confira os dados. Só depois de marcar "Conferi" o botão de enviar libera.</p>
+    ${falta.length ? `<div class="situacao espera"><b>Atenção:</b> ${esc(falta.join('; '))}.</div>` : ''}
+    <h3 class="conf-h">Fornecedor (${esc(p.empresaNome)})</h3>
+    <dl class="ficha">${linha('E-mail(s) de destino', emails.join(', '))}${linha('Pedido mínimo', e.minimo ? brl(e.minimo) : '')}</dl>
+    <h3 class="conf-h">Quem representa</h3>
+    <dl class="ficha">${linha('Representação', rep.nome)}${linha('CNPJ', rep.cnpj)}${linha('Contato', [rep.contato, rep.telefone].filter(Boolean).join(' · '))}${linha('Responde para', rep.email)}</dl>
+    <h3 class="conf-h">Cliente</h3>
+    <dl class="ficha">${linha('Nome', p.clienteNome)}${linha('Razão social', c.razao)}${linha('CNPJ', c.cnpj || p.clienteCnpj)}${linha('Inscrição estadual', c.ie)}
+      ${linha('Cidade', c.cidade || p.clienteCidade)}${linha('Contato', [c.contato, c.telefone].filter(Boolean).join(' · '))}${linha('E-mail (compra)', c.emailCompra)}${linha('E-mail (notas)', c.emailNotas)}</dl>
+    <h3 class="conf-h">Entrega e pagamento</h3>
+    <dl class="ficha">${linha('Entregar em', endereco)}${linha('Entrega desejada', p.entrega ? diaBR(p.entrega) : '')}${linha('Transportadora', p.transportadora)}
+      ${linha('Frete', c.frete)}${linha('Pagamento', p.pagamento)}${linha('Observação', p.obs)}</dl>
+    <h3 class="conf-h">Itens</h3>
+    ${resumoHTML(p.itens)}
+    ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
+    <button class="btn sec" id="cf-pdf" type="button">Ver o PDF que vai junto</button>
+    <label class="conf-ok"><input type="checkbox" id="cf-ok"> Conferi os dados acima</label>
+    <div class="btns">
+      <button class="btn ghost" id="cf-voltar" type="button">Voltar ao pedido</button>
+      <button class="btn aprovar" id="cf-enviar" type="button" disabled>${reenvio ? 'Reenviar por e-mail' : 'Enviar por e-mail ao fornecedor'}</button>
+    </div>`);
+  $('#cf-pdf').addEventListener('click', () => abrirPdf(p));
+  $('#cf-ok').addEventListener('change', ev => { $('#cf-enviar').disabled = !ev.target.checked || !emails.length; });
+  $('#cf-voltar').addEventListener('click', () => abrirPedido(p.id));
+  $('#cf-enviar').addEventListener('click', () => mudarSituacao(p, reenvio ? 'reenviar' : ENVIADO, '', reenvio ? undefined : {email: true}));
 }
 // Faturamento: nº da NF, chave de acesso, data, valor faturado e o arquivo (PDF ou XML) que a marca mandou.
 // O arquivo fica numa pasta do Drive da planilha; dá para mandar a NF por e-mail para o cliente.
@@ -2726,7 +2872,7 @@ async function mudarSituacao(p, nova, motivo, extra){
     if(local){ local.status = j.status; LS.set('pedidos', pedidos); }
     fecharSheet(); renderPedidos();
     // O aviso do servidor (ex.: "enviado por e-mail para ...", "marca sem e-mail") vale mais que a mensagem padrão.
-    toast(j.aviso || ({[APROVADO]:'Pedido aprovado', [RECUSADO]:'Pedido recusado', [CANCELADO]:'Pedido cancelado', [ENVIADO]:'Pedido marcado como enviado',
+    toast(j.aviso || ({[APROVADO]:'Pedido aprovado pelo cliente', [RECUSADO]:'Pedido recusado', [CANCELADO]:'Pedido cancelado', [ENVIADO]:'Pedido marcado como enviado',
       [FATURADO]:'Faturamento registrado', [ENTREGUE]:'Pedido marcado como entregue'}[j.status] || 'Pedido atualizado'), j.aviso ? 6000 : 0);
     carregarPedidos(false);
   }catch(e){
