@@ -1262,6 +1262,16 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
     <input id="login-senha" name="password" type="password" autocomplete="current-password">
     <button class="btn" id="pin-btn" type="submit" style="width:100%">Entrar</button>
   </form>
+  <form id="esq-form" novalidate hidden>
+    <p style="margin:8px 0">Enviamos um código de 6 números para o e-mail do seu cadastro.</p>
+    <button class="btn" id="esq-pedir" type="button" style="width:100%;margin-bottom:10px">Enviar código por e-mail</button>
+    <label for="esq-cod">Código recebido</label>
+    <input id="esq-cod" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+    <label for="esq-nova">Nova senha</label>
+    <input id="esq-nova" type="password" autocomplete="new-password">
+    <button class="btn" id="esq-ok" type="submit" style="width:100%">Trocar a senha</button>
+  </form>
+  <button type="button" class="link" id="esq-link" style="margin-top:10px;background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;opacity:.8">Esqueci minha senha</button>
   <div class="pin-erro" id="pin-erro" role="alert"></div>
 </div></div>
 
@@ -1533,6 +1543,32 @@ async function entrar(ev){
   }finally{ $('#pin-btn').disabled = false; }
 }
 $('#login-form').addEventListener('submit', entrar);
+// Esqueci minha senha: código de 6 números por e-mail, depois define a nova senha.
+$('#esq-link').addEventListener('click', () => {
+  const abrir = $('#esq-form').hidden; $('#esq-form').hidden = !abrir; $('#login-form').hidden = abrir;
+  $('#esq-link').textContent = abrir ? 'Voltar ao login' : 'Esqueci minha senha'; $('#pin-erro').textContent = '';
+});
+$('#esq-pedir').addEventListener('click', async () => {
+  const usuario = $('#login-usuario').value.trim();
+  if(!usuario){ $('#pin-erro').textContent = 'Digite o usuário (volte ao login e preencha).'; return; }
+  if(!navigator.onLine){ $('#pin-erro').textContent = 'Conecte à internet.'; return; }
+  $('#esq-pedir').disabled = true; $('#pin-erro').textContent = 'Enviando…';
+  try{ const j = await api({acao:'senhaPedirCodigo', usuario}); $('#pin-erro').textContent = j.aviso || 'Código enviado.'; $('#esq-cod').focus(); }
+  catch(e){ $('#pin-erro').textContent = e.message; }
+  setTimeout(() => { $('#esq-pedir').disabled = false; }, 30000);
+});
+$('#esq-form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const usuario = $('#login-usuario').value.trim(), codigo = $('#esq-cod').value.trim(), senha = $('#esq-nova').value;
+  if(!usuario || !codigo || !senha){ $('#pin-erro').textContent = 'Preencha o usuário, o código e a nova senha.'; return; }
+  $('#esq-ok').disabled = true; $('#pin-erro').textContent = 'Trocando…';
+  try{
+    await api({acao:'senhaTrocar', usuario, codigo, senha});
+    $('#esq-cod').value = ''; $('#esq-nova').value = ''; $('#esq-link').click();
+    $('#pin-erro').textContent = 'Senha trocada. Entre com a nova senha.';
+  }catch(e){ $('#pin-erro').textContent = e.message; }
+  finally{ $('#esq-ok').disabled = false; }
+});
 
 function abrirConta(){
   if(DEMO){ toast('Modo demonstração: não há login'); return; }
@@ -2659,6 +2695,17 @@ $('#btn-repetir').addEventListener('click', () => repetirUltimo($('#cliente').va
 // rede, nome, cidade, contato e telefone) e para editar um cadastro (editar: o cliente).
 // Ao digitar o CNPJ, o app consulta a Receita (BrasilAPI) e preenche razão social, nome fantasia e endereço.
 const FRETES = ['CIF (por conta do fornecedor)', 'FOB (por conta do cliente)', 'Retira na loja'];
+// Validação dos dígitos verificadores (CPF e CNPJ)
+function cpfValido(d){
+  d = String(d).replace(/\D/g, ''); if(d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  for(let t = 9; t < 11; t++){ let s = 0; for(let i = 0; i < t; i++) s += Number(d[i]) * (t + 1 - i); const dv = ((s * 10) % 11) % 10; if(dv !== Number(d[t])) return false; }
+  return true;
+}
+function cnpjValido(d){
+  d = String(d).replace(/\D/g, ''); if(d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const calc = n => { let s = 0, p = n - 7; for(let i = 0; i < n; i++){ s += Number(d[i]) * p--; if(p < 2) p = 9; } const r = s % 11; return r < 2 ? 0 : 11 - r; };
+  return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
+}
 function abrirNovaLoja(depois, base, editar){
   if(DEMO){ toast('No modo demonstração não dá para cadastrar lojas.'); return; }
   const o = editar || base || {}, v = k => esc(o[k] || '');
@@ -2669,13 +2716,15 @@ function abrirNovaLoja(depois, base, editar){
     ${base && novo ? `<p class="meta">Filial da rede <b>${esc(grupoDe(base))}</b>. Os dados abaixo vieram de ${esc(base.nome)}: troque o que for diferente.</p>` : ''}
     <form class="form-loja form-6" id="form-loja" novalidate>
       <section class="bloco"><h3>Identificação</h3>
-      <label class="field"><span class="lbl">CNPJ *</span>
+      <div class="seg" id="nl-tipo" role="group" aria-label="Tipo de documento"><button type="button" data-t="cnpj" aria-pressed="true">CNPJ</button><button type="button" data-t="cpf" aria-pressed="false">CPF</button></div>
+      <label class="field"><span class="lbl" id="nl-doc-lbl">CNPJ *</span>
         <span class="cnpj-linha"><input id="nl-cnpj" inputmode="numeric" placeholder="só números" value="${editar ? v('cnpj') : ''}" autocomplete="off">
         <button class="mini" type="button" id="nl-consultar">Consultar</button></span>
         <span class="cnpj-info" id="nl-cnpj-info">Digitando o CNPJ, o app busca razão social, nome fantasia e endereço.</span></label>
       <label class="field"><span class="lbl">Nome da loja *</span><input id="nl-nome" autocomplete="organization" required value="${v('nome')}"></label>
       <label class="field"><span class="lbl">Razão social</span><input id="nl-razao" value="${editar ? v('razao') : ''}"></label>
-      <label class="field"><span class="lbl">Inscrição estadual</span><input id="nl-ie" inputmode="numeric" value="${editar ? v('ie') : ''}" placeholder="ou ISENTO"></label></section>
+      <div class="duas"><label class="field"><span class="lbl">Inscrição estadual</span><input id="nl-ie" inputmode="numeric" value="${editar ? v('ie') : ''}" placeholder="ou ISENTO"></label>
+        <label class="field"><span class="lbl">Indicador da IE</span><select id="nl-ie-ind">${['', 'Contribuinte', 'Isento', 'Não contribuinte'].map(x => `<option value="${x}"${(editar ? o.indicadorIe : '') === x ? ' selected' : ''}>${x || 'Escolha'}</option>`).join('')}</select></label></div></section>
       <section class="bloco"><h3>Contato</h3>
       <div class="duas">
         <label class="field"><span class="lbl">Contato</span><input id="nl-contato" value="${v('contato')}"></label>
@@ -2685,6 +2734,7 @@ function abrirNovaLoja(depois, base, editar){
       <label class="field"><span class="lbl">E-mail financeiro</span><input id="nl-em-fin" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailFinanceiro') : ''}"></label>
       <label class="field"><span class="lbl">E-mail para envio de notas</span><input id="nl-em-nf" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailNotas') : ''}"></label></section>
       <section class="bloco"><h3>Endereço</h3>
+      <label class="field"><span class="lbl">CEP</span><input id="nl-cep" inputmode="numeric" maxlength="9" placeholder="00000-000" value="${editar ? v('cep') : ''}" autocomplete="postal-code"><span class="cnpj-info" id="nl-cep-info"></span></label>
       <label class="field"><span class="lbl">Endereço</span><input id="nl-end" autocomplete="street-address" value="${editar ? v('endereco') : ''}"></label>
       <label class="field"><span class="lbl">Cidade / UF</span><input id="nl-cidade" autocomplete="address-level2" value="${v('cidade')}"></label></section>
       <section class="bloco"><h3>Condições de venda</h3>
@@ -2709,6 +2759,34 @@ function abrirNovaLoja(depois, base, editar){
     campo.hidden = !nova; $('#nl-grupo').value = nova ? '' : e.target.value; if(nova) $('#nl-grupo').focus();
   });
   setTimeout(() => (editar ? $('#nl-nome') : $('#nl-cnpj')).focus(), 80);
+  // CNPJ | CPF: no CPF some o botão Consultar e não há consulta; a validação confere os dígitos.
+  let tipoDoc = soDigitos(editar?.cnpj || '').length === 11 ? 'cpf' : 'cnpj';
+  const aplicarTipo = () => {
+    document.querySelectorAll('#nl-tipo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === tipoDoc));
+    $('#nl-doc-lbl').textContent = tipoDoc === 'cpf' ? 'CPF *' : 'CNPJ *';
+    $('#nl-consultar').hidden = tipoDoc === 'cpf';
+    $('#nl-cnpj-info').textContent = tipoDoc === 'cpf' ? 'CPF: 11 números. Não há consulta automática, preencha os dados à mão.' : 'Digitando o CNPJ, o app busca razão social, nome fantasia e endereço.';
+    $('#nl-cnpj-info').className = 'cnpj-info';
+    $('#nl-cnpj').placeholder = tipoDoc === 'cpf' ? '000.000.000-00' : 'só números';
+  };
+  $('#nl-tipo').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if(!b) return; tipoDoc = b.dataset.t; $('#nl-cnpj').value = ''; aplicarTipo(); });
+  aplicarTipo();
+  // CEP: ao completar os 8 números, consulta e preenche endereço e cidade (sem apagar o que já foi digitado).
+  let cepConsultado = '';
+  $('#nl-cep').addEventListener('input', async () => {
+    const n = soDigitos($('#nl-cep').value).slice(0, 8), info = $('#nl-cep-info');
+    $('#nl-cep').value = n.length > 5 ? n.slice(0, 5) + '-' + n.slice(5) : n;
+    if(n.length !== 8 || n === cepConsultado || !navigator.onLine) return;
+    cepConsultado = n; info.className = 'cnpj-info'; info.textContent = 'Consultando o CEP…';
+    try{
+      const r = await fetch('https://brasilapi.com.br/api/cep/v2/' + n); if(!r.ok) throw new Error('nao achou');
+      const d = await r.json();
+      const rua = [d.street, d.neighborhood].filter(Boolean).join(', '), cid = d.city ? d.city + (d.state ? '/' + d.state : '') : '';
+      if(rua && !$('#nl-end').value.trim()) $('#nl-end').value = rua + ', ';
+      if(cid && !$('#nl-cidade').value.trim()) $('#nl-cidade').value = cid;
+      info.textContent = rua || cid ? 'CEP encontrado: confira o endereço e complete com o número.' : '';
+    }catch(_){ info.className = 'cnpj-info'; info.textContent = 'CEP não encontrado agora. Preencha o endereço à mão.'; }
+  });
   // Consulta do CNPJ: preenche o que vier da Receita (nome fantasia só se estiver vazio ou igual ao da filial de origem).
   let consultado = '';
   const consultar = async (forcar) => {
@@ -2743,14 +2821,14 @@ function abrirNovaLoja(depois, base, editar){
     // Rede digitada parecida com uma que já existe (só muda acento/maiúscula): usa o nome que já existe.
     const gDig = $('#nl-grupo').value.trim(), gExiste = nomesGrupos().find(g => norm(g) === norm(gDig));
     const val = id => $(id).value.trim();
-    const dados = {nome: val('#nl-nome'), cnpj: val('#nl-cnpj'), razao: val('#nl-razao'), ie: val('#nl-ie'), grupo: gExiste || gDig,
+    const dados = {nome: val('#nl-nome'), cnpj: val('#nl-cnpj'), razao: val('#nl-razao'), ie: val('#nl-ie'), indicadorIe: $('#nl-ie-ind').value, cep: soDigitos($('#nl-cep').value), grupo: gExiste || gDig,
       endereco: val('#nl-end'), cidade: val('#nl-cidade'), contato: val('#nl-contato'), telefone: val('#nl-tel'),
       emailCompra: val('#nl-em-compra'), emailFinanceiro: val('#nl-em-fin'), emailNotas: val('#nl-em-nf'),
       pagamento: val('#nl-pag'), prazo: val('#nl-prazo'), frete: val('#nl-frete'), obs: val('#nl-obs')};
     if(base && novo) dados.base = base.id;   // a loja de origem entra na mesma rede, se ainda não tiver uma
     // Obrigatórios: CNPJ (14 números) e nome. O erro marca o campo em vermelho e avisa no rodapé.
     document.querySelectorAll('#form-loja .erro-campo').forEach(x => x.classList.remove('erro-campo')); $('#nl-aviso')?.remove();
-    const faltas = []; if(novo && soDigitos(dados.cnpj).length !== 14) faltas.push(['#nl-cnpj', 'CNPJ com 14 números']); if(dados.nome.length < 2) faltas.push(['#nl-nome', 'nome da loja']);
+    const faltas = []; { const dd = soDigitos(dados.cnpj); const ok = tipoDoc === 'cpf' ? cpfValido(dd) : cnpjValido(dd); if((novo || dd) && !ok) faltas.push(['#nl-cnpj', dd.length === (tipoDoc === 'cpf' ? 11 : 14) ? (tipoDoc === 'cpf' ? 'CPF inválido' : 'CNPJ inválido') : (tipoDoc === 'cpf' ? 'CPF com 11 números' : 'CNPJ com 14 números')]); } if(dados.nome.length < 2) faltas.push(['#nl-nome', 'nome da loja']);
     if(faltas.length){
       faltas.forEach(([id]) => $(id).classList.add('erro-campo'));
       $('.rodape-form').insertAdjacentHTML('afterbegin', `<p class="cnpj-info erro" id="nl-aviso">Falta preencher: ${faltas.map(f => f[1]).join(' e ')}.</p>`);
@@ -4255,6 +4333,13 @@ async function mudarSituacao(p, nova, motivo, extra){
   if(!navigator.onLine){ toast('Sem internet. Tente de novo quando tiver sinal.'); return; }
   document.querySelectorAll('#sheet-body .btn').forEach(b => b.disabled = true);
   try{
+    // Envio à marca: anexa o PDF gerado no app (com o título e as colunas certas).
+    if(nova === 'reenviar' || extra?.email){
+      try{
+        const r = gerarPdf(p);
+        if(r) extra = Object.assign({}, extra, {arquivo: {nome: r.nome, tipo: 'application/pdf', base64: await new Promise((ok, er) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = er; f.readAsDataURL(r.blob); })}});
+      }catch(_){ /* sem PDF do app, o servidor monta o dele */ }
+    }
     const j = await api(Object.assign({acao:'situacao', id:p.id, nova, motivo: motivo || ''}, extra || {}));
     const r = remotos.find(x => x.id === p.id);
     if(r) Object.assign(r, {status:j.status, atualizadoPor:j.atualizadoPor, atualizadoEm:j.atualizadoEm, motivo:j.motivo}, j.nf ? {nf:j.nf} : {},
@@ -4286,8 +4371,16 @@ function renderCatalogo(){
   $('#cat-planilha-wrap').hidden = DEMO || !ehAdmin();   // só o administrador mexe em preços e produtos por planilha
   const baseP = (DATA?.empresas || []).filter(e => !empAtiva() || e.id === empAtiva()).flatMap(e => prodsDe(e.id));
   const cardsC = [['todos','Produtos', baseP.length], ['semfoto','Sem foto', baseP.filter(p => !p.foto).length], ['semprec','Sem preço', baseP.filter(p => !(p.preco > 0) && !p.livre).length], ['livre','Preço livre', baseP.filter(p => p.livre).length]];
+  const desat = (DATA?.desativados || []).filter(p => !empAtiva() || p.empresa === empAtiva());
+  if(ehAdmin() && DATA?.desativados) cardsC.push(['desat', 'Desativados', desat.length]);
   $('#cat-cards').innerHTML = cardsC.map(([k,t,n]) => `<button class="rel-card cf-${k}" data-cf="${k}" aria-pressed="${catFiltro === k}"><small>${t}</small><strong>${n}</strong></button>`).join('');
   const qC = norm($('#cat-busca').value || '');
+  if(catFiltro === 'desat'){   // produtos com Ativo = Não: só consulta (reativar é na planilha)
+    const ld = desat.filter(p => !qC || norm(p.nome + ' ' + p.id).includes(qC));
+    $('#catalogo').innerHTML = `<p class="meta">Produtos desativados na planilha (coluna Ativo = Não). Eles não aparecem nos pedidos. Para voltar, mude o Ativo para Sim na aba Produtos.</p>` +
+      (ld.length ? `<div class="rel-quadro"><table class="rel-tab"><thead><tr><th>Código</th><th>Produto</th><th>Marca</th></tr></thead><tbody>${ld.slice(0, 300).map(p => `<tr><td>${esc(p.id)}</td><td>${esc(p.nome)}</td><td>${esc(emp(p.empresa)?.nome || p.empresa)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhum produto desativado.</p>');
+    return;
+  }
   const passa = p => (!qC || norm(p.nome + ' ' + p.id).includes(qC)) && (catFiltro === 'todos' || (catFiltro === 'semfoto' && !p.foto) || (catFiltro === 'semprec' && !(p.preco > 0) && !p.livre) || (catFiltro === 'livre' && p.livre));
   // Categorias numa lista à esquerda (com a quantidade); tabela de produtos ao centro.
   const ps = baseP.filter(passa), cc = {}; ps.forEach(p => { const c = catDe(p); cc[c] = (cc[c] || 0) + 1; });
