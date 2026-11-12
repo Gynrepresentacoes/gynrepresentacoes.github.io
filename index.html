@@ -644,6 +644,10 @@ body{font-variant-numeric:tabular-nums}
 .pcard.on .pc-add{background:var(--surface);color:var(--ipe);border:1.5px solid var(--ipe)}
 .pc-rem{flex:0 0 40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
 .pc-rem:hover{color:var(--bad);border-color:var(--bad)}
+.conf-ed .field{margin-bottom:8px}.conf-ed input,.conf-ed textarea{width:100%}
+.cc-ac{display:flex;gap:10px;margin-top:4px}
+.cc-ac button{background:none;border:0;padding:0;font:inherit;font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer}
+.cc-ac button.ruim{color:var(--bad)}
 .r-tirar{background:none;border:0;padding:0;font:inherit;font-size:12px;color:var(--bad);text-decoration:underline;cursor:pointer}
 .pc-hist{color:var(--ipe);font-weight:600}
 .conf-h{font-size:14px;margin:16px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
@@ -1808,8 +1812,10 @@ function abrirEmpresaForm(e){
       ${e ? `<p class="dica-preco">Código da empresa: <b>${esc(e.id)}</b> (não muda; os produtos usam este código na coluna Empresa).</p>` : '<p class="dica-preco">Depois de criar, cadastre os produtos na aba Produtos da planilha com o código que aparecer aqui.</p>'}
       <button class="btn primary" id="fe-salvar" type="submit">${e ? 'Salvar' : 'Criar empresa'}</button>
       <button class="btn ghost" type="button" id="fe-voltar">Voltar</button>
+      ${e ? '<p style="text-align:center;margin:10px 0 0"><button type="button" class="r-tirar" id="fe-excluir">Excluir esta empresa</button></p>' : ''}
     </form>`);
   $('#fe-voltar').addEventListener('click', abrirConfigCriador);
+  $('#fe-excluir')?.addEventListener('click', () => excluirItem('empresa', e.id, e.nome, abrirConfigCriador));
   $('#form-emp').addEventListener('submit', async ev => {
     ev.preventDefault();
     const n = id => { const x = numBR($(id).value || '0'); return isNaN(x) ? 0 : x; };
@@ -3097,7 +3103,9 @@ function abrirLoja(id){
       <span class="lig-wrap"><button class="btn sec" id="lj-ligar" type="button"${tel ? '' : ' disabled'}>Ligar ▾</button>
         <div class="lig-menu" id="lig-menu" hidden><a href="tel:${tel}">Ligar agora<small>chamada normal do telefone</small></a><a href="https://wa.me/${zap}" target="_blank" rel="noopener">Ligar pelo WhatsApp<small>abre a conversa no WhatsApp</small></a><button type="button" id="lig-copiar">Copiar número</button></div></span>
       <button class="btn primary" id="lj-novo" type="button">Novo pedido</button></div>
-    ${ehAdmin() && c.situacao === AGUARDANDO ? '<div class="btns"><button class="btn aprovar" id="lj-aprovar">Aprovar cadastro</button><button class="btn perigo" id="lj-recusar">Recusar cadastro</button></div>' : ''}`);
+    ${ehAdmin() && c.situacao === AGUARDANDO ? '<div class="btns"><button class="btn aprovar" id="lj-aprovar">Aprovar cadastro</button><button class="btn perigo" id="lj-recusar">Recusar cadastro</button></div>' : ''}
+    ${ehAdmin() ? '<p style="text-align:center;margin:14px 0 0"><button type="button" class="r-tirar" id="lj-excluir">Excluir esta loja</button></p>' : ''}`);
+  $('#lj-excluir')?.addEventListener('click', () => excluirItem('loja', id, c.nome, () => { fecharSheet(); carregarLojas(); }));
   $('#lj-novo').addEventListener('click', () => { $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = id; fecharSheet(); irPara('novo'); aoTrocarCliente(); });
   $('#lj-rede-ver')?.addEventListener('click', () => abrirRede(grupoDe(c)));
   // Filial nova: se a loja ainda não tem rede, a rede ganha o nome da loja (dá para mudar no formulário).
@@ -4301,8 +4309,14 @@ function abrirConferencia(p, reenvio){
       </div>
       <div>
         <h3 class="conf-h">Entrega e pagamento</h3>
-        <dl class="ficha">${linha('Entregar em', endereco)}${linha('Entrega desejada', p.entrega ? diaBR(p.entrega) : '')}${linha('Transportadora', p.transportadora)}
-          ${linha('Frete', c.frete)}${linha('Pagamento', p.pagamento)}${linha('Observação', p.obs)}</dl>
+        <div class="conf-ed">
+          <label class="field"><span class="lbl">Entrega desejada</span><input type="date" id="ce-entrega" value="${esc(p.entrega || '')}"></label>
+          <label class="field"><span class="lbl">Entregar em</span><input id="ce-end" value="${esc(endereco)}" placeholder="endereço de entrega"></label>
+          <div class="duas"><label class="field"><span class="lbl">Frete</span><input id="ce-frete" list="ce-frete-op" value="${esc(p.frete || c.frete || '')}" placeholder="ex.: CIF, FOB"><datalist id="ce-frete-op"><option value="CIF (por conta da marca)"><option value="FOB (por conta do cliente)"></datalist></label>
+          <label class="field"><span class="lbl">Pagamento</span><input id="ce-pag" list="ce-pag-op" value="${esc(p.pagamento || '')}"><datalist id="ce-pag-op">${(e.pagamentos || []).map(x => `<option value="${esc(x)}">`).join('')}</datalist></label></div>
+          <label class="field"><span class="lbl">Observação</span><textarea id="ce-obs" rows="2">${esc(p.obs || '')}</textarea></label>
+          <p class="dica-preco" style="margin:0">Pode corrigir aqui antes de enviar. Itens e valores não mudam nesta tela.</p>
+        </div>
         <div class="conf-tot"><span>Total (${p.itens.length} ${p.itens.length === 1 ? 'item' : 'itens'})</span><b>${brl(p.total)}</b></div>
         ${p.desconto ? `<div class="meta" style="text-align:right">Subtotal ${brl(p.bruto ?? p.total)} · desconto ${String(p.desconto).replace('.', ',')}%</div>` : ''}
       </div>
@@ -4318,7 +4332,19 @@ function abrirConferencia(p, reenvio){
   $('#cf-pdf').addEventListener('click', () => abrirPdf(p));
   $('#cf-ok').addEventListener('change', ev => { $('#cf-enviar').disabled = !ev.target.checked || !emails.length; });
   $('#cf-voltar').addEventListener('click', () => abrirPedido(p.id));
-  $('#cf-enviar').addEventListener('click', () => mudarSituacao(p, reenvio ? 'reenviar' : ENVIADO, '', reenvio ? undefined : {email: true}));
+  // Lê os campos editados e guarda no pedido (PDF, Excel e e-mail passam a usar os valores corrigidos).
+  const lerEdicao = () => ({entrega: $('#ce-entrega').value, enderecoEntrega: $('#ce-end').value.trim(), frete: $('#ce-frete').value.trim(), pagamento: $('#ce-pag').value.trim(), obs: $('#ce-obs').value.trim()});
+  const aplicarEdicao = () => Object.assign(p, lerEdicao());
+  ['#ce-entrega', '#ce-end', '#ce-frete', '#ce-pag', '#ce-obs'].forEach(s => $(s).addEventListener('change', aplicarEdicao));
+  $('#cf-enviar').addEventListener('click', async () => {
+    const d = lerEdicao(), mudou = d.entrega !== (p.entrega || '') || d.enderecoEntrega !== (p.enderecoEntrega || c.endereco || '') || d.frete !== (p.frete || c.frete || '') || d.pagamento !== (p.pagamento || '') || d.obs !== (p.obs || '');
+    if(mudou){
+      $('#cf-enviar').disabled = true;
+      try{ await api({acao: 'pedidoEditar', id: p.id, dados: d}); Object.assign(p, d); const r = remotos.find(x => x.id === p.id); if(r) Object.assign(r, d); }
+      catch(err){ $('#cf-enviar').disabled = false; if(err.login) sessaoCaiu(err.message); else toast(err.message, 6000); return; }
+    }
+    mudarSituacao(p, reenvio ? 'reenviar' : ENVIADO, '', reenvio ? undefined : {email: true});
+  });
 }
 // Faturamento: nº da NF, chave de acesso, data, valor faturado e o arquivo (PDF ou XML) que a marca mandou.
 // O arquivo fica numa pasta do Drive da planilha; dá para mandar a NF por e-mail para o cliente.
@@ -4429,8 +4455,8 @@ function renderCatalogo(){
   const qC = norm($('#cat-busca').value || '');
   if(catFiltro === 'desat'){   // produtos com Ativo = Não: só consulta (reativar é na planilha)
     const ld = desat.filter(p => !qC || norm(p.nome + ' ' + p.id).includes(qC));
-    $('#catalogo').innerHTML = `<p class="meta">Produtos desativados na planilha (coluna Ativo = Não). Eles não aparecem nos pedidos. Para voltar, mude o Ativo para Sim na aba Produtos.</p>` +
-      (ld.length ? `<div class="rel-quadro"><table class="rel-tab"><thead><tr><th>Código</th><th>Produto</th><th>Marca</th></tr></thead><tbody>${ld.slice(0, 300).map(p => `<tr><td>${esc(p.id)}</td><td>${esc(p.nome)}</td><td>${esc(emp(p.empresa)?.nome || p.empresa)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhum produto desativado.</p>');
+    $('#catalogo').innerHTML = `<p class="meta">Produtos desativados na planilha (coluna Ativo = Não). Eles não aparecem nos pedidos. Use Reativar para eles voltarem.</p>` +
+      (ld.length ? `<div class="rel-quadro"><table class="rel-tab"><thead><tr><th>Código</th><th>Produto</th><th>Marca</th><th></th></tr></thead><tbody>${ld.slice(0, 300).map(p => `<tr><td>${esc(p.id)}</td><td>${esc(p.nome)}</td><td>${esc(emp(p.empresa)?.nome || p.empresa)}</td><td class="cc-ac"><button type="button" data-prea="${esc(String(p.id))}">Reativar</button>${sessao?.criador ? `<button type="button" class="ruim" data-pexc="${esc(String(p.id))}">Excluir</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Nenhum produto desativado.</p>');
     return;
   }
   const passa = p => (!qC || norm(p.nome + ' ' + p.id).includes(qC)) && (catFiltro === 'todos' || (catFiltro === 'semfoto' && !p.foto) || (catFiltro === 'semprec' && !(p.preco > 0) && !p.livre) || (catFiltro === 'livre' && p.livre));
@@ -4442,8 +4468,31 @@ function renderCatalogo(){
   const optCat = [['__todas', 'Todas', ps.length], ...cats.map(c => [c, c || 'Sem categoria', cc[c]])];
   $('#catalogo').innerHTML = `<div class="cat-lay"><nav class="cat-lista" aria-label="Categorias"><small class="cat-tit">CATEGORIAS</small>${optCat.map(([k, t, n]) => `<button type="button" data-cat="${esc(k)}" aria-pressed="${k === sel}">${esc(t)} <small>${n}</small></button>`).join('')}</nav>
     <div class="cat-tab"><select id="cat-sel-m" class="cat-sel-m" aria-label="Categoria">${optCat.map(([k, t, n]) => `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>${esc(t)} (${n})</option>`).join('')}</select>
-    ${lista.length ? `<div class="cat-grid">${lista.slice(0, MAX).map(p => `<div class="cat-card">${fotoHTML(p)}<div class="cc-t"><div class="cc-n">${esc(p.nome)}</div><div class="cc-s">${esc(catDe(p) || 'Sem categoria')}${p.foto ? '' : ' · sem foto'}</div><div class="cc-s">${esc(String(p.id))} · ${esc(p.un || '')}</div><div class="cc-p${p.preco > 0 ? '' : ' zero'}">${p.preco > 0 ? brl(p.preco) : p.livre ? 'preço livre' : 'sem preço'}</div></div></div>`).join('')}</div>${lista.length > MAX ? `<p class="meta">Mostrando ${MAX} de ${lista.length}. Use a busca para achar o resto.</p>` : ''}` : '<p class="empty">Nenhum produto com esse filtro.</p>'}</div></div>`;
+    ${lista.length ? `<div class="cat-grid">${lista.slice(0, MAX).map(p => `<div class="cat-card">${fotoHTML(p)}<div class="cc-t"><div class="cc-n">${esc(p.nome)}</div><div class="cc-s">${esc(catDe(p) || 'Sem categoria')}${p.foto ? '' : ' · sem foto'}</div><div class="cc-s">${esc(String(p.id))} · ${esc(p.un || '')}</div><div class="cc-p${p.preco > 0 ? '' : ' zero'}">${p.preco > 0 ? brl(p.preco) : p.livre ? 'preço livre' : 'sem preço'}</div>${ehAdmin() ? `<div class="cc-ac"><button type="button" data-pdes="${esc(String(p.id))}">Desativar</button>${sessao?.criador ? `<button type="button" class="ruim" data-pexc="${esc(String(p.id))}">Excluir</button>` : ''}</div>` : ''}</div></div>`).join('')}</div>${lista.length > MAX ? `<p class="meta">Mostrando ${MAX} de ${lista.length}. Use a busca para achar o resto.</p>` : ''}` : '<p class="empty">Nenhum produto com esse filtro.</p>'}</div></div>`;
 }
+// Excluir (com confirmação) e desativar/reativar: as regras de quem pode e de "só sem pedidos" são conferidas na planilha.
+async function excluirItem(tipo, id, nome, depois){
+  if(!confirm(`Excluir "${nome}"?\n\nNão dá para desfazer.`)) return;
+  try{
+    const j = await api({acao: 'excluir', tipo, id});
+    toast(j.aviso || 'Excluído', 4000);
+    await carregarCatalogo(false); if(depois) depois();
+  }catch(e){ if(e.login) sessaoCaiu(e.message); else alert(e.message); }
+}
+async function ativarProduto(id, ativo){
+  try{
+    await api({acao: 'produtoAtivo', id, ativo});
+    toast(ativo ? 'Produto reativado' : 'Produto desativado');
+    await carregarCatalogo(false);
+  }catch(e){ if(e.login) sessaoCaiu(e.message); else alert(e.message); }
+}
+$('#catalogo').addEventListener('click', e => {
+  const d = e.target.closest('[data-pdes]'), r = e.target.closest('[data-prea]'), x = e.target.closest('[data-pexc]');
+  const nomeDe = id => (DATA.produtos.find(p => String(p.id) === id) || (DATA.desativados || []).find(p => String(p.id) === id) || {}).nome || id;
+  if(d){ if(confirm(`Desativar "${nomeDe(d.dataset.pdes)}"?\n\nEle some dos pedidos novos; o histórico continua. Dá para reativar depois.`)) ativarProduto(d.dataset.pdes, false); }
+  else if(r) ativarProduto(r.dataset.prea, true);
+  else if(x) excluirItem('produto', x.dataset.pexc, nomeDe(x.dataset.pexc));
+});
 var catSel = '__todas';
 $('#catalogo').addEventListener('click', e => { const b = e.target.closest('.cat-lista [data-cat]'); if(b){ catSel = b.dataset.cat; renderCatalogo(); } });
 $('#catalogo').addEventListener('change', e => { if(e.target.id === 'cat-sel-m'){ catSel = e.target.value; renderCatalogo(); } });
