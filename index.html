@@ -310,8 +310,13 @@ input[type=date],input[type=month],input[type=number]{width:100%;background:var(
 @media(min-width:1000px){
   .sheet-panel{left:auto;top:0;max-height:none;width:480px;border-radius:0;transform:translateX(100%);padding:22px 22px 30px}
   .sheet.open .sheet-panel{transform:none}
-  .sheet.larga .sheet-panel{width:760px}
   .sheet-in{max-width:none}
+}
+/* Janelas centralizadas (cadastro da loja, marcar faturado): a partir de 700 px */
+@media(min-width:700px){
+  .sheet.larga .sheet-panel,.sheet.modal .sheet-panel{left:50%;right:auto;top:50%;bottom:auto;width:min(560px,94vw);max-height:90vh;border-radius:16px;transform:translate(-50%,-46%);opacity:0;transition:transform .2s ease,opacity .2s}
+  .sheet.larga .sheet-panel{width:min(820px,94vw)}
+  .sheet.larga.open .sheet-panel,.sheet.modal.open .sheet-panel{transform:translate(-50%,-50%);opacity:1}
 }
 .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .x{width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);font-size:24px;cursor:pointer}
@@ -568,10 +573,16 @@ body{font-variant-numeric:tabular-nums}
   /* Computador: tudo numa faixa só (os filtros de marca, vendedor e rede ficam visíveis) */
   /* Relatórios: filtros sempre visíveis numa coluna à esquerda; resultado à direita */
   #v-relatorios:not([hidden]){display:grid;grid-template-columns:240px minmax(0,1fr);gap:0 20px;align-items:start}
+  .rel-det{display:none}
+  .rel-ft,.rel-nota{display:block}
   #v-relatorios>h1{grid-column:1/-1}
   #v-relatorios .rel-barra{position:sticky;top:12px;flex-direction:column;align-items:stretch;margin-bottom:0}
   #v-relatorios .rel-barra .field{flex:none}
-  #v-relatorios .rel-acoes{order:-1;margin:0;flex:none;justify-content:flex-start}
+  #v-relatorios .rel-acoes{order:5;margin:0;flex:none;justify-content:flex-start}
+  #v-relatorios .rel-ft{display:block;order:-2;margin:0;font-size:15px}
+  #v-relatorios .rel-nota{display:block;order:9;margin:0;font-size:13px}
+  table.mat th:first-child,table.mat td:first-child{min-width:190px}
+  table.mat thead th:first-child{position:sticky;left:0;z-index:3;background:var(--surface)}
   #v-relatorios .rel-mais-box,#v-relatorios .rel-mais-box.aberto{display:flex;flex-direction:column;gap:8px;flex:none}
   #v-relatorios .rel-barra{min-width:0;width:240px}
   #v-relatorios .rel-mes-nav{flex:none;width:100%;display:flex;gap:4px}
@@ -726,10 +737,39 @@ html[data-estilo="suave"] .tema-op{border-width:1px}
 .cat-lista button[aria-pressed="true"]{background:var(--suave-tint,rgba(77,141,255,.18));font-weight:700}
 .cat-lista small{opacity:.7}
 .cat-prod{display:flex;gap:10px;align-items:center}
+.cat-tit{display:block;padding:6px 10px;font-weight:700;letter-spacing:.06em;opacity:.7;font-size:12px}
+#cat-cards .cf-todos[aria-pressed="true"],#cat-cards .cf-todos strong{color:#3d7bff}
+#cat-cards .cf-semprec{background:rgba(245,180,40,.14)}#cat-cards .cf-semprec small,#cat-cards .cf-semprec strong{color:#b7791f}
+#cat-cards .rel-card{border-radius:10px}
 .cat-sel-m{display:none;margin-bottom:10px}
 @media(max-width:699px){.cat-lay{grid-template-columns:1fr}.cat-lista{display:none}.cat-sel-m{display:block}}
 .form-6 .bloco{border:1px solid var(--line);border-radius:12px;padding:6px 14px 10px;margin-bottom:12px}
+.esc-op{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;cursor:pointer}
+.esc-op small{display:block;opacity:.75}.esc-op:has(input:checked){border-color:var(--acc-text,#4d8dff);background:var(--suave-tint,rgba(77,141,255,.12))}
+.rel-ft,.rel-nota{display:none}
+@media(min-width:1200px){
+  #v-relatorios:not([hidden]){grid-template-columns:230px minmax(0,1fr) 290px !important}
+  #v-relatorios .rel-det{display:block;position:sticky;top:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px}
+  #v-relatorios .rel-det h3{margin:0 0 10px;font-size:15px}
+}
+th.mes{color:#3d7bff;background:rgba(61,123,255,.10)}th.qh{background:rgba(61,123,255,.10);color:#3d7bff}th.tkh{background:rgba(47,163,107,.14);color:#2a8f5c}
+.rel-tit{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 4px}.rel-tit h2{margin:0}
+.rel-marca-ajuda{margin:0 0 8px}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;background:rgba(138,148,166,.18);margin-right:6px}
+.pill.a{background:rgba(245,180,40,.2);color:#b7791f}.pill.b{background:rgba(61,123,255,.18);color:#3d7bff}.pill.c{background:rgba(120,90,255,.18);color:#6a4fe0}.pill.d{background:rgba(47,163,107,.2);color:#2a8f5c}
+.barra-fat{display:inline-block;width:90px;height:8px;border-radius:6px;background:rgba(245,180,40,.5);overflow:hidden;vertical-align:middle}.barra-fat i{display:block;height:100%;background:#2fa36b}
+.barra-loja{display:inline-block;height:8px;border-radius:6px;background:rgba(61,123,255,.5)}
+.vd-painel{display:none}
+@media(min-width:1000px){
+  .vd-lay{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+  .vd-painel{display:block;position:sticky;top:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px;min-height:160px}
+  .vd-painel .x{display:none}
+  .vd-sel{background:var(--suave-tint,rgba(77,141,255,.15))}
+}
 .form-6 .bloco h3{margin:8px 0}
+.form-6 .rodape-form{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rodape-btns{display:flex;gap:8px}.rodape-btns .btn{width:auto;padding:10px 20px}
+#nl-aviso{flex:1 1 100%;margin:0 0 6px}
 .erro-campo{border-color:#d9534f !important;box-shadow:0 0 0 2px rgba(217,83,79,.25)}
 .form-6 .rodape-form{position:sticky;bottom:-22px;background:var(--paper);padding:12px 0 6px;border-top:1px solid var(--line)}
 @media(min-width:1000px){.form-6{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}.form-6 .rodape-form{grid-column:1/-1}}
@@ -741,10 +781,27 @@ html[data-estilo="suave"] .tema-op{border-width:1px}
 @media(max-width:999px){#lista-lojas.lj-quadro{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){#lista-lojas.lj-quadro{grid-template-columns:1fr}}
 .lj-sel{max-width:260px;margin-bottom:10px}
+#lojas-filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#lojas-filtros select{height:40px;min-height:0;width:auto;max-width:230px;margin:0;padding:6px 10px}
+#lojas-filtros .lj-grp-op{display:flex;gap:6px;align-items:center;font-size:14px}
+#lojas-filtros .lj-cards{flex:1 1 100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:4px 0}
+.lj-barra{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.lj-barra .lista-topo{flex:1 1 auto;margin:0}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}.seg button{border:0;background:none;color:inherit;font:inherit;font-weight:600;padding:7px 16px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--suave-tint,rgba(77,141,255,.2));color:var(--acc-text,#4d8dff)}
+.lj-aguard{justify-content:space-between;border:1px solid rgba(245,180,40,.5)}.lj-aguard-bt{display:flex;gap:8px}.lj-aguard-bt .btn{width:auto;padding:8px 18px}
+.lj-col h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.lj-col h3 .lj-soma{margin-left:auto;font-weight:500;font-size:13px;opacity:.8}
+.lj-ponto{width:10px;height:10px;border-radius:50%;background:#8a94a6}.lj-bem .lj-ponto{background:#2fa36b}.lj-esfriando .lj-ponto{background:#e0a020}.lj-parado .lj-ponto{background:#d9534f}
+.lj-mini{border-left:3px solid #8a94a6}.lj-bem .lj-mini{border-left-color:#2fa36b}.lj-esfriando .lj-mini{border-left-color:#e0a020}.lj-parado .lj-mini{border-left-color:#d9534f}
+.lj-rede{align-self:flex-start;font-size:12px;background:rgba(77,141,255,.15);color:var(--acc-text,#4d8dff);border-radius:6px;padding:1px 7px}
+.lj-fim{display:flex;justify-content:space-between;align-items:baseline}
 .lj-cards{margin:8px 0}.lj-cards .rel-card{cursor:pointer;text-align:left}.lj-cards .rel-card[aria-pressed="true"]{outline:2px solid var(--acc-text,#4d8dff)}
 .lig-wrap{position:relative;display:inline-block}.lig-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:30;min-width:240px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .lig-menu[hidden]{display:none}.lig-menu button,.lig-menu a{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 11px;border-radius:8px;font-weight:600;cursor:pointer;color:inherit;text-decoration:none;font:inherit}
-.lj-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.lj-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.lj-kpis>div{text-align:center;padding:10px 6px}.lj-kpis b{display:block;font-size:17px}
+.lj-etqs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.lj-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.lj-acoes .btn{width:100%}.lj-acoes .lig-wrap{display:block}
+.lj-links{display:flex;gap:8px;flex-wrap:wrap}
 .lj-kpis>div{background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}
 .lj-kpis small{opacity:.7;font-size:12px}
 .vd-exp{position:relative}
@@ -871,23 +928,23 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
     </div>
     <div class="vd-info" id="vd-info"></div>
     <div class="field"><input id="vendas-busca" type="search" placeholder="Buscar por cliente, rede, CNPJ, nº do pedido ou nº da NF" aria-label="Buscar venda"></div>
-    <div id="lista-pedidos"></div>
+    <div class="vd-lay"><div id="lista-pedidos"></div>
+      <aside id="vd-painel" class="vd-painel" aria-live="polite"><p class="meta">Clique num pedido da lista para ver os detalhes aqui.</p></aside></div>
   </section>
 
   <section id="v-lojas" class="view" hidden>
-    <div class="vd-hd"><h1>Lojas</h1>
-      <div class="vd-btns"><button class="chip" id="lj-modo" type="button" aria-pressed="false">Quadro</button><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
-    <div class="lista-topo">
-      <div class="chips" id="lojas-filtros"></div>
-    </div>
+    <div class="vd-hd"><h1>Lojas <small class="meta" id="lojas-info"></small></h1>
+      <div class="vd-btns"><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
     <div class="field"><input id="lojas-busca" type="search" placeholder="Buscar loja pelo nome, rede, cidade ou CNPJ" aria-label="Buscar loja"></div>
-    <p class="meta" id="lojas-info"></p>
+    <div class="lj-barra"><div class="lista-topo"><div class="chips" id="lojas-filtros"></div></div>
+      <div class="seg" id="lj-seg" role="group" aria-label="Visão"><button type="button" data-modo="quadro">Quadro</button><button type="button" data-modo="lista">Lista</button></div></div>
     <ul id="lista-lojas" class="orders"></ul>
   </section>
 
   <section id="v-relatorios" class="view" hidden>
     <h1>Relatórios</h1>
     <div class="rel-barra">
+      <h3 class="rel-ft">Filtros</h3>
       <div class="rel-mes-nav" role="group" aria-label="Mês do relatório">
         <button class="rel-seta" id="rel-mes-ant" type="button" aria-label="Mês anterior">‹</button>
         <input type="month" id="rel-mes" aria-label="Mês">
@@ -918,10 +975,12 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
         <label class="field"><span class="lbl">Vendedor</span><select id="rel-vend"></select></label>
         <label class="field"><span class="lbl">Rede</span><select id="rel-grupo"></select></label>
       </div>
+      <p class="meta rel-nota">A marca já vem do topo da tela, por isso não aparece aqui.</p>
       <div hidden><input type="date" id="rel-de"><input type="date" id="rel-ate"></div>
     </div>
     <div class="rel-centro"><div class="rel-topo" id="rel-topo"></div>
     <div id="rel-resultado"><p class="empty">Escolha o mês e o cliente.</p></div></div>
+    <aside id="rel-det" class="rel-det"><h3>Detalhes do produto</h3><p class="meta">Clique num produto da tabela para ver os detalhes aqui.</p></aside>
   </section>
 
   <section id="v-aprovar" class="view" hidden>
@@ -934,11 +993,10 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
   </section>
 
   <section id="v-catalogo" class="view" hidden>
-    <div class="vd-hd"><h1>Catálogo</h1>
+    <div class="vd-hd"><h1>Catálogo <small class="meta" id="cat-info"></small></h1>
       <div class="vd-btns"><button class="chip" id="btn-atualizar" type="button">↻ Atualizar</button>
         <span class="vd-menuwrap" id="cat-planilha-wrap" hidden><button class="chip" id="cat-planilha" type="button">Planilha ▾</button>
           <div class="vd-menu" id="cat-menu" hidden><button type="button" id="btn-importar-precos">Atualizar preços por planilha</button><button type="button" id="btn-cad-produtos">Cadastrar produtos por planilha</button><button type="button" id="btn-modelo-produtos">Baixar modelo da planilha</button></div></span></div></div>
-    <p class="note" id="cat-info"></p>
     <div class="rel-cards" id="cat-cards"></div>
     <div class="field"><input id="cat-busca" type="search" placeholder="Buscar produto por nome ou código" aria-label="Buscar produto"></div>
     <div id="catalogo"></div>
@@ -1543,7 +1601,20 @@ $('#ct-nova').addEventListener('click', () => $('#btn-nova-loja').click());
 $('#ct-lista').addEventListener('click', e => { const b = e.target.closest('[data-cli]'); if(b) escolherClienteTela(b.dataset.cli); });
 function escolherClienteTela(id){
   $('#ct-busca').value = '';
-  $('#cliente').value = id; st.trocandoCli = false; aoTrocarCliente();
+  $('#cliente').value = id; st.trocandoCli = false; st.escopo = 'uma'; aoTrocarCliente();
+  // Loja de uma rede com vários CNPJs: escolher entre só esta loja ou o mesmo pedido para várias filiais.
+  if(temFiliais() && !itensAtuais().length && !st.orcamento){
+    const c = cli(id), g = grupoDe(c), cd = condGrupo(id), n = filiaisDaRede().length;
+    abrirSheet(`
+      <div class="sheet-head"><h2>${esc(c.nome)} faz parte da rede ${esc(g)} (${n} CNPJs)</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+      <p class="meta">O André decide se o pedido é só desta loja ou de várias filiais.</p>
+      <label class="esc-op"><input type="radio" name="esc-rede" value="uma" checked> <span><b>Só esta loja</b><small>Um pedido para o CNPJ ${esc(c.cnpj || 'desta loja')}</small></span></label>
+      <label class="esc-op"><input type="radio" name="esc-rede" value="varias"> <span><b>Mesmo pedido para várias filiais</b><small>Escolha as filiais ao fechar; cada uma vira um pedido com número próprio</small></span></label>
+      <div class="note"><b>Vale para esta loja:</b> pedido mínimo, ${cd?.desconto ? `desconto da rede (${String(cd.desconto).replace('.', ',')}%)` : 'desconto da rede'} e pagamento da rede${cd?.pagamento ? ` (${esc(cd.pagamento)})` : ''}. O pedido fica no histórico deste CNPJ e também aparece no total da rede.</div>
+      <div class="btns"><button class="btn primary" id="esc-ok" type="button">Continuar</button></div>`);
+    $('#esc-ok').addEventListener('click', () => { st.escopo = document.querySelector('input[name="esc-rede"]:checked').value; fecharSheet(); if(st.escopo === 'varias') toast('Pedido para várias filiais: escolha os produtos e feche o pedido.', 5000); perguntarRepetir(id); });
+    return;
+  }
   perguntarRepetir(id);
 }
 // Loja que já comprou: pergunta se quer repetir o último pedido (só aqui, dentro do Novo pedido).
@@ -1935,6 +2006,7 @@ function validarFechamento(){
 }
 $('#btn-fechar-p').addEventListener('click', () => {
   if(!validarFechamento()) return;
+  if(st.escopo === 'varias' && temFiliais()){ $('#btn-lote-p').click(); return; }
   const bruto = itensAtuais().reduce((s,i) => s + i.q*i.preco, 0), desc = numBR($('#desc-p').value || '0');
   const erro = conferirRegras(bruto, desc); if(erro){ toast(erro); return; }
   const pag = pagamentoDe($('#pag-p'), $('#pag-outro-p')); if(pag === null) return;
@@ -2161,7 +2233,7 @@ function fecharPedido(pag, obs, desc, deOrcamento){
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Pedido ${esc(p.num)} fechado</h2>
       <p class="meta"><b>${esc(p.clienteNome)}</b><br>${brl(p.total)}, ${esc(p.pagamento)}<br>Ele está <b>Em aprovação</b>: assim que o cliente aprovar, marque na aba Vendas.</p></div>
-    ${acoesHTML(p)}
+    ${acoesHTML(p, true)}
     <button class="btn ghost" data-close style="margin-top:8px">Começar outro pedido</button>`);
   ligarAcoes(p);
   sincronizar();
@@ -2353,16 +2425,16 @@ function abrirNovaLoja(depois, base, editar){
   const o = editar || base || {}, v = k => esc(o[k] || '');
   const novo = !editar, pags = [...new Set([...pagamentosDe(st.empresa), ...(DATA?.clientes || []).map(c => c.pagamento).filter(Boolean)])];
   abrirSheet(`
-    <div class="sheet-head"><h2>${editar ? 'Editar cadastro' : base ? 'Nova filial (outro CNPJ)' : 'Nova loja'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="sheet-head"><div><h2>${editar ? 'Editar cadastro' : base ? 'Nova filial (outro CNPJ)' : 'Nova loja'}</h2>${editar ? `<small class="meta">${esc(editar.nome)}</small>` : ''}</div><button class="x" data-close aria-label="Fechar">×</button></div>
     ${novo && !ehAdmin() ? '<p class="note">A loja entra na hora para você fazer o pedido; o administrador confere o cadastro.</p>' : ''}
     ${base && novo ? `<p class="meta">Filial da rede <b>${esc(grupoDe(base))}</b>. Os dados abaixo vieram de ${esc(base.nome)}: troque o que for diferente.</p>` : ''}
     <form class="form-loja form-6" id="form-loja" novalidate>
       <section class="bloco"><h3>Identificação</h3>
-      <label class="field"><span class="lbl">CNPJ ou CPF</span>
+      <label class="field"><span class="lbl">CNPJ *</span>
         <span class="cnpj-linha"><input id="nl-cnpj" inputmode="numeric" placeholder="só números" value="${editar ? v('cnpj') : ''}" autocomplete="off">
         <button class="mini" type="button" id="nl-consultar">Consultar</button></span>
         <span class="cnpj-info" id="nl-cnpj-info">Digitando o CNPJ, o app busca razão social, nome fantasia e endereço.</span></label>
-      <label class="field"><span class="lbl">Nome fantasia *</span><input id="nl-nome" autocomplete="organization" required value="${v('nome')}"></label>
+      <label class="field"><span class="lbl">Nome da loja *</span><input id="nl-nome" autocomplete="organization" required value="${v('nome')}"></label>
       <label class="field"><span class="lbl">Razão social</span><input id="nl-razao" value="${editar ? v('razao') : ''}"></label>
       <label class="field"><span class="lbl">Inscrição estadual</span><input id="nl-ie" inputmode="numeric" value="${editar ? v('ie') : ''}" placeholder="ou ISENTO"></label></section>
       <section class="bloco"><h3>Contato</h3>
@@ -2389,7 +2461,7 @@ function abrirNovaLoja(depois, base, editar){
         <datalist id="dl-grupos">${nomesGrupos().map(g => `<option value="${esc(g)}">`).join('')}</datalist></label></section>
       <section class="bloco"><h3>Observações</h3>
       <label class="field"><textarea id="nl-obs" rows="3" aria-label="Observação">${editar ? v('obs') : ''}</textarea></label></section>
-      <div class="rodape-form"><button class="btn primary" id="nl-salvar" type="submit">${editar ? 'Salvar cadastro' : base ? 'Cadastrar filial' : 'Cadastrar loja'}</button></div>
+      <div class="rodape-form"><small class="meta">Campos com * são obrigatórios.</small><span class="rodape-btns"><button class="btn sec" type="button" data-close>Cancelar</button><button class="btn primary" id="nl-salvar" type="submit">${editar ? 'Salvar' : base ? 'Cadastrar filial' : 'Cadastrar loja'}</button></span></div>
     </form>`);
   $('#sheet').classList.add('larga');
   setTimeout(() => (editar ? $('#nl-nome') : $('#nl-cnpj')).focus(), 80);
@@ -2500,12 +2572,13 @@ function renderLojas(){
   $('#lojas-info').textContent = `${lojas.length} loja${lojas.length === 1 ? '' : 's'}` + (ehAdmin() ? '' : ' · contando os seus pedidos');
   const ordem = (a, b) => (b.dias ?? -1) - (a.dias ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR');
   const aguard = ehAdmin() ? base.filter(c => c.situacao === AGUARDANDO) : [];
-  const faixa = aguard.length ? `<li class="lj-aguard"><b>${aguard.length} cadastro${aguard.length > 1 ? 's' : ''} aguardando aprovação:</b> ${aguard.map(c => `<button class="mini" data-loja="${esc(c.id)}">${esc(c.nome)}</button>`).join(' ')}</li>` : '';
+  const faixa = aguard.map(c => `<li class="lj-aguard"><span><b>1 loja nova aguardando aprovação:</b> ${esc(c.nome)}${c.cadastradoPor ? ` (cadastrada por ${esc((DATA?.usuarios || []).find(u => u.usuario === c.cadastradoPor)?.nome || c.cadastradoPor)})` : ''}</span>
+    <span class="lj-aguard-bt"><button class="btn aprovar" data-lj-ap="${esc(c.id)}" type="button">Aprovar</button><button class="btn sec" data-lj-rc="${esc(c.id)}" type="button">Recusar</button></span></li>`).join('');
   const dtxt = c => c.pedidos ? (c.dias === 0 ? 'hoje' : `há ${c.dias} dia${c.dias === 1 ? '' : 's'}`) : 'nunca comprou';
   const ul = $('#lista-lojas'); ul.classList.toggle('lj-quadro', modoLojas === 'quadro');
   if(modoLojas === 'quadro'){
     ul.innerHTML = faixa + Object.keys(NOMES).map(k => { const ls = base.filter(c => sit(c) === k).sort(k === 'bem' ? (a, b) => (a.dias ?? 9999) - (b.dias ?? 9999) : ordem);
-      return `<li class="lj-col lj-${k}"><h3>${NOMES[k]} <span>${ls.length}</span></h3><small class="lj-soma">${brl(ls.reduce((s, c) => s + c.t12, 0))} em 12 meses</small>${ls.map(c => `<button class="lj-mini" data-loja="${esc(c.id)}"><b>${esc(c.nome)}</b><small>${[esc(c.cidade || ''), grupoDe(c) ? '🏢 ' + esc(grupoDe(c)) : ''].filter(Boolean).join(' · ')}</small><small>${dtxt(c)}${c.t12 ? ' · ' + brl(c.t12) : ''}</small></button>`).join('') || '<p class="meta">—</p>'}</li>`; }).join('');
+      return `<li class="lj-col lj-${k}"><h3><span class="lj-ponto"></span>${NOMES[k]} · ${ls.length}<span class="lj-soma">${k === 'nunca' ? '' : brl(ls.reduce((s, c) => s + c.t12, 0))}</span></h3>${ls.map(c => `<button class="lj-mini" data-loja="${esc(c.id)}"><b>${esc(c.nome)}</b><small>${esc(c.cidade || '')}</small>${grupoDe(c) ? `<span class="lj-rede">🏢 ${esc(grupoDe(c))}</span>` : ''}<span class="lj-fim"><small>${c.pedidos ? dtxt(c) : 'sem pedidos'}</small><b>${c.t12 ? brl(c.t12) : ''}</b></span></button>`).join('') || '<p class="meta">—</p>'}</li>`; }).join('');
     return;
   }
   let ls = base.filter(c => (filtro === 'todas' || sit(c) === filtro) && (!diasLojas || (c.pedidos && c.dias >= Number(diasLojas))));
@@ -2598,36 +2671,30 @@ $('#lojas-filtros').addEventListener('change', e => {
 });
 $('#lojas-busca').addEventListener('input', renderLojas);
 var modoLojas = LS.get('modoLojas', 'quadro');
-function marcarModoLojas(){ const b = $('#lj-modo'); b.textContent = modoLojas === 'quadro' ? 'Lista' : 'Quadro'; b.setAttribute('aria-pressed', modoLojas === 'quadro'); }
-$('#lj-modo').addEventListener('click', () => { modoLojas = modoLojas === 'quadro' ? 'lista' : 'quadro'; LS.set('modoLojas', modoLojas); marcarModoLojas(); renderLojas(); });
+function marcarModoLojas(){ document.querySelectorAll('#lj-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.modo === modoLojas)); }
+$('#lj-seg').addEventListener('click', e => { const b = e.target.closest('[data-modo]'); if(!b) return; modoLojas = b.dataset.modo; LS.set('modoLojas', modoLojas); marcarModoLojas(); renderLojas(); });
 $('#lj-nova-top').addEventListener('click', () => abrirNovaLoja(null));
 marcarModoLojas();
+const brlK = v => v >= 10000 ? 'R$ ' + Math.round(v / 1000) + ' mil' : brl(v);
 function abrirLoja(id){
   const c = cli(id); if(!c) return;
   const r = resumoLojas[id] || {}, tel = soDigitos(c.telefone);
   const zap = tel ? (tel.length <= 11 ? '55' + tel : tel) : '';
   const recentes = listaPedidos().filter(p => p.cliente === id).slice(0, 5);
   abrirSheet(`
-    <div class="sheet-head"><h2>${esc(c.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="sheet-head"><div><h2>${esc(c.nome)}</h2><small class="meta">${[c.cidade, c.cnpj && 'CNPJ ' + c.cnpj].filter(Boolean).map(esc).join(' · ')}</small></div><button class="x" data-close aria-label="Fechar">×</button></div>
     ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
-    ${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} · ${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}
-    ${(() => { // Ficha do cadastro: só os campos preenchidos.
-      const f = [['Razão social', c.razao], ['CNPJ/CPF', c.cnpj], ['Insc. estadual', c.ie], ['Endereço', c.endereco], ['Cidade', c.cidade],
-        ['Contato', c.contato], ['Telefone', c.telefone], ['E-mail compra', c.emailCompra], ['E-mail financeiro', c.emailFinanceiro],
-        ['E-mail notas', c.emailNotas], ['Pagamento', c.pagamento], ['Prazo', c.prazo], ['Frete', c.frete], ['Observação', c.obs]].filter(x => x[1]);
-      return f.length ? `<dl class="ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Cadastro sem dados. Toque em <b>Editar cadastro</b> para completar.</p>';
-    })()}
-    ${r.pedidos ? `<div class="lj-kpis"><div><small>12 meses</small><b>${brl(total12(id))}</b></div><div><small>Pedidos</small><b>${r.pedidos}</b></div><div><small>Ticket médio</small><b>${brl(r.total / r.pedidos)}</b></div></div>` : '<p class="meta">Ainda sem pedidos.</p>'}
-    <div class="btns">
-      <button class="btn primary" id="lj-novo">Novo pedido</button>
+    <div class="lj-etqs">${r.pedidos ? (() => { const rt = ritmoDaLoja(id); return rt ? `<span class="badge ${RITMO[rt.st][1]}">${RITMO[rt.st][0]}</span>` : ''; })() : '<span class="badge env">Nunca comprou</span>'}${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} · ${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}</div>
+    ${r.pedidos ? `<div class="lj-kpis"><div><b>${brlK(total12(id))}</b><small>12 meses</small></div><div><b>${r.pedidos}</b><small>Pedidos</small></div><div><b>${brl(r.total / r.pedidos)}</b><small>Ticket</small></div></div>` : '<p class="meta">Ainda sem pedidos.</p>'}
+    ${(() => { const f = [['Contato', [c.contato, c.telefone].filter(Boolean).join(' · ')], ['E-mail', c.emailCompra], ['Pagamento', c.pagamento]].filter(x => x[1]);
+      return f.length ? `<h3 class="sub-h">Contato</h3><dl class="ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Sem contato cadastrado. Toque em <b>Editar cadastro</b>.</p>'; })()}
+    <div class="lj-acoes"><button class="btn primary" id="lj-novo" style="grid-column:1/-1">Novo pedido</button>
       <span class="lig-wrap"><button class="btn sec" id="lj-ligar" type="button"${tel ? '' : ' disabled title="Cadastre o telefone em Editar cadastro"'}>Ligar ▾</button>
         <div class="lig-menu" id="lig-menu" hidden><a href="tel:${tel}">Ligar agora</a><a href="https://wa.me/${zap}" target="_blank" rel="noopener">Ligar pelo WhatsApp</a><button type="button" id="lig-copiar">Copiar número</button></div></span>
-      ${ehAdmin() || c.cadastradoPor === sessao?.usuario ? '<button class="btn sec" id="lj-editar">Editar cadastro</button>' : ''}
-      ${ehAdmin() ? '<button class="btn sec" id="lj-historico">Ver histórico completo</button>' : ''}
-      <button class="btn sec" id="lj-filial">+ Adicionar filial (outro CNPJ)</button>
-      ${ehAdmin() ? `<button class="btn ghost" id="lj-mudar-rede">${grupoDe(c) ? 'Mudar / tirar da rede' : 'Colocar numa rede'}</button>` : ''}
-      ${ehAdmin() && c.situacao === AGUARDANDO ? '<button class="btn aprovar" id="lj-aprovar">Aprovar cadastro</button><button class="btn perigo" id="lj-recusar">Recusar cadastro</button>' : ''}
-    </div>`);
+      ${ehAdmin() || c.cadastradoPor === sessao?.usuario ? '<button class="btn sec" id="lj-editar">Editar cadastro</button>' : '<span></span>'}</div>
+    <div class="lj-links">${grupoDe(c) ? '<button class="mini" id="lj-filial">+ Nova filial da rede</button>' : '<button class="mini" id="lj-filial">+ Adicionar filial (outro CNPJ)</button>'}
+      ${ehAdmin() ? `<button class="mini" id="lj-historico">Ver histórico</button><button class="mini" id="lj-mudar-rede">${grupoDe(c) ? 'Mudar / tirar da rede' : 'Colocar numa rede'}</button>` : ''}</div>
+    ${ehAdmin() && c.situacao === AGUARDANDO ? '<div class="btns"><button class="btn aprovar" id="lj-aprovar">Aprovar cadastro</button><button class="btn perigo" id="lj-recusar">Recusar cadastro</button></div>' : ''}`);
   $('#lj-novo').addEventListener('click', () => { $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = id; fecharSheet(); irPara('novo'); aoTrocarCliente(); });
   $('#lj-rede-ver')?.addEventListener('click', () => abrirRede(grupoDe(c)));
   // Filial nova: se a loja ainda não tem rede, a rede ganha o nome da loja (dá para mudar no formulário).
@@ -2647,6 +2714,8 @@ function abrirLoja(id){
   document.querySelectorAll('#sheet-body [data-id]').forEach(b => b.addEventListener('click', () => abrirPedido(b.dataset.id)));
 }
 $('#lista-lojas').addEventListener('click', e => {
+  const ap = e.target.closest('[data-lj-ap]'); if(ap) return mudarSituacaoLoja(ap.dataset.ljAp, 'Ativo');
+  const rc = e.target.closest('[data-lj-rc]'); if(rc){ const m = prompt('Motivo da recusa (opcional):'); if(m !== null) mudarSituacaoLoja(rc.dataset.ljRc, RECUSADO, m); return; }
   const b = e.target.closest('[data-loja]'); if(b) return abrirLoja(b.dataset.loja);
   const r = e.target.closest('[data-rede]'); if(r) abrirRede(r.dataset.rede);
 });
@@ -2696,8 +2765,14 @@ function texto(p){
     ([rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).length ? '\n' + [rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join(' · ') : '');
 }
 // Compartilhar o pedido (nunca o orçamento): Ver PDF, Baixar ou enviar PDF, Excel do pedido e e-mail ao cliente.
-function acoesHTML(p){
+function acoesHTML(p, solto){
   if(p.tipo === 'orcamento' || situacaoDe(p) === ORCAMENTO) return '';   // orçamento nunca é enviado ao cliente
+  // Na tela "Pedido fechado" os botões vêm um a um (sem menu).
+  if(solto) return `<div class="btns">
+    <button class="btn sec" id="btn-pdf-abrir" type="button">Ver PDF</button>
+    <button class="btn sec" id="btn-pdf" type="button">Baixar ou enviar PDF</button>
+    <button class="btn sec" id="btn-excel-ped" type="button">Excel do pedido</button>
+    <button class="btn sec" id="btn-email-ped" type="button">Enviar por e-mail ao cliente</button></div>`;
   return `<div class="btns"><span class="lig-wrap"><button class="btn sec" id="btn-compartilhar" type="button">Compartilhar ▾</button>
     <div class="lig-menu" id="comp-menu" hidden>
     <button id="btn-pdf-abrir" type="button">Ver PDF</button>
@@ -2707,7 +2782,7 @@ function acoesHTML(p){
 }
 function ligarAcoes(p){
   if(!$('#btn-pdf-abrir')) return;
-  $('#btn-compartilhar').addEventListener('click', e => { e.stopPropagation(); $('#comp-menu').hidden = !$('#comp-menu').hidden; });
+  $('#btn-compartilhar')?.addEventListener('click', e => { e.stopPropagation(); $('#comp-menu').hidden = !$('#comp-menu').hidden; });
   $('#btn-pdf-abrir').addEventListener('click', () => abrirPdf(p));
   $('#btn-pdf').addEventListener('click', () => baixarPdf(p));
   $('#btn-excel-ped').addEventListener('click', () => baixarExcelPedido(p));
@@ -3003,19 +3078,18 @@ function matrizMeses(lista, filtro, nMeses){
   });
   return {meses, linhas: [...mapa.values()].sort((a, b) => b.q - a.q)};
 }
-function matrizHTML(mx, titulo){
+function matrizHTML(mx, titulo, cab){
   const tk = c => c && c.q ? brl(c.total / c.q) : '';
   const maxQ = Math.max(1, ...mx.linhas.flatMap(x => mx.meses.map(m => (x.por[m.chave] || {q: 0}).q)));
-  if(!mx.linhas.length) return `<section class="rel-sec"><h2>Histórico de compra por mês</h2><p class="empty">Nenhuma compra nestes meses com esses filtros.</p></section>`;
-  return `<section class="rel-sec"><h2>Histórico de compra por mês</h2>
-    <p class="meta">Últimos 4 meses: quantidade e ticket médio (valor pago ÷ unidades, já com desconto) de cada produto. Toque num produto para ver os detalhes.</p>
+  if(!mx.linhas.length) return `<section class="rel-sec">${cab || '<h2>Histórico de compra por mês</h2>'}<p class="empty">Nenhuma compra nestes meses com esses filtros.</p></section>`;
+  return `<section class="rel-sec">${cab || '<h2>Histórico de compra por mês</h2>'}
     <div class="tabela-wrap rel-scroll"><table class="tabela mat">
       <thead><tr><th rowspan="2">${esc(titulo)}</th>${mx.meses.map(m => `<th colspan="2" class="mes">${m.rot}</th>`).join('')}<th colspan="2" class="mes">Total</th></tr>
-        <tr>${[...mx.meses, 0].map(() => '<th class="n">quant</th><th class="n">ticket médio</th>').join('')}</tr></thead>
+        <tr>${[...mx.meses, 0].map(() => '<th class="n qh">quant</th><th class="n tkh">ticket (R$)</th>').join('')}</tr></thead>
       <tbody>${mx.linhas.map(x => `<tr data-q="${esc(norm(x.produto + ' ' + x.codigo))}" data-det="${esc(x.empresaId + '|' + x.codigo)}"><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)}</div></td>${mx.meses.map(m => {
         const c = x.por[m.chave]; return `<td class="n${c ? '' : ' zero'}"${c ? ` style="background:rgba(61,123,255,${(0.08 + 0.32 * c.q / maxQ).toFixed(2)})"` : ''}>${c ? c.q.toLocaleString('pt-BR') : '·'}</td><td class="n${c ? '' : ' zero'}"${c ? ' style="background:rgba(47,163,107,.10)"' : ''}>${c ? tk(c) : '·'}</td>`; }).join('')}
         <td class="n"><b>${x.q.toLocaleString('pt-BR')}</b></td><td class="n"><b>${tk(x)}</b></td></tr>`).join('')}</tbody>
-    </table></div><p class="meta">Ponto (·) = não comprou no mês. Quanto mais azul, mais unidades. Ticket médio = valor pago ÷ unidades, já com o desconto do pedido.</p></section>`;
+    </table></div><p class="meta">quant = unidades · ticket (R$) = valor pago ÷ unidades do produto no mês. Cor mais forte = mais unidades. (·) = não comprou. Clique num produto para ver os detalhes.</p></section>`;
 }
 // Detalhes do produto (toque na linha da tabela por mês): considera só os 4 meses da tela.
 function abrirDetalheProduto(chave){
@@ -3023,11 +3097,14 @@ function abrirDetalheProduto(chave){
   const pr = DATA?.produtos?.find(p => p.id === x.codigo), n = x.vendas.length;
   const un = x.q, med = un ? x.total / un : 0, precos = x.vendas.map(v => v.q ? v.v / v.q : 0).filter(Boolean);
   const descMed = n ? x.vendas.reduce((s, v) => s + v.desc, 0) / n : 0, meses = d.matriz.meses.filter(m => x.por[m.chave]).length;
-  abrirSheet(`<div class="sheet-head"><h2>${esc(x.produto)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+  const lateral = matchMedia('(min-width: 1200px)').matches && !$('#v-relatorios').hidden;
+  const html = `${lateral ? `<h3>Detalhes do produto</h3><b>${esc(x.produto)}</b>` : `<div class="sheet-head"><h2>${esc(x.produto)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>`}
     <p class="meta">${esc(x.empresa)} · últimos 4 meses</p>
     <dl class="ficha"><dt>Tabela hoje</dt><dd>${pr && pr.preco > 0 ? brl(pr.preco) : 'sem preço de tabela'}</dd><dt>Preço médio pago</dt><dd>${brl(med)}</dd>
       <dt>Menor / maior</dt><dd>${precos.length ? brl(Math.min(...precos)) + ' / ' + brl(Math.max(...precos)) : '—'}</dd><dt>Desconto médio</dt><dd>${descMed.toFixed(1).replace('.', ',')}%</dd>
-      <dt>Comprou em</dt><dd>${meses} de ${d.matriz.meses.length} meses</dd><dt>Total em unidades</dt><dd>${un.toLocaleString('pt-BR')}</dd><dt>Valor total</dt><dd>${brl(x.total)}</dd></dl>`);
+      <dt>Comprou em</dt><dd>${meses} de ${d.matriz.meses.length} meses</dd><dt>Total em unidades</dt><dd>${un.toLocaleString('pt-BR')}</dd><dt>Valor total</dt><dd>${brl(x.total)}</dd></dl>`;
+  if(lateral){ $('#rel-det').innerHTML = html; document.querySelectorAll('#rel-resultado tr.vd-sel').forEach(r => r.classList.remove('vd-sel')); document.querySelector(`#rel-resultado tr[data-det="${CSS.escape(chave)}"]`)?.classList.add('vd-sel'); }
+  else abrirSheet(html);
 }
 $('#rel-resultado').addEventListener('click', e => { const tr = e.target.closest('tr[data-det]'); if(tr) abrirDetalheProduto(tr.dataset.det); });
 
@@ -3154,7 +3231,10 @@ function renderRelatorio(){
       <tbody>${d.porProduto.map(x => `<tr ${dq(x.produto + ' ' + x.codigo)}><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)} · ${x.pedidos} pedido${x.pedidos > 1 ? 's' : ''}</div></td><td data-l="Quantidade" class="n">${nBR(x.q)}</td><td data-l="Ticket médio" class="n">${brl(ticket(x))}</td><td data-l="Valor total" class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
     </table></div></section>`;
 
-  const fEmpR = $('#rel-emp').value, mesHTML = matrizHTML(d.matriz, fEmpR ? (emp(fEmpR)?.nome || fEmpR) : 'Produto');
+  const fEmpR = $('#rel-emp').value, nomeMarca = fEmpR ? (emp(fEmpR)?.nome || fEmpR) : 'Todas as marcas';
+  const rtC = c ? d.ritmo.find(s => s.id === fCli) : null;
+  const cabMat = `<div class="rel-tit"><h2>${esc(c ? c.nome : nomeMarca)}</h2>${rtC ? `<span class="badge ${RITMO[rtC.st][1]}">${RITMO[rtC.st][0]}</span>` : ''}</div><p class="meta">${esc(c ? nomeMarca : 'todas as lojas')} · últimos 4 meses</p>`;
+  const mesHTML = matrizHTML(d.matriz, 'Produto', cabMat);
 
   const lojasHTML = !d.linhas.length ? vazio : `<section class="rel-sec"><h2>Por loja</h2><p class="meta">Toque numa loja para abrir a ficha.</p><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
       <thead><tr><th>Loja</th><th class="n">Pedidos</th><th class="n">Itens</th><th class="n">Valor</th></tr></thead>
@@ -3206,9 +3286,10 @@ function renderRelatorio(){
       <div class="rel-cards"><div class="rel-card"><small>Vendas (aprovados)</small><strong>${brl(d.totais.valor)}</strong></div><div class="rel-card"><small>Pedidos</small><strong>${d.totais.pedidos}</strong></div>
         ${admin ? `<div class="rel-card"><small>Comissão a receber da marca</small><strong>${brl(d.totais.comissaoMarcas)}</strong></div>` : ''}
         ${admin && d.comissao.vendedores.some(x => x.pct) ? `<div class="rel-card"><small>Comissão dos vendedores</small><strong>${brl(d.totais.comissaoVendedores)}</strong></div>` : ''}</div>
-      ${bloco('Caminho dos pedidos', etapa.map(e => e.n).join(' → '), `<table class="tabela"><tbody>${etapa.map(e => `<tr><td>${e.t}</td><td class="n">${e.n}</td><td class="n">${brl(e.v)}</td></tr>`).join('')}</tbody></table>
+      <p class="meta rel-marca-ajuda">Clique no título para abrir ou fechar. Fechado, cada bloco já mostra o essencial.</p>
+      ${bloco('Caminho dos pedidos e faturamento', `<span class="pill a">${etapa[0].n} em aprovação</span><span class="pill b">${etapa[1].n} aprovados</span><span class="pill c">${etapa[2].n} enviados</span><span class="pill d">${etapa[3].n} faturados</span><span class="barra-fat"><i style="width:${vEnv ? Math.min(100, Math.round(vFat / vEnv * 100)) : 0}%"></i></span> <b>${brl(Math.max(0, vEnv - vFat))} a faturar</b>`, `<table class="tabela"><tbody>${etapa.map(e => `<tr><td>${e.t}</td><td class="n">${e.n}</td><td class="n">${brl(e.v)}</td></tr>`).join('')}</tbody></table>
         <p class="meta">Faturamento da marca: enviado <b>${brl(vEnv)}</b> · faturado <b>${brl(vFat)}</b> · a faturar <b>${brl(Math.max(0, vEnv - vFat))}</b></p>`)}
-      ${bloco('Lojas que mais compram', d.porLoja.slice(0, 3).map(x => esc(x.loja)).join(', '), `<table class="tabela"><tbody>${d.porLoja.slice(0, 10).map(x => `<tr ${x.id ? `data-ritmo-cli="${esc(x.id)}"` : ''}><td>${esc(x.loja)}</td><td class="n">${brl(x.total)}</td><td class="n">${Math.round(x.total / totV * 100)}%</td></tr>`).join('')}</tbody></table>`)}
+      ${bloco('Lojas que mais compram', d.porLoja.slice(0, 3).map(x => esc(x.loja)).join(', '), `<p class="meta">Quanto cada loja comprou no período e quanto isso representa do total. Clique numa loja para abrir a ficha.</p><table class="tabela"><tbody>${d.porLoja.slice(0, 10).map(x => `<tr ${x.id ? `data-ritmo-cli="${esc(x.id)}"` : ''}><td>${esc(x.loja)}</td><td><span class="barra-loja" style="width:${Math.max(6, Math.round(x.total / totV * 140))}px"></span></td><td class="n">${brl(x.total)} · ${Math.round(x.total / totV * 100)}%</td></tr>`).join('')}</tbody></table>`)}
       ${aten.length ? bloco('Lojas que pedem atenção', aten.length + ' loja' + (aten.length > 1 ? 's' : ''), `<table class="tabela"><tbody>${aten.map(s => `<tr data-ritmo-cli="${esc(s.id)}"><td>${esc(s.nome)}<div class="sub">${esc(s.cidade)}</div></td><td>${textoDias(s.dias)}</td><td>${textoRitmo(s)}</td></tr>`).join('')}</tbody></table>`) : ''}
     </section>`;
   })();
@@ -3448,7 +3529,17 @@ function cartaoVenda(p, aba){
     <span class="emp">${esc(p.pagamento || '')}${p.entrega ? ' · entrega ' + diaBR(p.entrega) : ''}</span>
     ${badge(p)}<span class="tot">${brl(p.total)}</span></div>${ac ? `<div class="vd-acoes">${ac}</div>` : ''}</li>`;
 }
+// O painel da direita acompanha o pedido escolhido: depois de atualizar a lista, reabre o mesmo pedido (com a situação nova) se ele ainda estiver nela.
+var vdPainelId = null, vdPainelAba = null;
 function renderPedidos(){
+  const mantem = vdPainelId && vdPainelAba === vdAba ? vdPainelId : null;
+  renderPedidosBase();
+  const pv = $('#vd-painel'); if(!pv) return;
+  const linha = mantem && [...document.querySelectorAll('#lista-pedidos [data-id]')].find(x => x.dataset.id === mantem);
+  if(linha && painelVendas()){ (linha.closest('tr') || linha).classList.add('vd-sel'); if(vdAba === 'todos') abrirResumoVenda(mantem); else abrirPedido(mantem); }
+  else { vdPainelId = null; pv.innerHTML = '<p class="meta">Clique num pedido da lista para ver os detalhes aqui.</p>'; }
+}
+function renderPedidosBase(){
   const todas = todasVendas();
   $('#pedidos-topo').hidden = false;
   $('#btn-atualizar-pedidos').hidden = DEMO;
@@ -3500,7 +3591,10 @@ $('#lista-pedidos').addEventListener('click', e => {
   const a = e.target.closest('[data-ac]');
   if(a){ e.stopPropagation(); acaoVenda(a.dataset.ac, a.dataset.id); return; }
   const o = e.target.closest('[data-orc]'); if(o){ abrirOrcamento(o.dataset.orc); return; }
-  const d = e.target.closest('[data-id]'); if(d) abrirPedido(d.dataset.id);
+  const d = e.target.closest('[data-id]'); if(!d) return;
+  document.querySelectorAll('#lista-pedidos .vd-sel').forEach(x => x.classList.remove('vd-sel')); (d.closest('tr') || d).classList.add('vd-sel');
+  vdPainelId = d.dataset.id; vdPainelAba = vdAba;
+  if(vdAba === 'todos' && painelVendas()) abrirResumoVenda(d.dataset.id); else abrirPedido(d.dataset.id);
 });
 $('#lista-pedidos').addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.matches('.vd-card')){ e.preventDefault(); e.target.click(); } });
 async function acaoVenda(ac, id){
@@ -3581,6 +3675,23 @@ $('#vd-exportar').addEventListener('click', e => { e.stopPropagation(); $('#vd-m
 document.addEventListener('click', () => { const m = $('#vd-menu'); if(m) m.hidden = true; });
 $('#vd-menu').addEventListener('click', e => { const b = e.target.closest('[data-exp]'); if(b) exportarListaVendas(b.dataset.exp); });
 
+// Vendas no computador: o pedido aparece no painel à direita da lista (muda ao clicar na linha); no resto, numa janela.
+const painelVendas = () => !$('#v-pedidos').hidden && matchMedia('(min-width: 1000px)').matches;
+function noPainelOuSheet(html){
+  if(painelVendas()){ fecharSheet(); $('#vd-painel').innerHTML = html; return; }
+  abrirSheet(html);
+}
+// Aba Todos: só informação (sem botões): cliente, valor, situação, barra colorida, pagamento, entrega e NF.
+function abrirResumoVenda(id){
+  const p = listaPedidos().find(x => x.id === id); if(!p) return;
+  const s = situacaoDe(p);
+  noPainelOuSheet(`<div class="sheet-head"><h2>Pedido ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', ' + esc(p.clienteCidade) : ''}<br>${esc(p.empresaNome)} · ${dataBR(p.data)}</p>
+    <span class="badge ${CLASSE[s] === 'aprov' ? 'ok' : 'espera'}">${esc(rotulo(s))}</span>
+    ${barraAndamento(p)}
+    <dl class="ficha"><dt>Valor</dt><dd><b>${brl(p.total)}</b></dd><dt>Pagamento</dt><dd>${esc(p.pagamento || '—')}</dd>
+      ${p.entrega ? `<dt>Prazo de entrega</dt><dd>${esc(diaBR(p.entrega))}</dd>` : ''}<dt>Nota fiscal</dt><dd>${p.nf ? esc(p.nf) : 'Nenhuma NF registrada'}</dd></dl>`);
+}
 function abrirPedido(id){
   // (pedido antigo que só veio no relatório também abre)
   const p = listaPedidos().find(x => x.id === id) || (REL?.pedidos || []).find(x => x.id === id); if(!p) return;
@@ -3607,7 +3718,7 @@ function abrirPedido(id){
     ${s === FATURADO || s === ENTREGUE ? `<button class="btn ghost" id="ad-nf">${p.nf ? 'Corrigir dados da NF' : '+ Adicionar NF (opcional)'}</button>` : ''}
     ${s === APROVADO && !temEmail ? `<p class="meta" style="margin:0">A marca ${esc(p.empresaNome)} está sem e-mail na aba Empresas: envie o PDF pelo WhatsApp e marque como enviado.</p>` : ''}
   </div>`;
-  abrirSheet(`
+  noPainelOuSheet(`
     <div class="sheet-head"><h2>Pedido ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${caixa}
     ${barraAndamento(p)}
@@ -3707,7 +3818,9 @@ function abrirFaturamento(p, soNf){
           <span>Enviar o arquivo da NF por e-mail para <b>${esc(c.emailNotas)}</b></span></label>` : '<p class="dica-preco">Cadastre o "E-mail para envio de notas" do cliente para poder mandar a NF por e-mail.</p>'}
       </details>
       <button class="btn primary" id="ft-salvar" type="submit">${soNf || jaFat ? 'Salvar NF' : 'Marcar como faturado'}</button>
+      <button class="btn sec" id="ft-voltar" type="button">Voltar</button>
     </form>`);
+  $('#sheet').classList.add('modal'); $('#ft-voltar').addEventListener('click', () => abrirPedido(p.id));
   $('#ft-arq')?.addEventListener('change', () => { if($('#ft-enviar') && $('#ft-arq').files[0]) $('#ft-enviar').checked = true; });
   // Chave de acesso (44 números): o número da NF está dentro dela (posições 26 a 34).
   $('#ft-chave').addEventListener('input', () => {
@@ -3772,14 +3885,13 @@ async function mudarSituacao(p, nova, motivo, extra){
 /* ---------- Catálogo ---------- */
 function renderCatalogo(){
   const em = LS.get('catalogoEm', null);
-  $('#cat-info').textContent = DEMO ? 'Produtos de exemplo. Quando a planilha estiver ligada, o catálogo vem dela.'
-    : em ? `Catálogo da planilha, atualizado em ${dataBR(em)}. Mude produtos e preços na planilha e toque em Atualizar.`
-         : 'O catálogo ainda não foi carregado da planilha.';
+  const nomeM = empAtiva() ? (emp(empAtiva())?.nome || '') : 'Todas as marcas';
+  $('#cat-info').textContent = DEMO ? 'Produtos de exemplo' : em ? `${nomeM} · atualizado em ${dataBR(em)}` : 'o catálogo ainda não foi carregado da planilha';
   $('#btn-atualizar').hidden = DEMO;
   $('#cat-planilha-wrap').hidden = DEMO || !ehAdmin();   // só o administrador mexe em preços e produtos por planilha
   const baseP = (DATA?.empresas || []).filter(e => !empAtiva() || e.id === empAtiva()).flatMap(e => prodsDe(e.id));
   const cardsC = [['todos','Produtos', baseP.length], ['semfoto','Sem foto', baseP.filter(p => !p.foto).length], ['semprec','Sem preço', baseP.filter(p => !(p.preco > 0) && !p.livre).length], ['livre','Preço livre', baseP.filter(p => p.livre).length]];
-  $('#cat-cards').innerHTML = cardsC.map(([k,t,n]) => `<button class="rel-card" data-cf="${k}" aria-pressed="${catFiltro === k}"><small>${t}</small><strong>${n}</strong></button>`).join('');
+  $('#cat-cards').innerHTML = cardsC.map(([k,t,n]) => `<button class="rel-card cf-${k}" data-cf="${k}" aria-pressed="${catFiltro === k}"><small>${t}</small><strong>${n}</strong></button>`).join('');
   const qC = norm($('#cat-busca').value || '');
   const passa = p => (!qC || norm(p.nome + ' ' + p.id).includes(qC)) && (catFiltro === 'todos' || (catFiltro === 'semfoto' && !p.foto) || (catFiltro === 'semprec' && !(p.preco > 0) && !p.livre) || (catFiltro === 'livre' && p.livre));
   // Categorias numa lista à esquerda (com a quantidade); tabela de produtos ao centro.
@@ -3788,9 +3900,9 @@ function renderCatalogo(){
   if(catSel && !(catSel in cc)) catSel = '__todas';
   const sel = catSel || '__todas', lista = sel === '__todas' ? ps : ps.filter(p => catDe(p) === sel), MAX = 300;
   const optCat = [['__todas', 'Todas', ps.length], ...cats.map(c => [c, c || 'Sem categoria', cc[c]])];
-  $('#catalogo').innerHTML = `<div class="cat-lay"><nav class="cat-lista" aria-label="Categorias">${optCat.map(([k, t, n]) => `<button type="button" data-cat="${esc(k)}" aria-pressed="${k === sel}">${esc(t)} <small>${n}</small></button>`).join('')}</nav>
+  $('#catalogo').innerHTML = `<div class="cat-lay"><nav class="cat-lista" aria-label="Categorias"><small class="cat-tit">CATEGORIAS</small>${optCat.map(([k, t, n]) => `<button type="button" data-cat="${esc(k)}" aria-pressed="${k === sel}">${esc(t)} <small>${n}</small></button>`).join('')}</nav>
     <div class="cat-tab"><select id="cat-sel-m" class="cat-sel-m" aria-label="Categoria">${optCat.map(([k, t, n]) => `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>${esc(t)} (${n})</option>`).join('')}</select>
-    ${lista.length ? `<table class="tabela"><thead><tr><th>Produto</th><th>Código</th><th>Un.</th><th class="n">Tabela</th></tr></thead><tbody>${lista.slice(0, MAX).map(p => `<tr><td><div class="cat-prod">${fotoHTML(p)}<div><b>${esc(p.nome)}</b><div class="sub">${esc(catDe(p) || 'Sem categoria')}</div></div></div></td><td>${esc(String(p.id).replace(/^[A-Z]{3}-/, ''))}</td><td>${esc(p.un || '')}</td><td class="n">${p.preco > 0 ? brl(p.preco) : p.livre ? '<span class="badge env">preço livre</span>' : '<span class="badge espera">sem preço</span>'}</td></tr>`).join('')}</tbody></table>${lista.length > MAX ? `<p class="meta">Mostrando ${MAX} de ${lista.length}. Use a busca para achar o resto.</p>` : ''}` : '<p class="empty">Nenhum produto com esse filtro.</p>'}</div></div>`;
+    ${lista.length ? `<table class="tabela"><thead><tr><th>Produto</th><th>Código</th><th>Un.</th><th class="n">Tabela</th></tr></thead><tbody>${lista.slice(0, MAX).map(p => `<tr><td><div class="cat-prod">${fotoHTML(p)}<div><b>${esc(p.nome)}</b><div class="sub">${esc(catDe(p) || 'Sem categoria')}${p.foto ? '' : ' · sem foto'}</div></div></div></td><td>${esc(String(p.id))}</td><td>${esc(p.un || '')}</td><td class="n">${p.preco > 0 ? brl(p.preco) : p.livre ? '<span class="badge env">preço livre</span>' : '<span class="badge espera">sem preço</span>'}</td></tr>`).join('')}</tbody></table>${lista.length > MAX ? `<p class="meta">Mostrando ${MAX} de ${lista.length}. Use a busca para achar o resto.</p>` : ''}` : '<p class="empty">Nenhum produto com esse filtro.</p>'}</div></div>`;
 }
 var catSel = '__todas';
 $('#catalogo').addEventListener('click', e => { const b = e.target.closest('.cat-lista [data-cat]'); if(b){ catSel = b.dataset.cat; renderCatalogo(); } });
@@ -3998,7 +4110,7 @@ document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'visible' && Date.now() - pedidosEm > 30000) carregarPedidos(false);
 });
 function abrirSheet(html){
-  $('#sheet').classList.remove('larga');
+  $('#sheet').classList.remove('larga', 'modal');
   const s = $('#sheet'); $('#sheet-body').innerHTML = html; s.hidden = false;
   requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add('open')));
 }
