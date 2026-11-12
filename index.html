@@ -17,7 +17,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
 <script>/* Tema escolhido na conta (claro/escuro); sem escolha, segue o celular. */
-try{ const t = JSON.parse(localStorage.getItem('pa-tema') || 'null'); if(t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; }catch(e){}</script>
+try{ const t = JSON.parse(localStorage.getItem('pa-tema') || 'null'); if(t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; }catch(e){}
+/* Estilo visual escolhido na conta: "suave" (padrão) ou "classico" (o visual de sempre). */
+try{ document.documentElement.dataset.estilo = JSON.parse(localStorage.getItem('pa-estilo') || 'null') === 'classico' ? 'classico' : 'suave'; }catch(e){ document.documentElement.dataset.estilo = 'suave'; }</script>
 <style>
 :root{
   --paper:#F2F5FB; --surface:#FFFFFF; --ink:#0B1630; --muted:#56627D; --line:#D7DFEE;
@@ -558,9 +560,24 @@ body{font-variant-numeric:tabular-nums}
   #catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:24px}
   #catalogo .cat-group{margin:0}
   /* Computador: tudo numa faixa só (os filtros de marca, vendedor e rede ficam visíveis) */
-  .rel-mes-nav{flex:0 0 300px}
+  /* Relatórios: filtros sempre visíveis numa coluna à esquerda; resultado à direita */
+  #v-relatorios:not([hidden]){display:grid;grid-template-columns:240px minmax(0,1fr);gap:0 20px;align-items:start}
+  #v-relatorios>h1{grid-column:1/-1}
+  #v-relatorios .rel-barra{position:sticky;top:12px;flex-direction:column;align-items:stretch;margin-bottom:0}
+  #v-relatorios .rel-barra .field{flex:none}
+  #v-relatorios .rel-acoes{order:-1;margin:0;flex:none;justify-content:flex-start}
+  #v-relatorios .rel-mais-box,#v-relatorios .rel-mais-box.aberto{display:flex;flex-direction:column;gap:8px;flex:none}
+  #v-relatorios .rel-barra{min-width:0;width:240px}
+  #v-relatorios .rel-mes-nav{flex:none;width:100%;display:flex;gap:4px}
+  #v-relatorios .rel-mes-nav input{min-width:0;flex:1}
+  #v-relatorios #rel-resultado{min-width:0}
+  #v-relatorios #rel-emp{display:none}
+  #v-relatorios .rel-mais-box .field:first-child{display:none}
+  .rel-mes-nav{flex:0 0 auto}
   .rel-barra .field{flex:1 1 150px}
   .rel-acoes{flex:0 0 auto;margin-left:auto}
+  .rel-rec{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0}
+  .rel-rec summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px}
   #rel-mais{display:none}
   .rel-mais-box,.rel-mais-box.aberto{display:contents}
   .rel-cards{grid-template-columns:repeat(4,1fr)}
@@ -614,6 +631,125 @@ body{font-variant-numeric:tabular-nums}
 .rel-det>summary{cursor:pointer;font-weight:700;padding:14px 0;color:var(--ipe)}
 .rel-det[open]>summary{border-bottom:1px solid var(--line);margin-bottom:12px}
 .rel-scroll{max-height:460px;overflow:auto}
+
+/* ===== Estilos visuais (Sua conta > Estilo) =====
+   "Clássico" = o visual de sempre (nenhuma regra extra). "Suave" (padrão) = botões claros com borda fina, cartões planos,
+   seleção em azul suave e cabeçalhos de tabela em azul claro. Só muda cor, borda, tamanho e peso: nada de estrutura. */
+:root{--acc-text:#1F5FBF}
+:root[data-theme="dark"]{--acc-text:#7FAEFF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--acc-text:#7FAEFF}}
+html[data-estilo="suave"]{--suave-tint:color-mix(in srgb,var(--acc-text) 14%,transparent);--suave-bd:color-mix(in srgb,var(--acc-text) 45%,transparent);--suave-tint2:color-mix(in srgb,var(--acc-text) 7%,transparent)}
+html[data-estilo="suave"] .chip{border-width:1px;font-weight:500}
+html[data-estilo="suave"] .chip[aria-pressed="true"]{background:var(--suave-tint);color:var(--acc-text);border-color:var(--suave-bd)}
+html[data-estilo="suave"] .mini{border-width:1px;font-weight:500}
+html[data-estilo="suave"] .btn{border-radius:10px}
+html[data-estilo="suave"] .btn.sec{border-width:1px}
+html[data-estilo="suave"] .order,html[data-estilo="suave"] .rel-card,html[data-estilo="suave"] .cat-sec,html[data-estilo="suave"] .pcard,html[data-estilo="suave"] .tabela-wrap{border-width:1px;border-radius:10px}
+html[data-estilo="suave"] .tabela th{background:var(--suave-tint);color:var(--acc-text)}
+html[data-estilo="suave"] .nav button[aria-current="page"]{color:var(--acc-text)}
+html[data-estilo="suave"] .badge{font-weight:600}
+html[data-estilo="suave"] .tema-op{border-width:1px}
+
+/* ===== Novo pedido (v31): três áreas no computador, escolha de cliente em cartões, botão Novo pedido ===== */
+#cli-escolha,#btn-repetir{display:none!important}
+.painel-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.painel-hd h2{margin:0}
+.painel-hd .mini{flex:none;white-space:nowrap}
+#v-novo.sem-cli .busca-campo,#v-novo.sem-cli #produtos,#v-novo.sem-cli #campo-cat{display:none!important}
+.cli-tela[hidden]{display:none}
+.ct-topo{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:6px 0 12px}
+.ct-topo .mini{flex:none}
+.ct-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;color:inherit}
+.ct-card:hover{border-color:var(--ipe)}
+.ct-card b{display:block;font-size:16px}
+.ct-card small{display:block;color:var(--muted);font-size:13px}
+.ct-rede{border:1.5px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--surface)}
+.ct-rede-h{display:flex;justify-content:space-between;gap:8px;padding:8px 14px;background:var(--leaf-soft);color:var(--acc-text);font-weight:700}
+.ct-rede-h small{font-weight:500}
+.ct-rede .ct-card{border:0;border-top:1px solid var(--line);border-radius:0;margin:0}
+.ct-vazio{color:var(--muted);padding:14px 4px}
+.np-rail .cat-chips .chip small{margin-left:6px}
+.toast .toast-btn{background:none;border:0;color:inherit;font-weight:700;text-decoration:underline;margin-left:12px;cursor:pointer;pointer-events:auto;padding:0}
+.foto-info{margin-top:12px}
+.foto-info .rw{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.foto-info .rw span:first-child{color:var(--muted)}
+@media (max-width: 999px){
+  #v-novo .np-rail{display:contents}
+  #v-novo.sem-cli .painel{display:none}   /* escolhendo a loja: o resumo ainda não faz sentido */
+}
+@media (min-width: 1000px){
+  main{max-width:1720px}
+  #v-novo:not([hidden]){grid-template-columns:240px minmax(0,1fr) 330px;gap:0 22px}
+  #v-novo .novo-col{display:contents}
+  #v-novo .novo-col>h1,#v-novo .novo-col>.passos,#v-novo .novo-col>.demo,#v-novo .novo-col>.field,#v-novo .novo-col>.cli-tela,#v-novo .novo-col>.prod-list{grid-column:2}
+  #v-novo .np-rail{grid-column:1;grid-row:1 / span 8;position:sticky;top:94px;align-self:start;max-height:calc(100vh - 118px);overflow:auto;
+    background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px}
+  #v-novo .np-rail .field{margin-bottom:12px}
+  #v-novo .np-rail .field:last-child{margin-bottom:0}
+  #v-novo .painel{grid-column:3;grid-row:1 / span 8;padding:16px;border-radius:14px}
+  #v-novo .prod-list{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+  #v-novo .prod-list .grupo{grid-column:1 / -1}
+  #v-novo .np-rail .cat-chips{flex-direction:column;flex-wrap:nowrap;overflow:visible;gap:2px}
+  #v-novo .np-rail .cat-chips .chip{border:0;border-radius:8px;text-align:left;display:flex;justify-content:space-between;align-items:center;background:none;padding:7px 10px;font-weight:500;font-size:14px;width:100%}
+  #v-novo .np-rail .cat-chips .chip:hover{background:var(--paper)}
+  #v-novo .np-rail .cat-chips .chip[aria-pressed="true"]{background:var(--leaf-soft);color:var(--acc-text);font-weight:700}
+  html[data-estilo="suave"] #v-novo .np-rail .cat-chips .chip[aria-pressed="true"]{background:var(--suave-tint)}
+  .ct-card:hover{border-color:var(--ipe)}
+}
+/* ===== Vendas (v31): abas por etapa, tabela no computador, ações na linha ===== */
+.vd-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.vd-hd h1{margin:0}
+.vd-btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.vd-menuwrap{position:relative;display:inline-block}
+#cat-cards .rel-card{cursor:pointer;text-align:left}
+#cat-cards .rel-card[aria-pressed="true"]{outline:2px solid var(--acc-text,#4d8dff)}
+.lj-nova-desk{display:none}
+@media(min-width:900px){.lj-nova-desk{display:inline-flex}}
+#lista-lojas.lj-quadro{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:start;list-style:none;padding:0}
+.lj-col{background:var(--card,rgba(255,255,255,.04));border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.lj-col h3{margin:0 0 4px;font-size:14px;display:flex;justify-content:space-between}
+.lj-mini{display:flex;flex-direction:column;text-align:left;gap:2px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:inherit;font:inherit;cursor:pointer}
+.lj-mini small{opacity:.7}
+.lj-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.lj-kpis>div{background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}
+.lj-kpis small{opacity:.7;font-size:12px}
+.vd-exp{position:relative}
+.vd-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:230px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.vd-menu[hidden]{display:none}
+.vd-menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 11px;border-radius:8px;font-weight:600;cursor:pointer}
+.vd-menu button:hover{background:var(--paper)}
+.mini.pri{background:var(--suave-tint,var(--leaf-soft));color:var(--acc-text);border-color:var(--suave-bd,var(--ipe))}
+html[data-estilo="classico"] .mini.pri{background:var(--ipe);color:#fff;border-color:var(--ipe)}
+#filtros{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+#filtros::-webkit-scrollbar{display:none}
+#filtros .chip{flex:none;white-space:nowrap}
+#filtros .chip small{margin-left:6px;color:var(--muted);font-weight:600}
+#filtros .chip[aria-pressed="true"] small{color:inherit}
+#filtros .chip.alerta small{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:0 6px}
+.vd-info{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--leaf-soft);color:var(--ink);border-radius:10px;padding:9px 13px;margin:0 0 12px;font-size:14.5px}
+.vd-info span{color:var(--muted)}
+.vd-tab .tabela td small{display:block;color:var(--muted);font-size:12px}
+.vd-tab .tabela tr.vd-lin{cursor:pointer}
+.vd-tab .tabela tr.vd-lin:hover td{background:var(--leaf-soft)}
+.vd-tab .tabela tr.cancelado td{opacity:.7}
+.vd-tab .tabela td.ac{text-align:right;white-space:nowrap}
+.vd-acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.vd-card+.vd-acoes{margin:-2px 0 10px}
+.vd-bt{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 11px;font-weight:600;font-size:13px;cursor:pointer}
+.vd-bt.pri{background:var(--ipe);color:#fff;border-color:var(--ipe)}
+.vd-bt.perigo{color:var(--bad);border-color:var(--bad)}
+html[data-estilo="suave"] .vd-bt{border-width:1px;font-weight:500}
+html[data-estilo="suave"] .vd-bt.pri{background:var(--suave-tint);color:var(--acc-text);border-color:var(--suave-bd)}
+.barra-and{margin:6px 0 12px}
+.barra-and .bs{display:flex;gap:3px}.barra-and .bs i{flex:1;height:7px;border-radius:4px;background:var(--line)}
+.barra-and .bs i.on{background:var(--ok)}.barra-and .bs i.cu{background:var(--ipe)}.barra-and .bs i.rj{background:var(--bad)}
+.barra-and .bl{display:flex;gap:3px;margin-top:3px;font-size:11px;color:var(--muted)}.barra-and .bl span{flex:1;text-align:center}
+.mais-nf{border:1px solid var(--line);border-radius:10px;padding:2px 12px 8px;margin:0 0 14px}
+.mais-nf summary{cursor:pointer;color:var(--acc-text);font-weight:700;padding:9px 0}
+@media (min-width: 1000px){ .view#v-pedidos .fab,#fab-novo.fab-vd{display:none} }
+html[data-estilo="suave"] .ct-card,html[data-estilo="suave"] .ct-rede,html[data-estilo="suave"] .cli-card{border-width:1px;border-radius:10px}
+html[data-estilo="suave"] .pc-add{background:var(--suave-tint);color:var(--acc-text);border:1px solid var(--suave-bd)}
+html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--ok,#1E8E4E) 14%,transparent);color:var(--ok,#1E8E4E);border-color:color-mix(in srgb,var(--ok,#1E8E4E) 45%,transparent)}
 </style>
 </head>
 <body>
@@ -635,28 +771,39 @@ body{font-variant-numeric:tabular-nums}
       <span class="lbl">Empresa</span>
       <div id="empresas" class="chips"></div>
     </div>
-    <div class="field">
-      <label class="lbl" for="cliente">Cliente (loja)</label>
-      <div class="cli-card" id="cli-card" hidden></div>
-      <div id="cli-escolha">
-        <input id="cli-busca" class="cli-busca" type="search" placeholder="Buscar cliente, rede ou CNPJ" aria-label="Buscar cliente" autocomplete="off">
-        <div class="cli-linha"><select id="cliente"></select><button class="mini" id="btn-nova-loja" type="button">+ Nova loja</button></div>
+    <!-- Coluna da esquerda no computador (cliente escolhido + categorias); no celular os itens seguem em sequência. -->
+    <div class="np-rail">
+      <div class="field np-cli">
+        <label class="lbl" for="cliente">Cliente (loja)</label>
+        <div class="cli-card" id="cli-card" hidden></div>
+        <div id="cli-escolha" hidden>
+          <input id="cli-busca" class="cli-busca" type="search" placeholder="Buscar cliente, rede ou CNPJ" aria-label="Buscar cliente" autocomplete="off">
+          <div class="cli-linha"><select id="cliente"></select><button class="mini" id="btn-nova-loja" type="button">+ Nova loja</button></div>
+        </div>
+        <p class="cond-grupo" id="cond-grupo" hidden></p>
+        <button class="mini repetir" id="btn-repetir" type="button" hidden></button>
       </div>
-      <p class="cond-grupo" id="cond-grupo" hidden></p>
-      <button class="mini repetir" id="btn-repetir" type="button" hidden></button>
+      <div class="field" id="campo-cat" hidden>
+        <div class="cat-chips" id="cat-chips" role="group" aria-label="Categoria"></div>
+        <select id="categoria" hidden aria-hidden="true" tabindex="-1"></select>
+      </div>
+    </div>
+    <!-- Passo 1: para quem é o pedido (lista de lojas em cartões). Some quando já há cliente escolhido. -->
+    <div class="cli-tela" id="cli-tela" hidden>
+      <div class="ct-topo"><div><h2>Para quem é o pedido?</h2><p class="meta" style="margin:2px 0 0">Passo 1 de 3 · Cliente → Produtos → Revisar</p></div>
+        <button class="mini" id="ct-nova" type="button">+ Nova loja</button></div>
+      <input id="ct-busca" class="cli-busca" type="search" placeholder="Buscar loja pelo nome, rede, cidade ou CNPJ" aria-label="Buscar loja" autocomplete="off">
+      <div class="chips" id="ct-filtros" role="group" aria-label="Filtros de loja"></div>
+      <div id="ct-lista"></div>
     </div>
     <div class="field busca-campo">
       <input id="busca" type="search" placeholder="Buscar produto pelo nome ou código" aria-label="Buscar produto">
-    </div>
-    <div class="field" id="campo-cat" hidden>
-      <div class="cat-chips" id="cat-chips" role="group" aria-label="Categoria"></div>
-      <select id="categoria" hidden aria-hidden="true" tabindex="-1"></select>
     </div>
     <ul id="produtos" class="prod-list"></ul>
    </div>
     <!-- Resumo (carrinho): embaixo do catálogo no celular; fixo ao lado no computador (1000px ou mais). -->
     <aside class="painel" id="painel" aria-label="Resumo do pedido">
-      <h2>Resumo do pedido <small class="painel-sub">(carrinho)</small></h2>
+      <div class="painel-hd"><h2>Resumo do pedido</h2><button class="mini" id="btn-novo-ped" type="button">+ Novo pedido</button></div>
       <p class="meta" id="painel-cli"></p>
       <div id="painel-itens"></div>
       <label class="field desc-campo"><span class="lbl" id="desc-lbl-p">Desconto (%)</span>
@@ -676,20 +823,28 @@ body{font-variant-numeric:tabular-nums}
   </section>
 
   <section id="v-pedidos" class="view" hidden>
-    <h1>Vendas</h1>
+    <div class="vd-hd">
+      <h1>Vendas</h1>
+      <div class="vd-btns">
+        <button class="mini" id="btn-atualizar-pedidos" type="button">↻ Atualizar</button>
+        <div class="vd-exp"><button class="mini" id="vd-exportar" type="button" aria-haspopup="true">Exportar ▾</button>
+          <div class="vd-menu" id="vd-menu" hidden><button type="button" data-exp="xlsx">Excel da lista</button><button type="button" data-exp="pdf">Ver ou imprimir PDF da lista</button></div></div>
+        <button class="mini pri" id="vd-novo" type="button">+ Novo pedido</button>
+      </div>
+    </div>
     <div class="lista-topo" id="pedidos-topo" hidden>
       <div class="chips" id="filtros"></div>
-      <button class="mini" id="btn-atualizar-pedidos" type="button">Atualizar</button>
     </div>
-    <div class="field"><input id="vendas-busca" type="search" placeholder="Buscar por cliente, CNPJ ou número do pedido" aria-label="Buscar venda"></div>
-    <ul id="lista-pedidos" class="orders"></ul>
+    <div class="vd-info" id="vd-info"></div>
+    <div class="field"><input id="vendas-busca" type="search" placeholder="Buscar por cliente, rede, CNPJ, nº do pedido ou nº da NF" aria-label="Buscar venda"></div>
+    <div id="lista-pedidos"></div>
   </section>
 
   <section id="v-lojas" class="view" hidden>
-    <h1>Lojas</h1>
+    <div class="vd-hd"><h1>Lojas</h1>
+      <div class="vd-btns"><button class="chip" id="lj-modo" type="button" aria-pressed="false">Quadro</button><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
     <div class="lista-topo">
       <div class="chips" id="lojas-filtros"></div>
-      <button class="mini" id="btn-nova-loja2" type="button">+ Nova loja</button>
     </div>
     <div class="field"><input id="lojas-busca" type="search" placeholder="Buscar loja pelo nome, rede, cidade ou CNPJ" aria-label="Buscar loja"></div>
     <p class="meta" id="lojas-info"></p>
@@ -717,8 +872,10 @@ body{font-variant-numeric:tabular-nums}
         <div class="rel-exp">
           <button class="btn sec" id="rel-exportar" type="button" aria-haspopup="true" aria-expanded="false" disabled>Exportar ▾</button>
           <div class="rel-exp-menu" id="rel-exp-menu" role="menu">
+            <button class="btn sec" id="rel-ver-pdf" type="button" disabled>Ver PDF</button>
             <button class="btn sec" id="rel-pdf" type="button" disabled>Baixar PDF</button>
             <button class="btn sec" id="rel-xlsx" type="button" disabled>Baixar Excel</button>
+            <button class="btn sec" id="rel-xlsx-ano" type="button" disabled>Excel anual (12 meses)</button>
           </div>
         </div>
       </div>
@@ -742,10 +899,13 @@ body{font-variant-numeric:tabular-nums}
   </section>
 
   <section id="v-catalogo" class="view" hidden>
-    <h1>Catálogo</h1>
+    <div class="vd-hd"><h1>Catálogo</h1>
+      <div class="vd-btns"><button class="chip" id="btn-atualizar" type="button">↻ Atualizar</button>
+        <span class="vd-menuwrap" id="cat-planilha-wrap" hidden><button class="chip" id="cat-planilha" type="button">Planilha ▾</button>
+          <div class="vd-menu" id="cat-menu" hidden><button type="button" id="btn-importar-precos">Atualizar preços por planilha</button><button type="button" id="btn-cad-produtos">Cadastrar produtos por planilha</button><button type="button" id="btn-modelo-produtos">Baixar modelo da planilha</button></div></span></div></div>
     <p class="note" id="cat-info"></p>
-    <button class="btn sec" id="btn-atualizar" style="margin-bottom:10px">Atualizar catálogo</button>
-    <button class="btn sec" id="btn-importar-precos" style="margin-bottom:20px" hidden>Atualizar preços por planilha</button>
+    <div class="rel-cards" id="cat-cards"></div>
+    <div class="field"><input id="cat-busca" type="search" placeholder="Buscar produto por nome ou código" aria-label="Buscar produto"></div>
     <div id="catalogo"></div>
   </section>
 </main>
@@ -854,7 +1014,7 @@ const ENVIADO = 'Enviado ao fornecedor', FATURADO = 'Faturado', ENTREGUE = 'Entr
 // Depois de aprovado, o pedido segue: enviado à marca -> faturado (NF) -> entregue. Tudo isso conta como "aprovado".
 const POS_APROVACAO = [APROVADO, ENVIADO, FATURADO, ENTREGUE];
 // Nomes que aparecem na tela (os nomes gravados na planilha continuam os mesmos).
-const ROTULO = {[AGUARDANDO]:'Em aprovação', [APROVADO]:'Aprovado', [ENVIADO]:'Enviado ao fornecedor', [FATURADO]:'Faturado · em entrega',
+const ROTULO = {[AGUARDANDO]:'Em aprovação', [APROVADO]:'Aprovado', [ENVIADO]:'Enviado à marca', [FATURADO]:'Faturado · a entregar',
   [ENTREGUE]:'Entregue', [RECUSADO]:'Recusado', [CANCELADO]:'Cancelado'};
 const rotulo = s => ROTULO[s] || s;
 // Regras de cada marca (vêm da aba Empresas).
@@ -1027,10 +1187,13 @@ async function entrar(ev){
     const outro = !sessao || sessao.usuario !== j.usuario;
     sessao = {token:j.token, usuario:j.usuario, nome:j.nome, perfil:j.perfil || 'vendedor', criador: !!j.criador}; LS.set('sessao', sessao);
     if(outro){ remotos = []; LS.set('pedidosServidor', null); }
-    $('#login-senha').value = ''; $('#pin-erro').textContent = ''; $('#pin').hidden = true;
+    // A tela de login continua na frente ("Entrando…") até a pergunta da empresa estar pronta:
+    // assim não aparece o Novo pedido vazio entre o login e a escolha da empresa.
+    $('#login-senha').value = ''; $('#pin-erro').textContent = 'Entrando…';
     mostrarUsuario(); toast('Olá, ' + j.nome);
     precisaEscolher = true;
     await carregarCatalogo(false);
+    $('#pin').hidden = true; $('#pin-erro').textContent = '';
     if(precisaEscolher) abrirEscolhaEmpresa(); await sincronizar(); await carregarPedidos(false); carregarLojas();
   }catch(e){
     $('#pin-erro').textContent = e instanceof TypeError || e instanceof SyntaxError
@@ -1053,12 +1216,23 @@ function abrirConta(){
     <span class="lbl">Aparência</span>
     <div class="tema-op" role="group" aria-label="Tema">${[['auto','Automático'],['light','☀ Claro'],['dark','☾ Escuro']].map(([v,t]) =>
       `<button type="button" data-tema="${v}" aria-pressed="${(LS.get('tema', 'auto')) === v}">${t}</button>`).join('')}</div>
-    <p class="dica-preco" style="margin:0 0 4px">Automático segue o modo claro/escuro do celular.</p>
+    <p class="dica-preco" style="margin:0 0 12px">Automático segue o modo claro/escuro do celular.</p>
+    <span class="lbl">Estilo</span>
+    <div class="tema-op" role="group" aria-label="Estilo">${[['suave','1 · Suave'],['classico','2 · Clássico']].map(([v,t]) =>
+      `<button type="button" data-estilo="${v}" aria-pressed="${(LS.get('estilo', 'suave')) === v}">${t}</button>`).join('')}</div>
+    <p class="dica-preco" style="margin:0 0 4px">Muda o visual de todas as telas. Suave é o padrão das telas novas; Clássico é o visual de antes.</p>
     ${pend ? `<p class="note">Você tem ${pend} pedido${pend > 1 ? 's' : ''} aguardando internet. Eles serão enviados quando você entrar de novo.</p>` : ''}
     <div class="btns"><button class="btn sec" id="btn-sair">Sair</button></div>`);
   $('#btn-config-criador')?.addEventListener('click', abrirConfigCriador);
   $('#btn-meus-dados').addEventListener('click', abrirMeusDados);
-  document.querySelector('#sheet-body .tema-op').addEventListener('click', e => {
+  // Estilo: troca na hora e vale para todas as telas deste aparelho.
+  document.querySelector('#sheet-body [aria-label="Estilo"]').addEventListener('click', e => {
+    const b = e.target.closest('[data-estilo]'); if(!b) return;
+    const s = b.dataset.estilo === 'classico' ? 'classico' : 'suave'; LS.set('estilo', s);
+    document.documentElement.dataset.estilo = s;
+    document.querySelectorAll('#sheet-body [data-estilo]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  });
+  document.querySelector('#sheet-body [aria-label="Tema"]').addEventListener('click', e => {
     const b = e.target.closest('[data-tema]'); if(!b) return;
     const t = b.dataset.tema; LS.set('tema', t);
     if(t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
@@ -1283,7 +1457,10 @@ function mostrarCondGrupo(){
     (g?.obs ? `<br><small>${esc(g.obs)}</small>` : '');
   // Cliente escolhido vira um cartão com "Trocar"; a busca e a lista voltam ao tocar em Trocar.
   const card = $('#cli-card'), mostrarCard = !!c && !st.trocandoCli;
-  card.hidden = !mostrarCard; $('#cli-escolha').hidden = mostrarCard;
+  card.hidden = !mostrarCard; $('#cli-escolha').hidden = true;
+  // Sem cliente (ou ao tocar em "Trocar"): a escolha de loja em cartões ocupa o centro da tela.
+  $('#v-novo').classList.toggle('sem-cli', !mostrarCard); $('#cli-tela').hidden = mostrarCard;
+  if(!mostrarCard) renderCliTela();
   if(mostrarCard) card.innerHTML = `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v7h14v-7M10 20v-4h4v4"/></svg></span>
     <span class="txt"><b>${esc(c.nome)}</b><small>${[c.cidade, c.cnpj].filter(Boolean).map(esc).join(' · ') || 'sem CNPJ'}${c.situacao === AGUARDANDO ? ' · aguardando aprovação' : ''}</small>
       ${c.prazo || c.frete ? `<small>${[c.prazo && 'Prazo ' + c.prazo, c.frete && 'Frete ' + c.frete].filter(Boolean).map(esc).join(' · ')}</small>` : ''}</span>
@@ -1292,7 +1469,104 @@ function mostrarCondGrupo(){
 $('#cli-card').addEventListener('click', e => {
   if(!e.target.closest('#btn-trocar-cli')) return;
   st.trocandoCli = true; mostrarCondGrupo();
-  $('#cli-busca').focus();
+  $('#ct-busca').focus();
+});
+
+/* ---------- Passo 1: escolha da loja em cartões ---------- */
+let ctFiltro = 'todas';
+const FILTROS_LOJA = [['todas','Todas'],['recentes','Compraram há pouco'],['paradas','Paradas ou esfriando'],['aguardando','Aguardando aprovação']];
+function renderCliTela(){
+  if(!DATA) return;
+  $('#ct-filtros').innerHTML = FILTROS_LOJA.map(([v,t]) => `<button class="chip" type="button" data-f="${v}" aria-pressed="${ctFiltro === v}">${t}</button>`).join('');
+  const termos = norm($('#ct-busca').value || '').split(/\s+/).filter(Boolean), soNum = soDigitos($('#ct-busca').value);
+  const sit = c => { const r = resumoLojas[c.id]; const d = diasDesde(r?.ultimo); return {d, r}; };
+  const passa = c => {
+    const t = norm(`${c.nome} ${grupoDe(c)} ${c.cidade} ${c.cnpj || ''}`);
+    if(termos.length && !(termos.every(x => t.includes(x)) || (soNum.length >= 3 && soDigitos(c.cnpj).includes(soNum)))) return false;
+    const {d} = sit(c);
+    if(ctFiltro === 'recentes') return d !== null && d <= 30;
+    if(ctFiltro === 'paradas') return d !== null && d > 45;
+    if(ctFiltro === 'aguardando') return c.situacao === AGUARDANDO;
+    return true;
+  };
+  const card = c => { const {d, r} = sit(c);
+    const etq = c.situacao === AGUARDANDO ? '<span class="badge espera">Aguardando aprovação</span>'
+      : d === null ? '<span class="badge canc">Nunca comprou</span>' : d > 45 ? '<span class="badge rec">Parada ou esfriando</span>' : '<span class="badge aprov">Comprando</span>';
+    return `<button type="button" class="ct-card" data-cli="${esc(c.id)}"><span><b>${esc(c.nome)}</b><small>${[c.cidade, c.cnpj].filter(Boolean).map(esc).join(' · ') || 'sem CNPJ'}</small>
+      <small>${d === null ? 'Ainda sem pedidos' : `Última compra: há ${d} dia${d === 1 ? '' : 's'}${r?.total ? ' · ' + brl(r.total) : ''}`}</small></span>${etq}</button>`; };
+  const todos = [...(DATA.clientes || [])].filter(passa).sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const redes = new Map(), soltas = [];
+  todos.forEach(c => { const g = grupoDe(c); if(g){ const k = norm(g); (redes.get(k) || redes.set(k, {nome: g, lojas: []}).get(k)).lojas.push(c); } else soltas.push(c); });
+  const html = [...redes.values()].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(g => {
+    const cd = condGrupo(g.lojas[0].id);
+    return `<div class="ct-rede"><div class="ct-rede-h"><span>🏢 ${esc(g.nome)}</span><small>${g.lojas.length} CNPJ${g.lojas.length > 1 ? 's' : ''}${cd?.desconto ? ' · desconto ' + String(cd.desconto).replace('.', ',') + '%' : ''}${cd?.pagamento ? ' · ' + esc(cd.pagamento) : ''}</small></div>${g.lojas.map(card).join('')}</div>`; }).join('') + soltas.map(card).join('');
+  $('#ct-lista').innerHTML = html || '<p class="ct-vazio">Nenhuma loja com essa busca. Toque em + Nova loja para cadastrar.</p>';
+}
+$('#ct-busca').addEventListener('input', renderCliTela);
+$('#ct-filtros').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if(!b) return; ctFiltro = b.dataset.f; renderCliTela(); });
+$('#ct-nova').addEventListener('click', () => $('#btn-nova-loja').click());
+$('#ct-lista').addEventListener('click', e => { const b = e.target.closest('[data-cli]'); if(b) escolherClienteTela(b.dataset.cli); });
+function escolherClienteTela(id){
+  $('#ct-busca').value = '';
+  $('#cliente').value = id; st.trocandoCli = false; aoTrocarCliente();
+  perguntarRepetir(id);
+}
+// Loja que já comprou: pergunta se quer repetir o último pedido (só aqui, dentro do Novo pedido).
+function perguntarRepetir(id){
+  if(DEMO || itensAtuais().length || st.orcamento) return;
+  const u = ultimoLocal(id, st.empresa); if(!u) return;
+  const itens = (u.itens || []).map(i => `${i.q} × ${esc(i.nome)}`);
+  abrirSheet(`
+    <div class="sheet-head"><h2>Repetir o último pedido?</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">Esta loja já comprou aqui.</p>
+    <div class="note"><b>${esc(u.num)} · ${new Date(u.data).toLocaleDateString('pt-BR')}</b> · ${itens.length} produto${itens.length === 1 ? '' : 's'} · ${brl(u.total)}<br><small>${itens.slice(0, 6).join(', ')}${itens.length > 6 ? '…' : ''}</small></div>
+    <div class="btns"><button class="btn primary" id="rp-sim" type="button">Repetir o último pedido</button><button class="btn sec" id="rp-nao" type="button">Começar um pedido novo</button></div>`);
+  $('#rp-sim').addEventListener('click', () => { fecharSheet(); carregarNoPedido(u, `Itens do pedido ${u.num} (${new Date(u.data).toLocaleDateString('pt-BR')}) carregados.`); });
+  $('#rp-nao').addEventListener('click', fecharSheet);
+}
+
+/* ---------- "+ Novo pedido": volta para a escolha da loja (pergunta antes se há itens no pedido) ---------- */
+function toastAcao(msg, rotulo, fn){
+  const t = $('#toast'); t.innerHTML = `${esc(msg)}<button class="toast-btn" type="button" id="toast-acao">${esc(rotulo)}</button>`; t.hidden = false;
+  clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 8000);
+  $('#toast-acao').addEventListener('click', () => { t.hidden = true; clearTimeout(tt); fn(); });
+}
+function zerarPedido(){
+  st.itens = {}; st.precos = {}; st.base = {}; limparEntrega(); st.orcamento = null; st.aberto = null;
+  $('#obs-p').value = ''; $('#desc-p').value = ''; delete $('#desc-p').dataset.daRede;
+  st.busca = ''; $('#busca').value = ''; $('#cliente').value = ''; st.trocandoCli = false;
+  aoTrocarCliente(); irPara('novo');
+}
+$('#btn-novo-ped').addEventListener('click', () => {
+  const its = itensAtuais();
+  if(!its.length){ zerarPedido(); return; }
+  const tot = its.reduce((s,i) => s + i.q * i.preco, 0), un = its.reduce((s,i) => s + i.q, 0), c = cli($('#cliente').value);
+  abrirSheet(`
+    <div class="sheet-head"><h2>Começar um novo pedido?</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">O pedido atual ainda não foi fechado.</p>
+    <div class="note"><b>${esc(c?.nome || 'Sem cliente')}</b><br>${its.length} produto${its.length === 1 ? '' : 's'} · ${un} unidade${un === 1 ? '' : 's'} · <b>${brl(tot)}</b></div>
+    <div class="btns">
+      <button class="btn primary" id="np-continuar" type="button">Continuar este pedido</button>
+      <button class="btn sec" id="np-orc" type="button">Salvar como orçamento e começar outro</button>
+      <button class="btn perigo" id="np-descartar" type="button">Descartar e começar outro</button>
+    </div>`);
+  $('#np-continuar').addEventListener('click', fecharSheet);
+  $('#np-orc').addEventListener('click', () => {
+    fecharSheet();
+    if(!validarFechamento()) return;
+    const pag = pagamentoDe($('#pag-p'), $('#pag-outro-p')); if(pag === null) return;
+    salvarOrcamento(pag, $('#obs-p').value, numBR($('#desc-p').value || '0'));
+    zerarPedido();
+  });
+  $('#np-descartar').addEventListener('click', () => {
+    const snap = {itens: {...st.itens}, precos: {...st.precos}, base: {...st.base}, entrega: {...st.entrega}, cliente: $('#cliente').value, obs: $('#obs-p').value, desc: $('#desc-p').value, orc: st.orcamento};
+    fecharSheet(); zerarPedido();
+    toastAcao(`Pedido descartado (${its.length} ${its.length === 1 ? 'item' : 'itens'})`, 'Desfazer', () => {
+      st.itens = snap.itens; st.precos = snap.precos; st.base = snap.base; st.entrega = snap.entrega; st.orcamento = snap.orc;
+      $('#obs-p').value = snap.obs; $('#desc-p').value = snap.desc; $('#cliente').value = snap.cliente; st.trocandoCli = false;
+      renderProdutos(); renderCart(); irPara('novo');
+    });
+  });
 });
 function aoTrocarCliente(){
   const g = condGrupo($('#cliente').value);
@@ -1337,12 +1611,18 @@ fetch('fotos.json').then(r => r.ok ? r.json() : {}).then(d => {
 const fotoDe = p => (p.foto && /^https?:\/\//i.test(p.foto) ? p.foto : '') || FOTOS[p.id] || '';
 // Miniatura do produto. Se a imagem não carregar, some sem deixar buraco.
 const fotoHTML = p => { const f = fotoDe(p); return f
-  ? `<img class="thumb" loading="lazy" src="${esc(f)}" alt="" data-foto="${esc(f)}" data-nome="${esc(p.nome)}" onerror="this.remove()">` : ''; };
+  ? `<img class="thumb" loading="lazy" src="${esc(f)}" alt="" data-foto="${esc(f)}" data-nome="${esc(p.nome)}" data-pid="${esc(p.id)}" onerror="this.remove()">` : ''; };
 document.addEventListener('click', e => {
   const t = e.target.closest('img.thumb'); if(!t) return;
   e.preventDefault();
+  // Foto grande com as informações do produto: código, unidade, categoria e preço de tabela.
+  const p = (DATA?.produtos || []).find(x => x.id === t.dataset.pid);
+  const info = p ? `<div class="foto-info">
+      <div class="rw"><span>Código</span><b>${esc(p.id)}</b></div><div class="rw"><span>Unidade</span><b>${esc(p.un || '—')}</b></div>
+      ${catDe(p) ? `<div class="rw"><span>Categoria</span><b>${esc(catDe(p))}</b></div>` : ''}
+      <div class="rw"><span>Preço de tabela</span><b>${p.preco > 0 ? brl(p.preco) : 'sem preço de tabela'}</b></div></div>` : '';
   abrirSheet(`<div class="sheet-head"><h2 style="font-size:18px">${esc(t.dataset.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
-    <img class="foto-grande" src="${esc(t.dataset.foto)}" alt="${esc(t.dataset.nome)}">`);
+    <img class="foto-grande" src="${esc(t.dataset.foto)}" alt="${esc(t.dataset.nome)}">${info}`);
 });
 // Último valor de cada produto para o cliente escolhido (pedidos e orçamentos dele; o mais recente vale).
 let ULT = {};
@@ -1504,7 +1784,9 @@ function renderCart(){
   // Botão flutuante "Novo pedido": aparece fora da tela de Novo pedido.
   // Na aba Lojas o botão vira "+ Nova loja".
   const fab = $('#fab-novo'), naLojas = !$('#v-lojas').hidden;
-  fab.hidden = !$('#v-novo').hidden || !$('#v-relatorios').hidden;   // nos Relatórios o botão cobria as tabelas
+  // Escondido em Novo pedido, Relatórios (cobria as tabelas) e Catálogo (lá só tem produtos e preços).
+  // No computador, Vendas tem o "+ Novo pedido" no cabeçalho: o botão flutuante só fica no celular.
+  fab.hidden = !$('#v-novo').hidden || !$('#v-relatorios').hidden || !$('#v-catalogo').hidden || ((!$('#v-pedidos').hidden || naLojas) && !ehMobile());
   fab.dataset.modo = naLojas ? 'loja' : 'pedido';
   fab.innerHTML = `<span aria-hidden="true">+</span>${naLojas ? 'Nova loja' : 'Novo pedido'}`;
   renderPainel(its, tot);
@@ -2146,12 +2428,11 @@ function abrirNovaLoja(depois, base, editar){
   });
 }
 $('#btn-nova-loja').addEventListener('click', () => abrirNovaLoja(c => { $('#cli-busca').value = ''; renderClientes(); $('#cliente').value = c.id; aoTrocarCliente(); }));
-$('#btn-nova-loja2').addEventListener('click', () => abrirNovaLoja());
 
 const diasDesde = iso => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null;
 async function carregarLojas(){
   if(DEMO || !sessao || !navigator.onLine) return;
-  try{ const j = await api({acao:'lojas', empresa: empAtiva() || ''}); resumoLojas = j.lojas || {}; LS.set('resumoLojas', resumoLojas); renderLojas(); }
+  try{ const j = await api({acao:'lojas', empresa: empAtiva() || ''}); resumoLojas = j.lojas || {}; LS.set('resumoLojas', resumoLojas); renderLojas(); if(!$('#cli-tela').hidden) renderCliTela(); }
   catch(e){ if(e.login) sessaoCaiu(e.message); }
 }
 const FILTROS_LOJAS = [['todas','Todas'],['esfriando','Esfriando ou paradas'],['redes','Por rede'],['30','Sem pedido há 30+ dias'],['60','60+ dias'],['90','90+ dias'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
@@ -2173,6 +2454,14 @@ function renderLojas(){
   const esfriando = todas.filter(c => c.ritmo && (c.ritmo.st === 'esfriando' || c.ritmo.st === 'parado')).length;
   $('#lojas-info').textContent = `${todas.length} loja${todas.length === 1 ? '' : 's'}` + (esfriando ? ` · ${esfriando} esfriando ou parada${esfriando === 1 ? '' : 's'}` : '') +
     (ehAdmin() ? '' : ' · contando os seus pedidos');
+  $('#lista-lojas').classList.toggle('lj-quadro', modoLojas === 'quadro');
+  if(modoLojas === 'quadro'){
+    const col = c => c.situacao === AGUARDANDO ? 'aguard' : !c.pedidos ? 'nunca' : c.ritmo && c.ritmo.st === 'parado' ? 'parado' : c.ritmo && c.ritmo.st === 'esfriando' ? 'esfriando' : 'ativa';
+    const COLS = [['ativa','Comprando'],['esfriando','Esfriando'],['parado','Paradas'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
+    $('#lista-lojas').innerHTML = COLS.map(([k,t]) => { const ls = lista.filter(c => col(c) === k);
+      return `<li class="lj-col"><h3>${t} <span>${ls.length}</span></h3>${ls.map(c => `<button class="lj-mini" data-loja="${esc(c.id)}"><b>${esc(c.nome)}</b><small>${c.pedidos ? brl(c.total) + ' · ' + (c.dias === 0 ? 'hoje' : c.dias + ' d') : esc(c.cidade || '')}</small></button>`).join('') || '<p class="meta">—</p>'}</li>`; }).join('');
+    return;
+  }
   $('#lista-lojas').innerHTML = lista.length ? lista.map(c => `<li><button class="order loja" data-loja="${esc(c.id)}">
       <span class="num">${c.pedidos ? (c.dias === 0 ? 'Último pedido hoje' : `Último pedido há ${c.dias} dia${c.dias === 1 ? '' : 's'}`) : 'Nunca comprou'}</span>
       <span class="cli">${esc(c.nome)}</span>
@@ -2220,6 +2509,11 @@ function abrirRede(nome){
 }
 $('#lojas-filtros').addEventListener('click', e => { const b = e.target.closest('[data-fl]'); if(b){ filtroLojas = b.dataset.fl; renderLojas(); } });
 $('#lojas-busca').addEventListener('input', renderLojas);
+var modoLojas = LS.get('modoLojas', 'lista');
+function marcarModoLojas(){ const b = $('#lj-modo'); b.textContent = modoLojas === 'quadro' ? 'Lista' : 'Quadro'; b.setAttribute('aria-pressed', modoLojas === 'quadro'); }
+$('#lj-modo').addEventListener('click', () => { modoLojas = modoLojas === 'quadro' ? 'lista' : 'quadro'; LS.set('modoLojas', modoLojas); marcarModoLojas(); renderLojas(); });
+$('#lj-nova-top').addEventListener('click', () => abrirNovaLoja(null));
+marcarModoLojas();
 function abrirLoja(id){
   const c = cli(id); if(!c) return;
   const r = resumoLojas[id] || {}, tel = soDigitos(c.telefone);
@@ -2237,6 +2531,7 @@ function abrirLoja(id){
         ['E-mail notas', c.emailNotas], ['Pagamento', c.pagamento], ['Prazo', c.prazo], ['Frete', c.frete], ['Observação', c.obs]].filter(x => x[1]);
       return f.length ? `<dl class="ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Cadastro sem dados. Toque em <b>Editar cadastro</b> para completar.</p>';
     })()}
+    ${r.pedidos ? `<div class="lj-kpis"><div><small>Pedidos</small><b>${r.pedidos}</b></div><div><small>Total</small><b>${brl(r.total)}</b></div><div><small>Ticket médio</small><b>${brl(r.total / r.pedidos)}</b></div></div>` : ''}
     <p class="meta">${r.pedidos ? `<b>${r.pedidos}</b> pedido${r.pedidos > 1 ? 's' : ''}, <b>${brl(r.total)}</b> no total. Último: ${new Date(r.ultimo).toLocaleDateString('pt-BR')} (${esc(r.ultimoNum)}).` : 'Ainda não tem pedido.'}</p>
     ${recentes.length ? '<h2 class="sub-h">Pedidos recentes</h2><ul class="orders">' + recentes.map(cartaoPedido).join('') + '</ul>' : ''}
     <div class="btns">
@@ -2313,27 +2608,60 @@ function texto(p){
   return t + `\n\nRepresentante: ${p.representante || CFG.REPRESENTANTE}` +
     ([rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).length ? '\n' + [rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join(' · ') : '');
 }
+// Compartilhar o pedido (nunca o orçamento): Ver PDF, Baixar ou enviar PDF, Excel do pedido e e-mail ao cliente.
 function acoesHTML(p){
   if(p.tipo === 'orcamento' || situacaoDe(p) === ORCAMENTO) return '';   // orçamento nunca é enviado ao cliente
   return `<div class="btns">
-    <a class="btn zap" href="https://wa.me/?text=${encodeURIComponent(texto(p))}" target="_blank" rel="noopener">Enviar no WhatsApp</a>
-    <button class="btn sec" id="btn-pdf-abrir">Abrir ou imprimir PDF</button>
-    <button class="btn sec" id="btn-pdf">Baixar ou enviar PDF</button>
-    <button class="btn sec" id="btn-copiar">Copiar pedido</button></div>`;
+    <button class="btn sec" id="btn-pdf-abrir" type="button">Ver PDF</button>
+    <button class="btn sec" id="btn-pdf" type="button">Baixar ou enviar PDF</button>
+    <button class="btn sec" id="btn-excel-ped" type="button">Excel do pedido</button>
+    <button class="btn sec" id="btn-email-ped" type="button">Enviar por e-mail ao cliente</button></div>`;
 }
 function ligarAcoes(p){
-  if(!$('#btn-copiar')) return;
-  $('#btn-copiar').addEventListener('click', async () => {
-    const t = texto(p);
-    try{ await navigator.clipboard.writeText(t); toast('Pedido copiado'); }
-    catch(e){
-      const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
-      try{ document.execCommand('copy'); toast('Pedido copiado'); }catch(_){ toast('Não deu para copiar neste aparelho'); }
-      ta.remove();
-    }
-  });
+  if(!$('#btn-pdf-abrir')) return;
   $('#btn-pdf-abrir').addEventListener('click', () => abrirPdf(p));
   $('#btn-pdf').addEventListener('click', () => baixarPdf(p));
+  $('#btn-excel-ped').addEventListener('click', () => baixarExcelPedido(p));
+  $('#btn-email-ped').addEventListener('click', () => abrirEmailPedido(p));
+}
+async function baixarExcelPedido(p){
+  try{
+    const X = await carregarXLSX();
+    const linhas = (p.itens || []).map(i => [i.id, i.nome, i.un || '', Number(i.q) || 0, Number(i.preco) || 0, (Number(i.q) || 0) * (Number(i.preco) || 0)]);
+    const aoa = [['Pedido', String(p.num)], ['Cliente', p.clienteNome], ['Marca', p.empresaNome], ['Data', dataBR(p.data)], ['Pagamento', p.pagamento || ''], [],
+      ['Código', 'Produto', 'Un.', 'Qtd', 'Preço (R$)', 'Subtotal (R$)'], ...linhas, [], ['', '', '', '', 'Total (R$)', Number(p.total) || 0]];
+    const ws = X.utils.aoa_to_sheet(aoa); ws['!cols'] = [{wch: 14}, {wch: 46}, {wch: 6}, {wch: 8}, {wch: 12}, {wch: 14}];
+    for(let r = 7; r < aoa.length; r++) [4, 5].forEach(c => { const cel = ws[X.utils.encode_cell({r, c})]; if(cel && typeof cel.v === 'number') cel.z = '"R$" #,##0.00'; });
+    const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Pedido');
+    await entregarArquivo(new Blob([X.write(wb, {bookType: 'xlsx', type: 'array'})]), `Pedido-${p.num}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Pedido ' + p.num);
+  }catch(e){ console.error(e); toast('Não deu para gerar o Excel'); }
+}
+// E-mail do pedido ao cliente, com o PDF anexo. O app envia pela conta de e-mail da planilha (não precisa de programa de e-mail).
+function abrirEmailPedido(p){
+  if(DEMO){ toast('No modo demonstração não há envio por e-mail.'); return; }
+  const c = cli(p.cliente) || {}, cad = c.emailCompra || '';
+  abrirSheet(`
+    <div class="sheet-head"><h2>Enviar por e-mail</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta"><b>${esc(p.num)}</b> · ${esc(p.clienteNome)} · ${brl(p.total)}<br>O PDF do pedido vai anexo.</p>
+    ${cad ? '' : '<p class="note">Esta loja não tem e-mail cadastrado. Digite o endereço para enviar.</p>'}
+    <label class="field"><span class="lbl">Enviar para</span><input id="ep-email" type="email" inputmode="email" autocomplete="off" value="${esc(cad)}" placeholder="nome@empresa.com.br"></label>
+    ${cad ? '' : '<label class="field" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ep-guardar" checked style="width:20px;height:20px"><span>Guardar este e-mail no cadastro da loja</span></label>'}
+    <div class="btns"><button class="btn primary" id="ep-enviar" type="button">Enviar com o PDF anexo</button></div>`);
+  $('#ep-enviar').addEventListener('click', async () => {
+    const para = $('#ep-email').value.trim();
+    if(!/^\S+@\S+\.\S+$/.test(para)){ toast('Digite um e-mail válido'); $('#ep-email').focus(); return; }
+    const r = gerarPdf(p); if(!r) return;
+    $('#ep-enviar').disabled = true; $('#ep-enviar').textContent = 'Enviando…';
+    try{
+      const b64 = await new Promise((ok, erro) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = erro; f.readAsDataURL(r.blob); });
+      const j = await api({acao: 'emailPedido', id: p.id, para, guardar: !!$('#ep-guardar')?.checked, cliente: p.cliente, arquivo: {nome: r.nome, tipo: 'application/pdf', base64: b64}});
+      fecharSheet(); toast(j.aviso || 'E-mail enviado com o PDF', 5000);
+      if($('#ep-guardar')?.checked && c.id){ c.emailCompra = para; LS.set('catalogo', DATA); }
+    }catch(e){
+      $('#ep-enviar').disabled = false; $('#ep-enviar').textContent = 'Enviar com o PDF anexo';
+      if(e.login) sessaoCaiu(e.message); else toast(e instanceof TypeError ? 'Não deu para falar com a planilha' : e.message, 5000);
+    }
+  });
 }
 // Logo do PDF: carregado uma vez e guardado como dataURL. Se não carregar, o PDF sai sem logo.
 let LOGO_PDF = null;
@@ -2566,11 +2894,11 @@ function barrasMeses(v, larg, alt){
 
 // Histórico de compra por mês (modelo: produto nas linhas; para cada mês, quantidade e ticket médio).
 // Ticket médio = valor (já com o desconto do pedido) ÷ quantidade, igual ao "Histórico de compra dos itens".
-let MAT_N = LS.get('matMeses', 6);
+const MAT_N = 4;   // a tela mostra sempre os últimos 4 meses; o Excel anual usa 12
 const MESES_ABREV = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-function matrizMeses(lista, filtro){
+function matrizMeses(lista, filtro, nMeses){
   const h = new Date(), meses = [];
-  for(let k = MAT_N - 1; k >= 0; k--){ const d = new Date(h.getFullYear(), h.getMonth() - k, 1);
+  for(let k = (nMeses || MAT_N) - 1; k >= 0; k--){ const d = new Date(h.getFullYear(), h.getMonth() - k, 1);
     meses.push({chave: d.getFullYear() * 12 + d.getMonth(), rot: `${MESES_ABREV[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`}); }
   const valido = new Set(meses.map(m => m.chave)), mapa = new Map();
   (lista || []).filter(p => p.status !== ORCAMENTO && filtro(p)).forEach(p => {
@@ -2578,30 +2906,41 @@ function matrizMeses(lista, filtro){
     const f = 1 - (Number(p.desconto) || 0) / 100;
     (p.itens || []).forEach(i => {
       const k = p.empresa + '|' + i.id;
-      const x = mapa.get(k) || mapa.set(k, {produto: i.nome, empresa: p.empresaNome, codigo: i.id, por: {}, q: 0, total: 0}).get(k);
+      const x = mapa.get(k) || mapa.set(k, {produto: i.nome, empresa: p.empresaNome, empresaId: p.empresa, codigo: i.id, por: {}, q: 0, total: 0, vendas: []}).get(k);
       const m = x.por[ch] || (x.por[ch] = {q: 0, total: 0}), q = Number(i.q) || 0, v = q * (Number(i.preco) || 0) * f;
-      m.q += q; m.total += v; x.q += q; x.total += v; });
+      m.q += q; m.total += v; x.q += q; x.total += v; if(q) x.vendas.push({q, v, tab: Number(i.preco) || 0, desc: Number(p.desconto) || 0}); });
   });
   return {meses, linhas: [...mapa.values()].sort((a, b) => b.q - a.q)};
 }
 function matrizHTML(mx, titulo){
   const tk = c => c && c.q ? brl(c.total / c.q) : '';
-  const seletor = `<label class="mat-n">Meses: <select id="mat-n">${[3, 6, 12].map(n => `<option value="${n}"${n === MAT_N ? ' selected' : ''}>${n}</option>`).join('')}</select></label>`;
-  if(!mx.linhas.length) return `<section class="rel-sec"><h2>Histórico de compra por mês</h2>${seletor}<p class="empty">Nenhuma compra nestes meses com esses filtros.</p></section>`;
-  return `<section class="rel-sec"><h2>Histórico de compra por mês</h2>${seletor}
-    <p class="meta">Quantidade e ticket médio (valor ÷ quantidade) de cada produto, mês a mês. Mostra o histórico inteiro, sem o período escolhido acima.</p>
+  if(!mx.linhas.length) return `<section class="rel-sec"><h2>Histórico de compra por mês</h2><p class="empty">Nenhuma compra nestes meses com esses filtros.</p></section>`;
+  return `<section class="rel-sec"><h2>Histórico de compra por mês</h2>
+    <p class="meta">Últimos 4 meses: quantidade e ticket médio (valor pago ÷ unidades, já com desconto) de cada produto. Toque num produto para ver os detalhes.</p>
     <div class="tabela-wrap rel-scroll"><table class="tabela mat">
       <thead><tr><th rowspan="2">${esc(titulo)}</th>${mx.meses.map(m => `<th colspan="2" class="mes">${m.rot}</th>`).join('')}<th colspan="2" class="mes">Total</th></tr>
         <tr>${[...mx.meses, 0].map(() => '<th class="n">quant</th><th class="n">ticket médio</th>').join('')}</tr></thead>
-      <tbody>${mx.linhas.map(x => `<tr data-q="${esc(norm(x.produto + ' ' + x.codigo))}"><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)}</div></td>${mx.meses.map(m => {
+      <tbody>${mx.linhas.map(x => `<tr data-q="${esc(norm(x.produto + ' ' + x.codigo))}" data-det="${esc(x.empresaId + '|' + x.codigo)}"><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)}</div></td>${mx.meses.map(m => {
         const c = x.por[m.chave]; return `<td class="n${c ? '' : ' zero'}">${c ? c.q.toLocaleString('pt-BR') : ''}</td><td class="n${c ? '' : ' zero'}">${tk(c)}</td>`; }).join('')}
         <td class="n"><b>${x.q.toLocaleString('pt-BR')}</b></td><td class="n"><b>${tk(x)}</b></td></tr>`).join('')}</tbody>
     </table></div></section>`;
 }
-$('#rel-resultado').addEventListener('change', e => { if(e.target.id === 'mat-n'){ MAT_N = +e.target.value; LS.set('matMeses', MAT_N); renderRelatorio(); } });
+// Detalhes do produto (toque na linha da tabela por mês): considera só os 4 meses da tela.
+function abrirDetalheProduto(chave){
+  const d = dadosRelatorio(), x = d.matriz.linhas.find(l => l.empresaId + '|' + l.codigo === chave); if(!x) return;
+  const pr = DATA?.produtos?.find(p => p.id === x.codigo), n = x.vendas.length;
+  const un = x.q, med = un ? x.total / un : 0, precos = x.vendas.map(v => v.q ? v.v / v.q : 0).filter(Boolean);
+  const descMed = n ? x.vendas.reduce((s, v) => s + v.desc, 0) / n : 0, meses = d.matriz.meses.filter(m => x.por[m.chave]).length;
+  abrirSheet(`<div class="sheet-head"><h2>${esc(x.produto)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">${esc(x.empresa)} · últimos 4 meses</p>
+    <dl class="ficha"><dt>Tabela hoje</dt><dd>${pr && pr.preco > 0 ? brl(pr.preco) : 'sem preço de tabela'}</dd><dt>Preço médio pago</dt><dd>${brl(med)}</dd>
+      <dt>Menor / maior</dt><dd>${precos.length ? brl(Math.min(...precos)) + ' / ' + brl(Math.max(...precos)) : '—'}</dd><dt>Desconto médio</dt><dd>${descMed.toFixed(1).replace('.', ',')}%</dd>
+      <dt>Comprou em</dt><dd>${meses} de ${d.matriz.meses.length} meses</dd><dt>Total em unidades</dt><dd>${un.toLocaleString('pt-BR')}</dd><dt>Valor total</dt><dd>${brl(x.total)}</dd></dl>`);
+}
+$('#rel-resultado').addEventListener('click', e => { const tr = e.target.closest('tr[data-det]'); if(tr) abrirDetalheProduto(tr.dataset.det); });
 
 // Aplica os filtros e devolve as linhas de item (uma por produto de cada pedido) e os resumos.
-function dadosRelatorio(){
+function dadosRelatorio(nMeses){
   const fEmp = $('#rel-emp').value, vend = $('#rel-vend').value, sit = $('#rel-sit').value, fGrupo = $('#rel-grupo').value;
   const ok = s => sit === 'todos' ? true : sit === 'aprov' ? POS_APROVACAO.includes(s)
     : sit === 'faturados' ? (s === FATURADO || s === ENTREGUE) : (POS_APROVACAO.includes(s) || s === AGUARDANDO);
@@ -2651,7 +2990,7 @@ function dadosRelatorio(){
   // Ritmo de compra: histórico inteiro, com os mesmos filtros de empresa, vendedor, rede e cliente (sem período e situação).
   const ritmo = ritmoClientes(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && okGrupo(p) && (!fCli || p.cliente === fCli));
   // Histórico de compra por mês: produto x mês (quantidade e ticket médio), histórico inteiro, mesmos filtros (sem o período).
-  const matriz = matrizMeses(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli));
+  const matriz = matrizMeses(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli), nMeses);
   // Mês anterior (para as setas ↑ ↓ do resumo): mesmos filtros, histórico inteiro.
   const dIni = new Date(REL.de + 'T12:00:00'), ini = new Date(dIni.getFullYear(), dIni.getMonth() - 1, 1), fim = new Date(dIni.getFullYear(), dIni.getMonth(), 1);
   const pAnt = (REL.todos || REL.pedidos).filter(p => { const t = new Date(p.data); return t >= ini && t < fim && (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli); });
@@ -2678,7 +3017,7 @@ function aplicarBuscaRel(){
 }
 function renderRelatorio(){
   const d = dadosRelatorio();
-  $('#rel-pdf').disabled = $('#rel-xlsx').disabled = $('#rel-exportar').disabled = !d.linhas.length;
+  $('#rel-pdf').disabled = $('#rel-xlsx').disabled = $('#rel-exportar').disabled = $('#rel-ver-pdf').disabled = $('#rel-xlsx-ano').disabled = !d.linhas.length;
   const dt = s => new Date(s).toLocaleDateString('pt-BR'), nBR = x => x.toLocaleString('pt-BR');
   const fCli = $('#rel-cli').value, c = fCli && cli(fCli);
   const vazio = '<p class="empty">Nenhum pedido neste período com esses filtros.</p>';
@@ -2760,6 +3099,27 @@ function renderRelatorio(){
   const abas = [...(c ? ['cliente'] : []), 'itens', 'mes', 'lojas', 'comissao', ...(c ? [] : ['ritmo']), 'detalhe'];
   if(!abas.includes(REL_ABA)) REL_ABA = abas[0];
 
+  // Resumo da marca (sem cliente escolhido): números, caminho dos pedidos e lojas que pedem atenção. Blocos recolhem.
+  const resumoMarca = c || !d.linhas.length ? '' : (() => {
+    const nomeM = fEmpR ? (emp(fEmpR)?.nome || fEmpR) : 'marcas', admin = ehAdmin();
+    const base = REL.pedidos.filter(p => !fEmpR || p.empresa === fEmpR);
+    const etapa = [['Em aprovação', s => s === AGUARDANDO], ['Aprovados', s => s === APROVADO], ['Enviados à marca', s => s === ENVIADO], ['Faturados / entregues', s => s === FATURADO || s === ENTREGUE]]
+      .map(([t, f]) => { const ps = base.filter(p => f(p.status)); return {t, n: ps.length, v: ps.reduce((s, p) => s + (Number(p.total) || 0), 0)}; });
+    const fat = base.filter(p => p.status === FATURADO || p.status === ENTREGUE), vFat = fat.reduce((s, p) => s + (Number(p.valorFat) || Number(p.total) || 0), 0);
+    const vEnv = base.filter(p => [ENVIADO, FATURADO, ENTREGUE].includes(p.status)).reduce((s, p) => s + (Number(p.total) || 0), 0);
+    const totV = d.porLoja.reduce((s, x) => s + x.total, 0) || 1;
+    const aten = d.ritmo.filter(s => s.st === 'esfriando' || s.st === 'parado').slice(0, 8);
+    const bloco = (tit, previa, corpo) => `<details class="rel-rec"><summary><b>${tit}</b><span class="sub">${previa}</span></summary>${corpo}</details>`;
+    return `<section class="rel-sec rel-marca"><h2>Resumo da ${esc(nomeM)}</h2>
+      <div class="rel-cards"><div class="rel-card"><small>Vendas (aprovados)</small><strong>${brl(d.totais.valor)}</strong></div><div class="rel-card"><small>Pedidos</small><strong>${d.totais.pedidos}</strong></div>
+        ${admin ? `<div class="rel-card"><small>Comissão a receber da marca</small><strong>${brl(d.totais.comissaoMarcas)}</strong></div>` : ''}
+        ${admin && d.comissao.vendedores.some(x => x.pct) ? `<div class="rel-card"><small>Comissão dos vendedores</small><strong>${brl(d.totais.comissaoVendedores)}</strong></div>` : ''}</div>
+      ${bloco('Caminho dos pedidos', etapa.map(e => e.n).join(' → '), `<table class="tabela"><tbody>${etapa.map(e => `<tr><td>${e.t}</td><td class="n">${e.n}</td><td class="n">${brl(e.v)}</td></tr>`).join('')}</tbody></table>
+        <p class="meta">Faturamento da marca: enviado <b>${brl(vEnv)}</b> · faturado <b>${brl(vFat)}</b> · a faturar <b>${brl(Math.max(0, vEnv - vFat))}</b></p>`)}
+      ${bloco('Lojas que mais compram', d.porLoja.slice(0, 3).map(x => esc(x.loja)).join(', '), `<table class="tabela"><tbody>${d.porLoja.slice(0, 10).map(x => `<tr ${x.id ? `data-ritmo-cli="${esc(x.id)}"` : ''}><td>${esc(x.loja)}</td><td class="n">${brl(x.total)}</td><td class="n">${Math.round(x.total / totV * 100)}%</td></tr>`).join('')}</tbody></table>`)}
+      ${aten.length ? bloco('Lojas que pedem atenção', aten.length + ' loja' + (aten.length > 1 ? 's' : ''), `<table class="tabela"><tbody>${aten.map(s => `<tr data-ritmo-cli="${esc(s.id)}"><td>${esc(s.nome)}<div class="sub">${esc(s.cidade)}</div></td><td>${textoDias(s.dias)}</td><td>${textoRitmo(s)}</td></tr>`).join('')}</tbody></table>`) : ''}
+    </section>`;
+  })();
   const t = d.totais, a = d.anterior, tm = t.pedidos ? t.valor / t.pedidos : 0, tmA = a.pedidos ? a.valor / a.pedidos : 0;
   $('#rel-resultado').innerHTML = `
     <div class="rel-cards rel-resumo">
@@ -2770,7 +3130,8 @@ function renderRelatorio(){
     </div>
     <div class="rel-busca"><input type="search" id="rel-busca" placeholder="Buscar produto ou loja nas tabelas" value="${esc(REL_BUSCA)}" aria-label="Buscar produto ou loja" autocomplete="off"></div>
     <div class="rel-abas" role="tablist">${abas.map(k => `<button class="chip" type="button" role="tab" data-aba="${k}" aria-pressed="${k === REL_ABA}">${REL_ABAS_TXT[k]}</button>`).join('')}</div>
-    ${abas.map(k => `<div class="rel-painel${k === REL_ABA ? ' on' : ''}" data-painel="${k}">${paineis[k]}</div>`).join('')}`;
+    ${abas.map(k => `<div class="rel-painel${k === REL_ABA ? ' on' : ''}" data-painel="${k}">${paineis[k]}</div>`).join('')}
+    ${resumoMarca}`;
   aplicarBuscaRel(); rolarMatriz();
 }
 // No celular a tabela por mês abre mostrando os meses mais recentes (à direita).
@@ -2810,6 +3171,34 @@ function carregarXLSX(){
     document.head.appendChild(s);
   });
 }
+// Ver PDF: abre em outra aba, sem salvar.
+$('#rel-ver-pdf').addEventListener('click', () => {
+  if(!REL) return;
+  if(!window.jspdf || !window.PedidoPDF?.relatorio){ toast('Não deu para gerar o PDF'); return; }
+  try{
+    const d = dadosRelatorio();
+    d.ritmoPdf = s => [s.nome + (s.cidade ? ' (' + s.cidade + ')' : ''), RITMO[s.st][0], new Date(s.ultima).toLocaleDateString('pt-BR') + ' (' + textoDias(s.dias) + ')', textoRitmo(s), textoProxima(s), textoTend(s).replace(/[↑↓→]/g, '').trim()];
+    const url = URL.createObjectURL(PedidoPDF.relatorio(window.jspdf.jsPDF, d, LOGO_PDF).output('blob'));
+    if(!window.open(url, '_blank')) location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+  }catch(e){ console.error(e); toast('Não deu para gerar o PDF'); }
+});
+// Excel anual: produto x 12 meses (quant e ticket médio), mesmos filtros.
+$('#rel-xlsx-ano').addEventListener('click', async () => {
+  if(!REL) return;
+  const b = $('#rel-xlsx-ano'); b.disabled = true; b.textContent = 'Gerando…';
+  try{
+    const X = await carregarXLSX(), mx = dadosRelatorio(12).matriz, moeda = '"R$" #,##0.00';
+    const cab = ['Produto', 'Empresa', ...mx.meses.flatMap(m => [m.rot + ' quant', m.rot + ' ticket médio']), 'Total quant', 'Total ticket médio'];
+    const ws = X.utils.aoa_to_sheet([cab, ...mx.linhas.map(x => [x.produto, x.empresa, ...mx.meses.flatMap(m => { const c = x.por[m.chave]; return [c ? c.q : '', c && c.q ? c.total / c.q : '']; }), x.q, x.q ? x.total / x.q : 0])]);
+    ws['!cols'] = [{wch: 50}, {wch: 18}, ...cab.slice(2).map(() => ({wch: 14}))]; ws['!freeze'] = {xSplit: 1, ySplit: 1};
+    ws['!autofilter'] = {ref: X.utils.encode_range({s: {r: 0, c: 0}, e: {r: mx.linhas.length, c: cab.length - 1}})};
+    cab.forEach((t, c) => { if(/ticket/.test(t)) for(let r = 1; r <= mx.linhas.length; r++){ const cel = ws[X.utils.encode_cell({r, c})]; if(cel) cel.z = moeda; } });
+    const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Anual');
+    await entregarArquivo(new Blob([X.write(wb, {bookType: 'xlsx', type: 'array'})]), `Relatorio-anual-${REL.de.slice(0, 7)}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Relatório anual');
+  }catch(e){ console.error(e); toast(e.message || 'Não deu para gerar o Excel', 5000); }
+  finally{ b.disabled = false; b.textContent = 'Excel anual (12 meses)'; }
+});
 $('#rel-xlsx').addEventListener('click', async () => {
   if(!REL) return;
   const b = $('#rel-xlsx'); b.disabled = true; b.textContent = 'Gerando…';
@@ -2891,29 +3280,106 @@ function cartaoPedido(p){
     ${badge(p)}
     <span class="tot">${brl(p.total)}</span></button></li>`;
 }
-const FILTROS = [['todos','Todos'],['orc','Em negociação'],[AGUARDANDO,'Em aprovação'],['aprovados','Aprovados'],['entrega','Entrega'],['encerrados','Cancelados / Recusados']];
-const GRUPOS_FILTRO = {aprovados:[APROVADO, ENVIADO], entrega:[FATURADO, ENTREGUE], encerrados:[CANCELADO, RECUSADO]};
+/* ---------- Vendas: uma aba por etapa (v31) ---------- */
+const ABAS = [['todos','Todos'],['neg','Em negociação'],['apr','Em aprovação'],['ok','Aprovados'],['fat','Aguardando faturamento'],['ent','Entrega'],['fim','Finalizados'],['rec','Recusados / Cancelados']];
+const PROX = {
+  todos: 'Visão geral para procurar qualquer pedido. Para agir num pedido, abra a aba da etapa dele.',
+  neg: 'Próximo passo: transformar o orçamento em pedido quando o cliente fechar.',
+  apr: 'Próximo passo: aprovar ou recusar o pedido.',
+  ok: 'Próximo passo: enviar o pedido à marca por e-mail.',
+  fat: 'A marca já foi avisada. Próximo passo: quando ela faturar, marcar como faturado (a NF é opcional).',
+  ent: 'Próximo passo: marcar como entregue ou registrar que o cliente recusou.',
+  fim: 'Pedidos concluídos. Só consulta.',
+  rec: 'Pedidos que não seguiram, com o motivo. Só consulta.'};
+let vdAba = null;
+const etapaDe = p => { if(p.tipo === 'orcamento') return 'neg'; const s = situacaoDe(p);
+  return s === AGUARDANDO ? 'apr' : s === APROVADO ? 'ok' : s === ENVIADO ? 'fat' : s === FATURADO ? 'ent' : s === ENTREGUE ? 'fim' : (s === RECUSADO || s === CANCELADO) ? 'rec' : 'apr'; };
+const dtCurta = iso => iso ? new Date(iso).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}) : '—';
+const diasTxt = iso => { const d = diasDesde(iso); return d === null ? '—' : d === 0 ? 'hoje' : d === 1 ? '1 dia' : d + ' dias'; };
+const ehMobile = () => !matchMedia('(min-width: 1000px)').matches;
+function todasVendas(){
+  return [...listaPedidos(), ...listaOrcamentos()].sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : 0);
+}
+// Barra colorida de andamento: Aprovação · Aprovado · Enviado · Faturado · Entregue.
+function barraAndamento(p){
+  if(p.tipo === 'orcamento') return '<p class="meta">Orçamento em negociação: ainda não é um pedido.</p>';
+  const s = situacaoDe(p), ORD = {[AGUARDANDO]: 0, [APROVADO]: 1, [ENVIADO]: 2, [FATURADO]: 3, [ENTREGUE]: 4}, rec = s === RECUSADO || s === CANCELADO;
+  const naEntrega = rec && /^Recusa na entrega/i.test(p.motivo || '');
+  const rot = ['Aprovação', 'Aprovado', 'Enviado', 'Faturado', 'Entregue'];
+  const seg = rot.map((_, k) => { let c = '';
+    if(rec) c = naEntrega ? (k < 4 ? 'on' : 'rj') : (k === 0 ? 'rj' : '');
+    else if(s === ENTREGUE) c = 'on'; else c = ORD[s] > k ? 'on' : ORD[s] === k ? 'cu' : '';
+    return `<i class="${c}"></i>`; }).join('');
+  return `<div class="barra-and" aria-label="Andamento do pedido"><div class="bs">${seg}</div><div class="bl">${rot.map(r => `<span>${r}</span>`).join('')}</div></div>`;
+}
+function acoesVenda(p, aba){
+  const b = (rot, ac, cls) => `<button type="button" class="vd-bt ${cls || ''}" data-ac="${ac}" data-id="${esc(p.id)}">${rot}</button>`;
+  if(aba === 'neg' && p.tipo === 'orcamento') return b('Transformar em pedido', 'tr', 'pri') + b('Excluir', 'ex', 'perigo');
+  if(!ehAdmin() || p.sync === 'pendente' || p.tipo === 'orcamento') return '';
+  if(aba === 'apr') return b('Aprovar', 'ap', 'pri') + b('Recusar', 'rc', 'perigo');
+  if(aba === 'ok') return b('Enviar à marca', 'en', 'pri');
+  if(aba === 'fat') return b('Marcar faturado', 'fa', 'pri') + b('Reenviar e-mail', 're');
+  if(aba === 'ent') return b('Entregue', 'fi', 'pri') + b('Cliente recusou', 'cr', 'perigo') + (p.nf ? '' : b('+ NF', 'nf'));
+  return '';
+}
+// Colunas de cada aba (desktop). [título, função da célula, classe]
+const COLS_VENDAS = {
+  todos: [['Pedido', p => `${esc(p.num)}<small>${dtCurta(p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)], ['Situação', p => badge(p)],
+          ['Entrega', p => p.entrega ? diaBR(p.entrega) : '—'], ['NF', p => p.nf ? esc(p.nf) : '—'], ['Valor', p => brl(p.total), 'n']],
+  neg: [['Orçamento', p => `${esc(p.num)}<small>criado em ${dtCurta(p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)], ['Itens', p => (p.itens || []).length + ' produto' + ((p.itens || []).length === 1 ? '' : 's')],
+        ['Pagamento', p => esc(p.pagamento || '—')], ['Parado há', p => diasTxt(p.data)], ['Valor', p => brl(p.total), 'n']],
+  apr: [['Pedido', p => `${esc(p.num)}<small>feito em ${dtCurta(p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)], ['Pagamento', p => esc(p.pagamento || '—')],
+        ['Desconto', p => (Number(p.desconto) || 0) ? String(p.desconto).replace('.', ',') + '%' : '—'], ['Aguardando', p => p.sync === 'pendente' ? '<span class="badge pend">Aguardando internet</span>' : diasTxt(p.data)], ['Valor', p => brl(p.total), 'n']],
+  ok: [['Pedido', p => `${esc(p.num)}<small>aprovado em ${dtCurta(p.atualizadoEm || p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)], ['Pagamento', p => esc(p.pagamento || '—')],
+       ['E-mail à marca', () => '<span class="badge espera">Ainda não enviado</span>'], ['Valor', p => brl(p.total), 'n']],
+  fat: [['Pedido', p => `${esc(p.num)}<small>enviado em ${dtCurta(p.atualizadoEm || p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)], ['Pagamento', p => esc(p.pagamento || '—')],
+        ['Marca', () => '<span class="badge env">Avisada por e-mail</span>'], ['Valor', p => brl(p.total), 'n']],
+  ent: [['Pedido', p => `${esc(p.num)}<small>faturado em ${dtCurta(p.dataFat || p.atualizadoEm || p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)], ['NF (opcional)', p => p.nf ? esc(p.nf) : '<span class="sub">sem NF</span>'],
+        ['Entrega prevista', p => p.entrega ? diaBR(p.entrega) : '—'], ['Entrega', () => '<span class="badge env">A entregar</span>'], ['Valor', p => brl(p.total), 'n']],
+  fim: [['Pedido', p => `${esc(p.num)}<small>${dtCurta(p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)], ['NF', p => p.nf ? esc(p.nf) : '—'],
+        ['Entregue em', p => dtCurta(p.atualizadoEm)], ['Valor', p => brl(p.total), 'n']],
+  rec: [['Pedido', p => `${esc(p.num)}<small>${dtCurta(p.data)}</small>`], ['Cliente', p => esc(p.clienteNome)],
+        ['Situação', p => /^Recusa na entrega/i.test(p.motivo || '') ? '<span class="badge rec">Recusado na entrega</span>' : badge(p)], ['Motivo', p => esc(p.motivo || '—')], ['Valor', p => brl(p.total), 'n']]
+};
+function linhasVendas(aba){
+  const q = norm($('#vendas-busca').value || '').trim(), qNum = soDigitos($('#vendas-busca').value);
+  const bate = p => !q || norm(`${p.clienteNome} ${p.num} ${p.clienteGrupo || ''} ${p.nf || ''} ${p.clienteCnpj || cli(p.cliente)?.cnpj || ''}`).includes(q) ||
+    (qNum.length >= 3 && soDigitos(p.clienteCnpj || cli(p.cliente)?.cnpj).includes(qNum));
+  return todasVendas().filter(p => (aba === 'todos' || etapaDe(p) === aba) && bate(p));
+}
+function cartaoVenda(p, aba){
+  const ac = aba === 'todos' ? '' : acoesVenda(p, aba);
+  const sub = aba === 'apr' ? 'Aguardando há ' + diasTxt(p.data) : aba === 'neg' ? 'Parado há ' + diasTxt(p.data) : p.nf ? 'NF ' + esc(p.nf) : '';
+  return `<li><div class="order vd-card${situacaoDe(p) === CANCELADO ? ' cancelado' : ''}" role="button" tabindex="0" ${p.tipo === 'orcamento' ? 'data-orc' : 'data-id'}="${esc(p.id)}">
+    <span class="num">${p.tipo === 'orcamento' ? 'Orçamento' : 'Pedido'} ${esc(p.num)}, ${dtCurta(p.data)}${sub ? ' · ' + sub : ''}</span>
+    <span class="cli">${esc(p.clienteNome)}</span>
+    <span class="emp">${esc(p.pagamento || '')}${p.entrega ? ' · entrega ' + diaBR(p.entrega) : ''}</span>
+    ${badge(p)}<span class="tot">${brl(p.total)}</span></div>${ac ? `<div class="vd-acoes">${ac}</div>` : ''}</li>`;
+}
 function renderPedidos(){
-  const todos = listaPedidos();
+  const todas = todasVendas();
   $('#pedidos-topo').hidden = false;
   $('#btn-atualizar-pedidos').hidden = DEMO;
-  const meusOrc = listaOrcamentos();
-  // Busca por cliente (nome, rede, CNPJ) ou número do pedido.
-  const q = norm($('#vendas-busca').value || '').trim(), qNum = soDigitos($('#vendas-busca').value);
-  const bateVenda = p => !q || norm(`${p.clienteNome} ${p.num} ${p.clienteGrupo || ''} ${p.clienteCnpj || cli(p.cliente)?.cnpj || ''}`).includes(q) ||
-    (qNum.length >= 3 && soDigitos(p.clienteCnpj || cli(p.cliente)?.cnpj).includes(qNum));
-  $('#filtros').innerHTML = FILTROS.filter(([v]) => !DEMO || v === 'todos' || v === 'orc')
-    .map(([v,t]) => `<button class="chip" data-filtro="${esc(v)}" aria-pressed="${filtro===v}">${t}${v === 'orc' && meusOrc.length ? ' (' + meusOrc.length + ')' : ''}</button>`).join('');
-  let lista;
-  if(filtro === 'orc') lista = meusOrc;
-  else if(filtro === 'todos') lista = todos;
-  else if(GRUPOS_FILTRO[filtro]) lista = todos.filter(p => GRUPOS_FILTRO[filtro].includes(situacaoDe(p)) && p.sync !== 'pendente');
-  else lista = todos.filter(p => situacaoDe(p) === filtro && p.sync !== 'pendente');
-  lista = lista.filter(bateVenda);
-  const ul = $('#lista-pedidos');
-  ul.innerHTML = lista.length ? lista.map(cartaoPedido).join('')
-    : `<li class="empty">${filtro === 'orc' ? 'Nada em negociação. No Novo pedido, use "Salvar como orçamento".' : todos.length ? 'Nenhum pedido nesta situação.' : 'Nenhum pedido ainda. Toque em <b>+ Novo pedido</b> para começar.'}</li>`;
-  renderAprovar(todos);
+  $('#vd-novo').hidden = false;
+  const cont = k => todas.filter(p => k === 'todos' || etapaDe(p) === k).length;
+  if(vdAba === null) vdAba = cont('apr') ? 'apr' : 'todos';
+  const abas = ABAS.filter(([v]) => !DEMO || v === 'todos' || v === 'neg');
+  if(!abas.some(([v]) => v === vdAba)) vdAba = 'todos';
+  $('#filtros').innerHTML = abas.map(([v, t]) => `<button class="chip${v === 'apr' && cont('apr') ? ' alerta' : ''}" data-filtro="${esc(v)}" aria-pressed="${vdAba === v}">${t}<small>${cont(v)}</small></button>`).join('');
+  const lista = linhasVendas(vdAba), tot = lista.reduce((s, p) => s + (Number(p.total) || 0), 0);
+  $('#vd-info').innerHTML = `<span>${PROX[vdAba]}</span><b>${lista.length} ${lista.length === 1 ? 'item' : 'itens'} · ${brl(tot)}</b>`;
+  const box = $('#lista-pedidos');
+  if(!lista.length){
+    box.innerHTML = `<p class="empty">${vdAba === 'neg' ? 'Nada em negociação. No Novo pedido, use "Salvar como orçamento".' : todas.length ? 'Nada nesta aba.' : 'Nenhum pedido ainda. Toque em <b>+ Novo pedido</b> para começar.'}</p>`;
+  }else if(ehMobile() || DEMO){
+    box.innerHTML = `<ul class="orders">${lista.map(p => cartaoVenda(p, vdAba)).join('')}</ul>`;
+  }else{
+    const cols = COLS_VENDAS[vdAba], temAc = vdAba !== 'todos' && lista.some(p => acoesVenda(p, vdAba));
+    box.innerHTML = `<div class="tabela-wrap vd-tab"><table class="tabela"><thead><tr>${cols.map(c => `<th${c[2] ? ` class="${c[2]}"` : ''}>${c[0]}</th>`).join('')}${temAc ? '<th></th>' : ''}</tr></thead><tbody>` +
+      lista.map(p => `<tr class="vd-lin${situacaoDe(p) === CANCELADO ? ' cancelado' : ''}" ${p.tipo === 'orcamento' ? 'data-orc' : 'data-id'}="${esc(p.id)}">${cols.map(c => `<td${c[2] ? ` class="${c[2]}"` : ''}>${c[1](p)}</td>`).join('')}${temAc ? `<td class="ac"><div class="vd-acoes">${acoesVenda(p, vdAba)}</div></td>` : ''}</tr>`).join('') +
+      '</tbody></table></div>';
+  }
+  renderAprovar(todas.filter(p => p.tipo !== 'orcamento'));
 }
 function renderAprovar(todos){
   const fila = ehAdmin() ? (todos || listaPedidos()).filter(p => situacaoDe(p) === AGUARDANDO && p.sync !== 'pendente') : [];
@@ -2929,11 +3395,99 @@ function renderAprovar(todos){
 $('#lista-aprovar-lojas').addEventListener('click', e => { const b = e.target.closest('[data-loja]'); if(b) abrirLoja(b.dataset.loja); });
 $('#filtros').addEventListener('click', e => {
   const b = e.target.closest('[data-filtro]'); if(!b) return;
-  filtro = b.dataset.filtro; renderPedidos();
+  vdAba = b.dataset.filtro; renderPedidos();
 });
-$('#lista-pedidos').addEventListener('click', e => { const b = e.target.closest('[data-orc]'); if(b) abrirOrcamento(b.dataset.orc); });
+matchMedia('(min-width: 1000px)').addEventListener?.('change', () => { if(!$('#v-pedidos').hidden) renderPedidos(); });
 $('#btn-atualizar-pedidos').addEventListener('click', () => carregarPedidos(true));
 $('#vendas-busca').addEventListener('input', renderPedidos);
+$('#vd-novo').addEventListener('click', () => irPara('novo'));
+
+// Cliques da lista: botões de ação da etapa ou abrir o pedido/orçamento.
+function achaVenda(id){ return todasVendas().find(x => x.id === id); }
+$('#lista-pedidos').addEventListener('click', e => {
+  const a = e.target.closest('[data-ac]');
+  if(a){ e.stopPropagation(); acaoVenda(a.dataset.ac, a.dataset.id); return; }
+  const o = e.target.closest('[data-orc]'); if(o){ abrirOrcamento(o.dataset.orc); return; }
+  const d = e.target.closest('[data-id]'); if(d) abrirPedido(d.dataset.id);
+});
+$('#lista-pedidos').addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.matches('.vd-card')){ e.preventDefault(); e.target.click(); } });
+async function acaoVenda(ac, id){
+  const p = achaVenda(id); if(!p) return;
+  if(ac === 'tr'){ carregarNoPedido(p, `Orçamento ${p.num} carregado no Novo pedido: confira e feche o pedido.`); st.orcamento = p.id; return; }
+  if(ac === 'ex'){ excluirOrcamentoApp(p); return; }
+  if(ac === 'ap'){ mudarSituacao(p, APROVADO); return; }
+  if(ac === 'rc'){ abrirMotivo(p, 'Recusar pedido?', 'Ele vai para Recusados / Cancelados com o motivo.', ['Preço acima do combinado', 'Cliente desistiu', 'Pedido duplicado', 'Outro'], 'Recusar pedido', m => mudarSituacao(p, RECUSADO, m)); return; }
+  if(ac === 'en'){ abrirConferencia(p); return; }
+  if(ac === 're'){ abrirConferencia(p, true); return; }
+  if(ac === 'fa'){ abrirFaturamento(p, false); return; }
+  if(ac === 'nf'){ abrirFaturamento(p, true); return; }
+  if(ac === 'fi'){ mudarSituacao(p, ENTREGUE); return; }
+  if(ac === 'cr'){ abrirMotivo(p, 'O cliente recusou na entrega?', 'O pedido não foi recebido e vai para Recusados / Cancelados com o motivo.', ['Cliente recusou o produto', 'Produto com defeito ou avaria', 'Endereço não encontrado', 'Outro'], 'Registrar recusa na entrega', m => mudarSituacao(p, 'recusaEntrega', m)); return; }
+}
+function abrirMotivo(p, titulo, texto, motivos, rotulo, fn){
+  abrirSheet(`
+    <div class="sheet-head"><h2>${esc(titulo)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta"><b>${esc(p.num)}</b> · ${esc(p.clienteNome)}<br>${esc(texto)}</p>
+    <label class="field"><span class="lbl">Motivo</span><select id="mt-sel">${motivos.map(m => `<option>${esc(m)}</option>`).join('')}</select></label>
+    <label class="field" id="mt-out" hidden><span class="lbl">Qual?</span><input id="mt-txt" autocomplete="off" placeholder="Escreva o motivo"></label>
+    <div class="btns"><button class="btn perigo" id="mt-ok" type="button">${esc(rotulo)}</button><button class="btn ghost" data-close type="button">Voltar</button></div>`);
+  $('#mt-sel').addEventListener('change', () => { $('#mt-out').hidden = $('#mt-sel').value !== 'Outro'; });
+  $('#mt-ok').addEventListener('click', () => { const m = $('#mt-sel').value === 'Outro' ? ($('#mt-txt').value.trim() || 'Outro') : $('#mt-sel').value; fn(m); });
+}
+async function excluirOrcamentoApp(o){
+  if(!confirm(`Excluir o orçamento ${o.num}?`)) return;
+  if(!DEMO && remotos.some(r => r.id === o.id)){
+    try{ await api({acao: 'orcamentoExcluir', id: o.id}); remotos = remotos.filter(r => r.id !== o.id); }
+    catch(e){ if(e.login) sessaoCaiu(e.message); else toast('Não deu para excluir agora. Tente de novo com internet.', 5000); return; }
+  }
+  orcamentos = orcamentos.filter(x => x.id !== o.id); LS.set('orcamentos', orcamentos); renderPedidos(); toast('Orçamento excluído');
+}
+// Depois de aprovar: leva direto ao próximo passo (avisar a marca).
+function abrirProximoPasso(p){
+  abrirSheet(`
+    <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div><h2>Pedido aprovado</h2><p class="meta"><b>${esc(p.num)}</b> já está em Aprovados.</p></div>
+    <p class="note"><b>Próximo passo:</b> avisar a marca por e-mail.</p>
+    <div class="btns">
+      <button class="btn aprovar" id="pp-enviar" type="button">Enviar à marca agora</button>
+      <button class="btn sec" id="pp-comp" type="button">Compartilhar</button>
+      <button class="btn ghost" data-close type="button">Depois</button></div>`);
+  $('#pp-enviar').addEventListener('click', () => abrirConferencia(p));
+  $('#pp-comp').addEventListener('click', () => abrirCompartilhar(p));
+}
+function abrirCompartilhar(p){
+  abrirSheet(`<div class="sheet-head"><h2>Compartilhar ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta"><b>${esc(p.clienteNome)}</b> · ${brl(p.total)}</p>${acoesHTML(p)}`);
+  ligarAcoes(p);
+}
+// Exportar a lista que está na tela (Excel ou PDF).
+function dadosListaVendas(){
+  const lista = linhasVendas(vdAba);
+  const cab = ['Pedido', 'Data', 'Cliente', 'Situação', 'Pagamento', 'Entrega', 'NF', 'Valor (R$)'];
+  const linhas = lista.map(p => [String(p.num), new Date(p.data).toLocaleDateString('pt-BR'), p.clienteNome, p.tipo === 'orcamento' ? 'Orçamento' : rotulo(situacaoDe(p)), p.pagamento || '', p.entrega ? diaBR(p.entrega) : '', p.nf || '', Number(p.total) || 0]);
+  return {cab, linhas, titulo: 'Vendas · ' + (ABAS.find(a => a[0] === vdAba)?.[1] || '')};
+}
+async function exportarListaVendas(tipo){
+  const d = dadosListaVendas(); if(!d.linhas.length){ toast('Nada para exportar nesta aba.'); return; }
+  if(tipo === 'xlsx'){
+    try{
+      const X = await carregarXLSX(), ws = X.utils.aoa_to_sheet([d.cab, ...d.linhas]);
+      ws['!cols'] = [14, 12, 34, 22, 14, 12, 12, 14].map(w => ({wch: w}));
+      for(let r = 1; r <= d.linhas.length; r++){ const c = ws[X.utils.encode_cell({r, c: 7})]; if(c) c.z = '"R$" #,##0.00'; }
+      const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Vendas');
+      await entregarArquivo(new Blob([X.write(wb, {bookType: 'xlsx', type: 'array'})]), `Vendas-${vdAba}-${isoDia(new Date())}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', d.titulo);
+    }catch(e){ toast('Não deu para gerar o Excel'); }
+    return;
+  }
+  // PDF da lista: abre a lista numa aba para ver, imprimir ou salvar como PDF.
+  const w = window.open('', '_blank'); if(!w){ toast('O navegador bloqueou a nova aba.'); return; }
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(d.titulo)}</title><style>body{font:13px Arial,sans-serif;margin:24px;color:#111}h1{font-size:18px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:5px 7px;text-align:left}th{background:#e8eef6}td:last-child,th:last-child{text-align:right}</style>
+    <h1>${esc(d.titulo)}</h1><p>${new Date().toLocaleDateString('pt-BR')} · ${d.linhas.length} itens · ${esc(brl(d.linhas.reduce((s, l) => s + l[7], 0)))}</p>
+    <table><tr>${d.cab.map(c => `<th>${esc(c)}</th>`).join('')}</tr>${d.linhas.map(l => `<tr>${l.map((c, i) => `<td>${i === 7 ? esc(brl(c)) : esc(c)}</td>`).join('')}</tr>`).join('')}</table>`);
+  w.document.close(); setTimeout(() => w.print(), 400);
+}
+$('#vd-exportar').addEventListener('click', e => { e.stopPropagation(); $('#vd-menu').hidden = !$('#vd-menu').hidden; });
+document.addEventListener('click', () => { const m = $('#vd-menu'); if(m) m.hidden = true; });
+$('#vd-menu').addEventListener('click', e => { const b = e.target.closest('[data-exp]'); if(b) exportarListaVendas(b.dataset.exp); });
 
 function abrirPedido(id){
   // (pedido antigo que só veio no relatório também abre)
@@ -2956,14 +3510,15 @@ function abrirPedido(id){
     ${s === APROVADO && temEmail ? '<button class="btn aprovar" id="ad-email">Conferir e enviar ao fornecedor</button>' : ''}
     ${s === APROVADO ? `<button class="btn sec" id="ad-enviado">Marcar como enviado${temEmail ? ' (sem e-mail)' : ''}</button>` : ''}
     ${s === ENVIADO && temEmail ? '<button class="btn sec" id="ad-reenviar">Conferir e reenviar ao fornecedor</button>' : ''}
-    ${[APROVADO, ENVIADO].includes(s) ? '<button class="btn sec" id="ad-faturar">Fornecedor faturou: registrar NF e mover para Entrega</button>' : ''}
-    ${s === FATURADO || s === ENTREGUE ? '<button class="btn ghost" id="ad-faturar">Corrigir dados da NF</button>' : ''}
-    ${[ENVIADO, FATURADO].includes(s) ? '<button class="btn sec" id="ad-entregue">Marcar como entregue</button>' : ''}
+    ${[APROVADO, ENVIADO].includes(s) ? '<button class="btn sec" id="ad-faturar">Marcar como faturado (NF opcional)</button>' : ''}
+    ${s === FATURADO ? '<button class="btn sec" id="ad-entregue">Entregue</button><button class="btn perigo" id="ad-recusou">Cliente recusou</button>' : ''}
+    ${s === FATURADO || s === ENTREGUE ? `<button class="btn ghost" id="ad-nf">${p.nf ? 'Corrigir dados da NF' : '+ Adicionar NF (opcional)'}</button>` : ''}
     ${s === APROVADO && !temEmail ? `<p class="meta" style="margin:0">A marca ${esc(p.empresaNome)} está sem e-mail na aba Empresas: envie o PDF pelo WhatsApp e marque como enviado.</p>` : ''}
   </div>`;
   abrirSheet(`
     <div class="sheet-head"><h2>Pedido ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${caixa}
+    ${barraAndamento(p)}
     <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}${p.clienteCnpj ? `<br>CNPJ ${esc(p.clienteCnpj)}` : ''}${p.clienteGrupo ? ` · 🏢 ${esc(p.clienteGrupo)}` : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
     ${resumoHTML(p.itens)}
     ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
@@ -2993,7 +3548,9 @@ function abrirPedido(id){
   $('#ad-enviado')?.addEventListener('click', () => mudarSituacao(p, ENVIADO));
   $('#ad-reenviar')?.addEventListener('click', () => abrirConferencia(p, true));
   $('#ad-entregue')?.addEventListener('click', () => mudarSituacao(p, ENTREGUE));
-  $('#ad-faturar')?.addEventListener('click', () => abrirFaturamento(p));
+  $('#ad-faturar')?.addEventListener('click', () => abrirFaturamento(p, false));
+  $('#ad-nf')?.addEventListener('click', () => abrirFaturamento(p, true));
+  $('#ad-recusou')?.addEventListener('click', () => abrirMotivo(p, 'O cliente recusou na entrega?', 'O pedido não foi recebido e vai para Recusados / Cancelados com o motivo.', ['Cliente recusou o produto', 'Produto com defeito ou avaria', 'Endereço não encontrado', 'Outro'], 'Registrar recusa na entrega', m => mudarSituacao(p, 'recusaEntrega', m)));
   $('#ad-copiar-chave')?.addEventListener('click', async () => { try{ await navigator.clipboard.writeText(p.chaveNf); toast('Chave copiada'); }catch(e){ toast('Não deu para copiar'); } });
 }
 
@@ -3037,31 +3594,39 @@ function abrirConferencia(p, reenvio){
 }
 // Faturamento: nº da NF, chave de acesso, data, valor faturado e o arquivo (PDF ou XML) que a marca mandou.
 // O arquivo fica numa pasta do Drive da planilha; dá para mandar a NF por e-mail para o cliente.
-function abrirFaturamento(p){
-  const c = cli(p.cliente) || {}, hoje = isoDia(new Date());
+function abrirFaturamento(p, soNf){
+  const c = cli(p.cliente) || {}, hoje = isoDia(new Date()), jaFat = [FATURADO, ENTREGUE].includes(situacaoDe(p));
   abrirSheet(`
-    <div class="sheet-head"><h2>Faturamento · ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <div class="sheet-head"><h2>${soNf || jaFat ? 'Nota fiscal' : 'Marcar como faturado'} · ${esc(p.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <p class="meta"><b>${esc(p.clienteNome)}</b> · ${esc(p.empresaNome)} · pedido de ${brl(p.total)}</p>
     <form class="form-loja" id="form-fat" novalidate>
-      <div class="duas">
-        <label class="field"><span class="lbl">Nº da NF *</span><input id="ft-nf" inputmode="numeric" value="${esc(p.nf || '')}" autocomplete="off"></label>
-        <label class="field"><span class="lbl">Data do faturamento</span><input id="ft-data" type="date" value="${esc(p.dataFat || hoje)}"></label>
-      </div>
-      <label class="field"><span class="lbl">Valor faturado (R$)</span><input id="ft-valor" inputmode="decimal" value="${numFmt(p.valorFat || p.total)}" autocomplete="off">
-        <span class="cnpj-info">Se a marca faturou menos (falta de estoque) ou mais, coloque o valor da nota.</span></label>
-      <label class="field"><span class="lbl">Chave de acesso <small>(44 números, opcional)</small></span><input id="ft-chave" inputmode="numeric" value="${esc(p.chaveNf || '')}" autocomplete="off"></label>
-      <label class="field"><span class="lbl">Arquivo da NF <small>(PDF ou XML que a marca mandou, opcional)</small></span>
-        <input id="ft-arq" type="file" accept=".pdf,.xml,application/pdf,text/xml,application/xml">
-        ${p.arquivoNf ? '<span class="cnpj-info">Já tem um arquivo guardado; escolher outro substitui.</span>' : ''}</label>
-      ${c.emailNotas ? `<label class="field" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ft-enviar" style="width:20px;height:20px">
-        <span>Enviar o arquivo da NF por e-mail para <b>${esc(c.emailNotas)}</b></span></label>` : '<p class="dica-preco">Cadastre o "E-mail para envio de notas" do cliente para poder mandar a NF por e-mail.</p>'}
-      <button class="btn primary" id="ft-salvar" type="submit">Salvar faturamento</button>
+      <label class="field"><span class="lbl">Número da NF <small>(opcional)</small></span><input id="ft-nf" inputmode="numeric" value="${esc(p.nf || '')}" autocomplete="off" placeholder="Pode deixar em branco"></label>
+      <details class="mais-nf"${p.chaveNf || p.arquivoNf || p.valorFat ? ' open' : ''}><summary>+ Mais dados da NF (chave, data, valor, arquivo)</summary>
+        <label class="field"><span class="lbl">Chave de acesso <small>(44 números: preenche o número da NF sozinha)</small></span><input id="ft-chave" inputmode="numeric" value="${esc(p.chaveNf || '')}" autocomplete="off"><span class="cnpj-info" id="ft-chave-info"></span></label>
+        <div class="duas">
+          <label class="field"><span class="lbl">Data do faturamento</span><input id="ft-data" type="date" value="${esc(p.dataFat || hoje)}"></label>
+          <label class="field"><span class="lbl">Valor faturado (R$)</span><input id="ft-valor" inputmode="decimal" value="${numFmt(p.valorFat || p.total)}" autocomplete="off"></label>
+        </div>
+        <span class="cnpj-info">Se a marca faturou menos (falta de estoque) ou mais, coloque o valor da nota.</span>
+        <label class="field"><span class="lbl">Arquivo da NF <small>(PDF ou XML que a marca mandou)</small></span>
+          <input id="ft-arq" type="file" accept=".pdf,.xml,application/pdf,text/xml,application/xml">
+          ${p.arquivoNf ? '<span class="cnpj-info">Já tem um arquivo guardado; escolher outro substitui.</span>' : ''}</label>
+        ${c.emailNotas ? `<label class="field" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ft-enviar" style="width:20px;height:20px">
+          <span>Enviar o arquivo da NF por e-mail para <b>${esc(c.emailNotas)}</b></span></label>` : '<p class="dica-preco">Cadastre o "E-mail para envio de notas" do cliente para poder mandar a NF por e-mail.</p>'}
+      </details>
+      <button class="btn primary" id="ft-salvar" type="submit">${soNf || jaFat ? 'Salvar NF' : 'Marcar como faturado'}</button>
     </form>`);
-  $('#ft-arq').addEventListener('change', () => { if($('#ft-enviar') && $('#ft-arq').files[0]) $('#ft-enviar').checked = true; });
+  $('#ft-arq')?.addEventListener('change', () => { if($('#ft-enviar') && $('#ft-arq').files[0]) $('#ft-enviar').checked = true; });
+  // Chave de acesso (44 números): o número da NF está dentro dela (posições 26 a 34).
+  $('#ft-chave').addEventListener('input', () => {
+    const d = soDigitos($('#ft-chave').value), i = $('#ft-chave-info');
+    if(d.length >= 44){ const n = String(parseInt(d.substr(25, 9), 10)); if(n && n !== 'NaN'){ $('#ft-nf').value = n; i.textContent = 'Chave lida: NF ' + n + ' preenchida.'; } }
+    else i.textContent = d.length ? d.length + ' de 44 números' : '';
+  });
   $('#form-fat').addEventListener('submit', async ev => {
     ev.preventDefault();
     const nf = $('#ft-nf').value.trim(), chave = soDigitos($('#ft-chave').value), valor = numBR($('#ft-valor').value || '0');
-    if(!nf){ toast('Digite o número da NF'); $('#ft-nf').focus(); return; }
+    if((soNf || jaFat) && !nf){ toast('Digite o número da NF'); $('#ft-nf').focus(); return; }
     if(chave && chave.length !== 44){ toast('A chave de acesso tem 44 números (tem ' + chave.length + ').'); $('#ft-chave').focus(); return; }
     if(isNaN(valor) || valor < 0){ toast('Valor faturado inválido'); return; }
     const extra = {nf, chave, dataFat: $('#ft-data').value, valorFat: valor, enviarCliente: !!$('#ft-enviar')?.checked};
@@ -3075,9 +3640,9 @@ function abrirFaturamento(p){
     mudarSituacao(p, FATURADO, '', extra);
   });
 }
-['#lista-pedidos','#lista-aprovar'].forEach(sel => $(sel).addEventListener('click', e => {
+$('#lista-aprovar').addEventListener('click', e => {
   const b = e.target.closest('[data-id]'); if(b) abrirPedido(b.dataset.id);
-}));
+});
 
 async function mudarSituacao(p, nova, motivo, extra){
   // Pedido que nem chegou à planilha: cancela só aqui e não envia mais.
@@ -3097,9 +3662,12 @@ async function mudarSituacao(p, nova, motivo, extra){
     LS.set('pedidosServidor', {usuario: sessao.usuario, lista: remotos});
     const local = pedidos.find(x => x.id === p.id);
     if(local){ local.status = j.status; LS.set('pedidos', pedidos); }
-    fecharSheet(); renderPedidos();
+    fecharSheet();
+    // Aprovou: o pedido já passa para a aba Aprovados e a tela mostra o próximo passo (avisar a marca).
+    if(j.status === APROVADO && ehAdmin()){ vdAba = 'ok'; renderPedidos(); abrirProximoPasso(Object.assign({}, p, {status: j.status})); carregarPedidos(false); return; }
+    renderPedidos();
     // O aviso do servidor (ex.: "enviado por e-mail para ...", "marca sem e-mail") vale mais que a mensagem padrão.
-    toast(j.aviso || ({[APROVADO]:'Pedido aprovado pelo cliente', [RECUSADO]:'Pedido recusado', [CANCELADO]:'Pedido cancelado', [ENVIADO]:'Pedido marcado como enviado',
+    toast(j.aviso || (nova === 'recusaEntrega' ? 'Recusa na entrega registrada' : {[APROVADO]:'Pedido aprovado pelo cliente', [RECUSADO]:'Pedido recusado', [CANCELADO]:'Pedido cancelado', [ENVIADO]:'Pedido marcado como enviado',
       [FATURADO]:'Faturamento registrado', [ENTREGUE]:'Pedido marcado como entregue'}[j.status] || 'Pedido atualizado'), j.aviso ? 6000 : 0);
     carregarPedidos(false);
   }catch(e){
@@ -3116,27 +3684,38 @@ function renderCatalogo(){
     : em ? `Catálogo da planilha, atualizado em ${dataBR(em)}. Mude produtos e preços na planilha e toque em Atualizar.`
          : 'O catálogo ainda não foi carregado da planilha.';
   $('#btn-atualizar').hidden = DEMO;
-  $('#btn-importar-precos').hidden = DEMO || !ehAdmin();   // só o administrador atualiza preços
+  $('#cat-planilha-wrap').hidden = DEMO || !ehAdmin();   // só o administrador mexe em preços e produtos por planilha
+  const baseP = (DATA?.empresas || []).filter(e => !empAtiva() || e.id === empAtiva()).flatMap(e => prodsDe(e.id));
+  const cardsC = [['todos','Produtos', baseP.length], ['semfoto','Sem foto', baseP.filter(p => !p.foto).length], ['semprec','Sem preço', baseP.filter(p => !(p.preco > 0) && !p.livre).length], ['livre','Preço livre', baseP.filter(p => p.livre).length]];
+  $('#cat-cards').innerHTML = cardsC.map(([k,t,n]) => `<button class="rel-card" data-cf="${k}" aria-pressed="${catFiltro === k}"><small>${t}</small><strong>${n}</strong></button>`).join('');
+  const qC = norm($('#cat-busca').value || '');
+  const passa = p => (!qC || norm(p.nome + ' ' + p.id).includes(qC)) && (catFiltro === 'todos' || (catFiltro === 'semfoto' && !p.foto) || (catFiltro === 'semprec' && !(p.preco > 0) && !p.livre) || (catFiltro === 'livre' && p.livre));
   // Por empresa e, dentro dela, por categoria. Cada categoria abre e fecha; a lista só é montada ao abrir.
   $('#catalogo').innerHTML = (DATA?.empresas || []).filter(e => !empAtiva() || e.id === empAtiva()).map(e => {
-    const ps = prodsDe(e.id);
+    const ps = prodsDe(e.id).filter(passa);
     if(!ps.length) return `<div class="cat-group"><h2>${esc(e.nome)}</h2><p class="empty">Sem produtos.</p></div>`;
-    const cats = categoriasDe(e.id);
-    const semCat = ps.filter(p => !catDe(p)).length;
-    const secoes = [...cats, ...(semCat ? [['', semCat]] : [])];
+    const cc = {}; ps.forEach(p => { const c = catDe(p); cc[c] = (cc[c] || 0) + 1; });
+    const secoes = Object.keys(cc).sort((a, b) => (a === '') - (b === '') || a.localeCompare(b, 'pt-BR')).map(c => [c, cc[c]]);
     return `<div class="cat-group"><h2>${esc(e.nome)} <small style="font-size:15px;color:var(--muted)">${ps.length} produtos</small></h2>` +
-      secoes.map(([c, n]) => `<details class="cat-sec" data-emp="${esc(e.id)}" data-cat="${esc(c)}"${secoes.length === 1 ? ' open' : ''}>
+      secoes.map(([c, n]) => `<details class="cat-sec" data-emp="${esc(e.id)}" data-cat="${esc(c)}"${secoes.length === 1 || qC || catFiltro !== 'todos' ? ' open' : ''}>
         <summary>${esc(c || (secoes.length === 1 ? 'Produtos' : 'Sem categoria'))} <small>${n}</small></summary><ul class="prod-list"></ul></details>`).join('') + '</div>';
   }).join('');
   document.querySelectorAll('#catalogo details[open]').forEach(preencherSecao);
 }
 function preencherSecao(d){
   const ul = d.querySelector('ul'); if(ul.childElementCount) return;
-  ul.innerHTML = prodsDe(d.dataset.emp).filter(p => catDe(p) === d.dataset.cat).map(p => `<li class="prod">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
+  const qC = norm($('#cat-busca').value || '');
+  const passa = p => (!qC || norm(p.nome + ' ' + p.id).includes(qC)) && (catFiltro === 'todos' || (catFiltro === 'semfoto' && !p.foto) || (catFiltro === 'semprec' && !(p.preco > 0) && !p.livre) || (catFiltro === 'livre' && p.livre));
+  ul.innerHTML = prodsDe(d.dataset.emp).filter(p => catDe(p) === d.dataset.cat && passa(p)).map(p => `<li class="prod">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
     <div class="prod-sub">${esc(p.un)}</div></div><strong>${brl(p.preco)}</strong></li>`).join('');
 }
 $('#catalogo').addEventListener('toggle', e => { if(e.target.open) preencherSecao(e.target); }, true);
 $('#btn-atualizar').addEventListener('click', () => carregarCatalogo(true));
+var catFiltro = 'todos';
+$('#cat-cards').addEventListener('click', e => { const b = e.target.closest('[data-cf]'); if(b){ catFiltro = catFiltro === b.dataset.cf ? 'todos' : b.dataset.cf; renderCatalogo(); } });
+$('#cat-busca').addEventListener('input', renderCatalogo);
+$('#cat-planilha').addEventListener('click', e => { e.stopPropagation(); $('#cat-menu').hidden = !$('#cat-menu').hidden; });
+document.addEventListener('click', () => { $('#cat-menu').hidden = true; });
 
 /* ---------- Atualizar preços por planilha (administrador) ----------
    Arquivo Excel ou CSV com Código e Preço (e Empresa, se o código se repete entre marcas).
@@ -3239,6 +3818,68 @@ function abrirImportarPrecos(){
   });
 }
 $('#btn-importar-precos').addEventListener('click', abrirImportarPrecos);
+
+/* ---------- Cadastrar produtos por planilha (administrador) ---------- */
+const COLS_PROD = ['Empresa', 'Código', 'Nome', 'Unidade', 'Categoria', 'Preço'];
+async function baixarModeloProdutos(){
+  try{
+    const X = await carregarXLSX(), emp = empAtiva() || (DATA?.empresas?.[0]?.id || 'JFA');
+    const ws = X.utils.aoa_to_sheet([COLS_PROD, [emp, 'ABC123', 'Produto de exemplo (apague esta linha)', 'UN', 'Categoria', 0]]);
+    ws['!cols'] = [{wch: 12}, {wch: 14}, {wch: 44}, {wch: 8}, {wch: 20}, {wch: 12}];
+    const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Produtos');
+    await entregarArquivo(new Blob([X.write(wb, {bookType: 'xlsx', type: 'array'})]), 'modelo-produtos.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Modelo de produtos');
+  }catch(e){ console.error(e); toast('Não deu para gerar o modelo'); }
+}
+function lerPlanilhaProdutos(linhas){
+  const lim = linhas.filter(l => l.some(c => String(c ?? '').trim() !== ''));
+  if(lim.length < 2) return [];
+  const cab = lim[0].map(c => norm(String(c ?? '')).trim());
+  const ix = ns => cab.findIndex(c => ns.some(n => c === n || c.startsWith(n)));
+  const [iE, iC, iN, iU, iG, iP] = [ix(['empresa', 'marca']), ix(['codigo', 'cod', 'sku']), ix(['nome', 'produto', 'descricao']), ix(['unidade', 'un']), ix(['categoria']), ix(['preco', 'valor'])];
+  if(iC < 0 || iN < 0) return [];
+  const g = (l, i) => i >= 0 ? String(l[i] ?? '').trim() : '';
+  return lim.slice(1).map(l => ({empresa: g(l, iE) || empAtiva() || '', codigo: g(l, iC), nome: g(l, iN), un: g(l, iU), categoria: g(l, iG), preco: iP >= 0 ? precoDoArquivo(l[iP]) : 0}));
+}
+function abrirCadastrarProdutos(){
+  let itens = [];
+  abrirSheet(`
+    <div class="sheet-head"><h2>Cadastrar produtos por planilha</h2><button class="x" data-close aria-label="Fechar">×</button></div>
+    <p class="meta">Colunas: <b>Empresa, Código, Nome, Unidade, Categoria, Preço</b>. Só entram produtos novos; os que já existem são ignorados. Nada é gravado antes da sua confirmação. <a href="#" id="cp-modelo">Baixar modelo</a></p>
+    <label class="field"><span class="lbl">Arquivo</span><input type="file" id="cp-arq" accept=".xlsx,.xls,.csv,text/csv"></label>
+    <button class="btn primary" id="cp-conferir" disabled>Conferir</button><div id="cp-previa"></div>`);
+  $('#cp-modelo').addEventListener('click', e => { e.preventDefault(); baixarModeloProdutos(); });
+  $('#cp-arq').addEventListener('change', async e => {
+    itens = []; $('#cp-previa').innerHTML = ''; $('#cp-conferir').disabled = true; const f = e.target.files[0]; if(!f) return;
+    try{
+      const buf = await f.arrayBuffer();
+      if(/\.(csv|txt)$/i.test(f.name) || f.type === 'text/csv') itens = lerPlanilhaProdutos(lerCsvPrecos(buf));
+      else { const X = await carregarXLSX(), wb = X.read(buf, {type: 'array'}); itens = lerPlanilhaProdutos(X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, defval: ''})); }
+      if(!itens.length) toast('Não achei as colunas Código e Nome neste arquivo', 5000);
+      $('#cp-conferir').disabled = !itens.length;
+      if(itens.length) $('#cp-previa').innerHTML = `<p class="meta">${itens.length} linha${itens.length > 1 ? 's' : ''} lida${itens.length > 1 ? 's' : ''}. Toque em Conferir.</p>`;
+    }catch(err){ console.error(err); toast('Não deu para ler este arquivo', 5000); }
+  });
+  const mostrar = (r, gravado) => {
+    const c = r.resumo, l = est => r.resultados.filter(x => x.estado === est).slice(0, 40);
+    const bloco = (est, tit) => l(est).length ? `<h3 class="sub-h">${tit} (${c[est]})</h3><ul class="imp-lista">${l(est).map(x => `<li><span>${esc(x.nome || x.codigo)}</span><span>${esc(x.id || x.empresa || '')}</span></li>`).join('')}</ul>` : '';
+    $('#cp-previa').innerHTML = `<div class="rel-cards imp-cards"><div class="rel-card"><small>${gravado ? 'Cadastrados' : 'Serão cadastrados'}</small><strong>${c.novo}</strong></div><div class="rel-card"><small>Já existem</small><strong>${c.existe}</strong></div><div class="rel-card"><small>Com problema</small><strong>${c.invalido}</strong></div></div>
+      ${bloco('novo', gravado ? 'Cadastrados' : 'Serão cadastrados')}${bloco('invalido', 'Faltou empresa, código ou nome')}
+      ${gravado ? '<button class="btn ghost" data-close>Fechar</button>' : (c.novo ? `<button class="btn primary" id="cp-gravar" style="margin-top:10px">Cadastrar ${c.novo} produto${c.novo > 1 ? 's' : ''}</button>` : '<p class="meta">Nada novo para cadastrar.</p>')}`;
+    $('#cp-gravar')?.addEventListener('click', async () => {
+      const b = $('#cp-gravar'); b.disabled = true; b.textContent = 'Gravando…';
+      try{ const g = await api({acao: 'produtosImportar', itens, simular: false}); mostrar(g, true); toast('Produtos cadastrados'); carregarCatalogo(false); }
+      catch(err){ b.disabled = false; b.textContent = 'Tentar de novo'; if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para gravar', 5000); }
+    });
+  };
+  $('#cp-conferir').addEventListener('click', async () => {
+    const b = $('#cp-conferir'); b.disabled = true; b.textContent = 'Conferindo…';
+    try{ mostrar(await api({acao: 'produtosImportar', itens, simular: true}), false); }
+    catch(err){ if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para conferir', 5000); }
+    finally{ b.disabled = false; b.textContent = 'Conferir'; }
+  });
+}
+$('#btn-cad-produtos').addEventListener('click', abrirCadastrarProdutos);
+$('#btn-modelo-produtos').addEventListener('click', baixarModeloProdutos);
 
 /* ---------- Navegação, sheet, toast, rede ---------- */
 function irPara(view){
