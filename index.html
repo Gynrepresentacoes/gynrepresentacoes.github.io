@@ -661,6 +661,19 @@ body{font-variant-numeric:tabular-nums}
   #v-novo:not([hidden]){grid-template-columns:minmax(0,1fr) 420px;gap:28px}
   #produtos.prod-list{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
   #produtos.prod-list .grupo,#produtos.prod-list .empty{grid-column:1/-1}
+  /* Lista compacta (Sua conta > Tamanho da lista de produtos): uma linha por produto, com todos os campos à vista. */
+  html[data-dens="compacto"] #produtos.prod-list{grid-template-columns:1fr;gap:6px}
+  html[data-dens="compacto"] .prod-list .prod.pcard{flex-wrap:nowrap;align-items:center;padding:6px 10px;gap:10px}
+  html[data-dens="compacto"] .pcard > :first-child{flex:0 0 40px;width:40px;height:40px}
+  html[data-dens="compacto"] .pcard > :first-child img{width:40px;height:40px;object-fit:contain}
+  html[data-dens="compacto"] .pcard .prod-nome{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html[data-dens="compacto"] .pcard .prod-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html[data-dens="compacto"] .pcard .pc-hist{display:none}
+  html[data-dens="compacto"] .pcard .pc-campos{flex:0 0 auto}
+  html[data-dens="compacto"] .pc-f span{display:none}
+  html[data-dens="compacto"] .pc-f input{height:34px}
+  html[data-dens="compacto"] .pc-q{flex:0 0 56px}html[data-dens="compacto"] .pc-d{flex:0 0 56px}html[data-dens="compacto"] .pc-v{flex:0 0 92px}
+  html[data-dens="compacto"] .pc-add{height:34px;padding:0 12px}
   .cat-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:6px}
   .cat-chips::-webkit-scrollbar{display:block;height:6px}
   .cat-chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
@@ -1574,6 +1587,13 @@ $('#esq-form').addEventListener('submit', async ev => {
   finally{ $('#esq-ok').disabled = false; }
 });
 
+// Tamanho da lista de produtos (por aparelho): Automático = Compacto em telas de notebook (até 1500 px), Confortável em telas maiores.
+function aplicarDensidade(){
+  const m = LS.get('lista', 'auto');
+  const compacto = m === 'compacto' || (m === 'auto' && innerWidth <= 1500);
+  document.documentElement.dataset.dens = compacto ? 'compacto' : 'conforto';
+}
+aplicarDensidade(); addEventListener('resize', aplicarDensidade);
 function abrirConta(){
   if(DEMO){ toast('Modo demonstração: não há login'); return; }
   if(!sessao) return pedirLogin();
@@ -1592,7 +1612,11 @@ function abrirConta(){
     <span class="lbl">Estilo</span>
     <div class="tema-op" role="group" aria-label="Estilo">${[['suave','1 · Suave'],['classico','2 · Clássico']].map(([v,t]) =>
       `<button type="button" data-estilo="${v}" aria-pressed="${(LS.get('estilo', 'suave')) === v}">${t}</button>`).join('')}</div>
-    <p class="dica-preco" style="margin:0 0 4px">Muda o visual de todas as telas. Suave é o padrão das telas novas; Clássico é o visual de antes.</p>
+    <p class="dica-preco" style="margin:0 0 12px">Muda o visual de todas as telas. Suave é o padrão das telas novas; Clássico é o visual de antes.</p>
+    <span class="lbl">Tamanho da lista de produtos</span>
+    <div class="tema-op" role="group" aria-label="Tamanho da lista">${[['auto','Automático'],['conforto','Confortável'],['compacto','Compacto']].map(([v,t]) =>
+      `<button type="button" data-lista="${v}" aria-pressed="${(LS.get('lista', 'auto')) === v}">${t}</button>`).join('')}</div>
+    <p class="dica-preco" style="margin:0 0 4px">No computador, no Novo pedido. Automático usa Compacto em telas de notebook. A escolha fica salva só neste aparelho.</p>
     ${pend ? `<p class="note">Você tem ${pend} pedido${pend > 1 ? 's' : ''} aguardando internet. Eles serão enviados quando você entrar de novo.</p>` : ''}
     <div class="btns"><button class="btn sec" id="btn-sair">Sair</button></div>`);
   $('#btn-config-criador')?.addEventListener('click', abrirConfigCriador);
@@ -1603,6 +1627,11 @@ function abrirConta(){
     const s = b.dataset.estilo === 'classico' ? 'classico' : 'suave'; LS.set('estilo', s);
     document.documentElement.dataset.estilo = s;
     document.querySelectorAll('#sheet-body [data-estilo]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  });
+  document.querySelector('#sheet-body [aria-label="Tamanho da lista"]').addEventListener('click', e => {
+    const b = e.target.closest('[data-lista]'); if(!b) return;
+    LS.set('lista', b.dataset.lista); aplicarDensidade();
+    document.querySelectorAll('#sheet-body [data-lista]').forEach(x => x.setAttribute('aria-pressed', x === b));
   });
   document.querySelector('#sheet-body [aria-label="Tema"]').addEventListener('click', e => {
     const b = e.target.closest('[data-tema]'); if(!b) return;
