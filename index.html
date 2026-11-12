@@ -931,6 +931,12 @@ select:disabled option{color:var(--muted)}
 .lj-acoes .lig-menu{left:0;right:auto;top:auto;bottom:calc(100% + 6px);min-width:260px}
 .lig-menu small{display:block;font-weight:400;opacity:.75;font-size:12px}
 .lj-nota{color:var(--muted);font-size:12px;margin-top:6px}
+.conf-g{display:grid;grid-template-columns:1fr;gap:6px 26px}
+@media(min-width:700px){.conf-g{grid-template-columns:1fr 1fr}}
+.conf-tot{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px}.conf-tot b{font-size:20px}
+.conf-bt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.conf-bt .btn{width:100%}
+.conf-prev{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px}
+.conf-pe{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.conf-acoes{display:flex;gap:8px}.conf-acoes .btn{width:auto;padding:10px 16px}
 .lj-mais{margin-top:8px}.lj-mais summary{cursor:pointer;color:var(--acc-text,#4d8dff);font-weight:600;font-size:13px}
 @media(min-width:700px){.vd-hd .vd-btns{flex-wrap:nowrap;margin-left:auto}.vd-hd{flex-wrap:nowrap}}
 .vd-btns .chip,.vd-btns button{white-space:nowrap}
@@ -4048,25 +4054,30 @@ function abrirConferencia(p, reenvio){
     <div class="sheet-head"><h2>Conferir antes de enviar</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <p class="meta">Pedido <b>${esc(p.num)}</b> · confira os dados. Só depois de marcar "Conferi" o botão de enviar libera.</p>
     ${falta.length ? `<div class="situacao espera"><b>Atenção:</b> ${esc(falta.join('; '))}.</div>` : ''}
-    <h3 class="conf-h">Fornecedor (${esc(p.empresaNome)})</h3>
-    <dl class="ficha">${linha('E-mail(s) de destino', emails.join(', '))}${linha('Pedido mínimo', e.minimo ? brl(e.minimo) : '')}</dl>
-    <h3 class="conf-h">Quem representa</h3>
-    <dl class="ficha">${linha('Representação', rep.nome)}${linha('CNPJ', rep.cnpj)}${linha('Contato', [rep.contato, rep.telefone].filter(Boolean).join(' · '))}${linha('Responde para', rep.email)}</dl>
-    <h3 class="conf-h">Cliente</h3>
-    <dl class="ficha">${linha('Nome', p.clienteNome)}${linha('Razão social', c.razao)}${linha('CNPJ', c.cnpj || p.clienteCnpj)}${linha('Inscrição estadual', c.ie)}
-      ${linha('Cidade', c.cidade || p.clienteCidade)}${linha('Contato', [c.contato, c.telefone].filter(Boolean).join(' · '))}${linha('E-mail (compra)', c.emailCompra)}${linha('E-mail (notas)', c.emailNotas)}</dl>
-    <h3 class="conf-h">Entrega e pagamento</h3>
-    <dl class="ficha">${linha('Entregar em', endereco)}${linha('Entrega desejada', p.entrega ? diaBR(p.entrega) : '')}${linha('Transportadora', p.transportadora)}
-      ${linha('Frete', c.frete)}${linha('Pagamento', p.pagamento)}${linha('Observação', p.obs)}</dl>
-    <h3 class="conf-h">Itens</h3>
-    ${resumoHTML(p.itens)}
-    ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
-    <button class="btn sec" id="cf-pdf" type="button">Ver o PDF que vai junto</button>
-    <label class="conf-ok"><input type="checkbox" id="cf-ok"> Conferi os dados acima</label>
-    <div class="btns">
-      <button class="btn ghost" id="cf-voltar" type="button">Voltar ao pedido</button>
-      <button class="btn aprovar" id="cf-enviar" type="button" disabled>${reenvio ? 'Reenviar por e-mail' : 'Enviar por e-mail ao fornecedor'}</button>
-    </div>`);
+    <div class="conf-g">
+      <div>
+        <h3 class="conf-h">Fornecedor (${esc(p.empresaNome)})</h3>
+        <dl class="ficha">${linha('E-mail(s) de destino', emails.join(', '))}${linha('Pedido mínimo', e.minimo ? brl(e.minimo) : '')}</dl>
+        <h3 class="conf-h">Cliente</h3>
+        <dl class="ficha">${linha('Nome', p.clienteNome)}${linha('Razão social', c.razao)}${linha('CNPJ', c.cnpj || p.clienteCnpj)}${linha('Inscrição estadual', c.ie)}
+          ${linha('Cidade', c.cidade || p.clienteCidade)}${linha('Contato', [c.contato, c.telefone].filter(Boolean).join(' · '))}${linha('E-mail para notas', c.emailNotas)}</dl>
+      </div>
+      <div>
+        <h3 class="conf-h">Entrega e pagamento</h3>
+        <dl class="ficha">${linha('Entregar em', endereco)}${linha('Entrega desejada', p.entrega ? diaBR(p.entrega) : '')}${linha('Transportadora', p.transportadora)}
+          ${linha('Frete', c.frete)}${linha('Pagamento', p.pagamento)}${linha('Observação', p.obs)}</dl>
+        <div class="conf-tot"><span>Total (${p.itens.length} ${p.itens.length === 1 ? 'item' : 'itens'})</span><b>${brl(p.total)}</b></div>
+        ${p.desconto ? `<div class="meta" style="text-align:right">Subtotal ${brl(p.bruto ?? p.total)} · desconto ${String(p.desconto).replace('.', ',')}%</div>` : ''}
+      </div>
+    </div>
+    <div class="conf-bt"><button class="btn sec" id="cf-pdf" type="button">Ver PDF</button><button class="btn sec" id="cf-xls" type="button">Baixar Excel</button><button class="btn sec" id="cf-mail" type="button">Ver o e-mail</button></div>
+    <div id="cf-prev" class="conf-prev" hidden><b>Para:</b> ${esc(emails.join(', ') || 'sem e-mail cadastrado')}<br><b>Assunto:</b> ${esc('Pedido ' + p.num + ' - ' + p.clienteNome + ' - GYN Representações')}<br><br>Olá! Segue o pedido abaixo (também em PDF anexo).<br><span class="sub">No corpo do e-mail: dados do cliente, pagamento e entrega, itens e total, só com os campos preenchidos.</span></div>
+    <div class="conf-pe"><label class="conf-ok"><input type="checkbox" id="cf-ok"> Conferi os dados acima</label>
+      <span class="conf-acoes"><button class="btn ghost" id="cf-voltar" type="button">Voltar ao pedido</button>
+      <button class="btn aprovar" id="cf-enviar" type="button" disabled>${reenvio ? 'Reenviar por e-mail' : 'Enviar por e-mail ao fornecedor'}</button></span></div>`);
+  $('#sheet').classList.add('larga');
+  $('#cf-xls').addEventListener('click', () => baixarExcelPedido(p));
+  $('#cf-mail').addEventListener('click', () => { $('#cf-prev').hidden = !$('#cf-prev').hidden; });
   $('#cf-pdf').addEventListener('click', () => abrirPdf(p));
   $('#cf-ok').addEventListener('change', ev => { $('#cf-enviar').disabled = !ev.target.checked || !emails.length; });
   $('#cf-voltar').addEventListener('click', () => abrirPedido(p.id));
