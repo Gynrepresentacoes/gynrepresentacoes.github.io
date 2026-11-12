@@ -252,6 +252,47 @@
     var n = function (v) { return Number(v).toLocaleString('pt-BR'); };
     var dt = function (s) { var x = new Date(s); return x.toLocaleDateString('pt-BR') + ' ' + x.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
 
+    // Quadro por mês (produto x meses: quantidade e ticket médio), com as cores da tela. Só ele no PDF anual.
+    function matrizPdf(titulo, mx) {
+      var nm = mx.meses.length, wp = nm > 6 ? 46 : 70, wt = nm > 6 ? 20 : 30, wm = (W - 2 * M - wp - wt) / nm, wq = wm * 0.4, wk = wm * 0.6;
+      var maxQ = 1; mx.linhas.forEach(function (x) { mx.meses.forEach(function (m) { var c = x.por[m.chave]; if (c && c.q > maxQ) maxQ = c.q; }); });
+      function cab() {
+        if (y > H - 40) { doc.addPage(); y = 16; }
+        doc.setFillColor(219, 230, 243); doc.rect(M, y, wp, 12, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor.apply(doc, marinho); doc.text('Produto', M + 2, y + 7);
+        var x = M + wp;
+        mx.meses.forEach(function (m) {
+          doc.setFillColor(219, 230, 243); doc.rect(x, y, wm, 6, 'F'); doc.setTextColor.apply(doc, marinho); doc.text(m.rot, x + wm / 2, y + 4.2, { align: 'center' });
+          doc.setFillColor(232, 240, 250); doc.rect(x, y + 6, wq, 6, 'F'); doc.setFillColor(222, 242, 232); doc.rect(x + wq, y + 6, wk, 6, 'F');
+          doc.setFontSize(6.3); doc.setTextColor.apply(doc, cinza); doc.text('quant', x + wq / 2, y + 10.2, { align: 'center' }); doc.text('ticket', x + wq + wk / 2, y + 10.2, { align: 'center' }); doc.setFontSize(7.5);
+          x += wm;
+        });
+        doc.setFillColor(225, 228, 235); doc.rect(x, y, wt, 12, 'F'); doc.setTextColor.apply(doc, marinho); doc.text('Total', x + wt / 2, y + 4.2, { align: 'center' });
+        doc.setFontSize(6.3); doc.setTextColor.apply(doc, cinza); doc.text('quant', x + wt * 0.2, y + 10.2, { align: 'center' }); doc.text('ticket', x + wt * 0.65, y + 10.2, { align: 'center' });
+        y += 12;
+      }
+      doc.setTextColor.apply(doc, tinta); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(titulo, M, y); y += 4;
+      cab();
+      mx.linhas.forEach(function (x0) {
+        if (y + 8 > H - 12) { doc.addPage(); y = 16; cab(); }
+        var x = M + wp;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, tinta);
+        doc.text(doc.splitTextToSize(limpa(x0.produto), wp - 3).slice(0, 2), M + 2, y + 3.4);
+        mx.meses.forEach(function (m) {
+          var c = x0.por[m.chave];
+          if (c) { var a = 0.08 + 0.32 * c.q / maxQ; doc.setFillColor(Math.round(255 - (255 - 61) * a), Math.round(255 - (255 - 123) * a), 255); doc.rect(x, y, wq, 8, 'F'); doc.setFillColor(238, 248, 243); doc.rect(x + wq, y, wk, 8, 'F'); }
+          doc.setTextColor.apply(doc, tinta);
+          doc.text(c ? String(c.q) : '·', x + wq / 2, y + 5, { align: 'center' }); doc.text(c && c.q ? brl(c.total / c.q) : '·', x + wq + wk / 2, y + 5, { align: 'center' });
+          x += wm;
+        });
+        doc.setFont('helvetica', 'bold'); doc.text(String(x0.q), x + wt * 0.2, y + 5, { align: 'center' }); doc.text(x0.q ? brl(x0.total / x0.q) : '·', x + wt * 0.65, y + 5, { align: 'center' });
+        y += 8; doc.setDrawColor.apply(doc, linha); doc.setLineWidth(0.15); doc.line(M, y, W - M, y);
+      });
+      y += 8;
+    }
+    if (d.matriz && d.matriz.linhas.length) matrizPdf(d.soMatriz ? 'Histórico de compra por mês · ' + d.matriz.meses.length + ' meses' : 'Histórico de compra por mês (últimos ' + d.matriz.meses.length + ' meses)', d.matriz);
+    if (d.soMatriz) { var tt = doc.getNumberOfPages(); for (var ii = 1; ii <= tt; ii++) { doc.setPage(ii); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor.apply(doc, cinza); doc.text('GYN Representações · Relatório anual', M, H - 6); doc.text('Página ' + ii + ' de ' + tt, W - M, H - 6, { align: 'right' }); } return doc; }
+
     // Primeiro o histórico de compra dos itens, depois o resumo.
     tabela('Histórico de compra dos itens', [
       { t: 'Produto', w: 110 }, { t: 'Empresa', w: 36, cinza: 1 }, { t: 'Código', w: 26, cinza: 1 }, { t: 'Pedidos', w: 18, a: 'r' },
