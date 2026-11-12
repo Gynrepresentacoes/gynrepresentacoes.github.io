@@ -554,7 +554,10 @@ body{font-variant-numeric:tabular-nums}
   main{max-width:1240px;padding:30px 28px 48px}
   /* Novo pedido: produtos à esquerda, resumo fixo à direita. */
   #v-novo:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:32px;align-items:start}
-  .painel{display:block;position:sticky;top:94px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:20px;max-height:calc(100vh - 120px);overflow:auto}
+  .painel{display:block;position:sticky;top:94px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:20px;max-height:calc(100vh - 150px);overflow:auto}
+  .painel .fechar-p{display:flex;flex-direction:column;gap:8px}
+  .painel .fechar-p .btn{margin:0;width:100%}
+  .painel .fp-sec{display:flex;gap:8px}.painel .fp-sec .btn{flex:1;padding:10px 6px;font-size:13px}
   .painel h2{margin-bottom:12px}
   .painel .btn:disabled{opacity:.45;cursor:not-allowed}
   .cart{display:none!important}
@@ -641,6 +644,7 @@ body{font-variant-numeric:tabular-nums}
 .pcard.on .pc-add{background:var(--surface);color:var(--ipe);border:1.5px solid var(--ipe)}
 .pc-rem{flex:0 0 40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
 .pc-rem:hover{color:var(--bad);border-color:var(--bad)}
+.r-tirar{background:none;border:0;padding:0;font:inherit;font-size:12px;color:var(--bad);text-decoration:underline;cursor:pointer}
 .pc-hist{color:var(--ipe);font-weight:600}
 .conf-h{font-size:14px;margin:16px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .conf-ok{display:flex;align-items:center;gap:10px;margin:14px 0 6px;font-weight:600}
@@ -721,8 +725,8 @@ html[data-estilo="suave"] .tema-op{border-width:1px}
     background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px}
   #v-novo .np-rail .field{margin-bottom:12px}
   #v-novo .np-rail .field:last-child{margin-bottom:0}
-  #v-novo .painel{grid-column:3;grid-row:1 / span 8;padding:16px;border-radius:14px;max-height:none;overflow:visible;align-self:start}
-  #v-novo .painel .fechar-p{position:static;margin:14px 0 0;padding:12px 0 0}
+  #v-novo .painel{grid-column:3;grid-row:1 / span 8;padding:16px;border-radius:14px;max-height:calc(100vh - 150px);overflow:auto;align-self:start}
+  #v-novo .painel .fechar-p{position:sticky;bottom:-16px;margin:14px -16px -16px;padding:12px 16px 16px;background:var(--surface);z-index:2}
   #v-novo .painel .painel-hd{flex-wrap:wrap}
   #v-novo .prod-list{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
   #v-novo .prod-list .grupo{grid-column:1 / -1}
@@ -1124,10 +1128,10 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
       <label class="field"><span class="lbl">Observação</span>
         <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
       <div id="entrega-p"></div>
-      <button class="btn sec lote" id="btn-lote-p" type="button" hidden>Fechar para várias filiais da rede…</button>
-      <button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
-      <button class="btn ghost limpar" id="btn-limpar-p" type="button" hidden>Limpar pedido</button>
-      <div class="fechar-p"><button class="btn primary fechar" id="btn-fechar-p" type="button">Fechar pedido</button></div>
+      <div class="fechar-p"><button class="btn primary fechar" id="btn-fechar-p" type="button">Fechar pedido</button>
+        <button class="btn sec lote" id="btn-lote-p" type="button" hidden>Fechar para várias filiais da rede…</button>
+        <div class="fp-sec"><button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
+        <button class="btn ghost limpar" id="btn-limpar-p" type="button" hidden>Limpar pedido</button></div></div>
     </aside>
   </section>
 
@@ -2043,7 +2047,6 @@ function linhaProduto(p){
       <label class="pc-f pc-v"><span>Valor R$</span><input class="pc-val" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${f(valor)}" aria-label="Valor de ${esc(p.nome)}"></label>
       <label class="pc-f pc-d"><span>Desc. %</span><input class="pc-dsc" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${desc}" aria-label="Desconto em % de ${esc(p.nome)}"></label>
       <button class="pc-add" type="button" data-act="add" data-id="${id}">${n ? 'Atualizar' : 'Adicionar'}</button>
-      ${n ? `<button class="pc-rem" type="button" data-act="rem" data-id="${id}" aria-label="Tirar ${esc(p.nome)} do pedido" title="Tirar do pedido">×</button>` : ''}
     </div></li>`;
 }
 // Busca: todas as palavras digitadas precisam aparecer no nome, código ou categoria (qualquer ordem, sem ligar para acento).
@@ -2151,7 +2154,17 @@ document.addEventListener('change', e => {
   if(document.activeElement === inp) inp.blur();
   renderCart(); atualizarRevisao();
 });
-document.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('input.preco-item, input.desc-item')) e.target.blur(); });
+// Enter confirma o preço/desconto: aplica, fecha os campos do item e volta o resumo ao normal.
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || !e.target.matches('input.preco-item, input.desc-item')) return;
+  e.preventDefault(); st.aberto = null; e.target.blur(); renderCart(); atualizarRevisao();
+});
+// "tirar" no resumo: tira o item do pedido (o lugar visível para isso; no cartão do produto não há mais o ×).
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tirar]'); if(!b) return;
+  const id = b.dataset.tirar; delete st.itens[id]; delete st.precos[id]; delete st.base[id]; if(st.aberto === id) st.aberto = null;
+  renderProdutos(); renderCart(); atualizarRevisao();
+});
 document.addEventListener('focusin', e => { if(e.target.matches('input.preco-item, input.desc-item')) e.target.select(); });
 function renderCart(){
   const its = itensAtuais();
@@ -2364,7 +2377,7 @@ function resumoHTML(itens, editavel){
     const ref = editavel && i.preco !== i.tabela && i.tabela > 0 ? `${i.semTabela ? 'cheio' : 'tabela'} ${brl(i.tabela)}` : '';
     const linhas = `<div class="r1"><span>${esc(i.nome)}</span><span class="v">${brl(i.q*i.preco)}</span></div>
       <div class="r2"><span>${i.q} ${esc(i.un || '')} × ${brl(i.preco)}${pct ? `<span class="tag-desc">−${pct}%</span>` : ''}</span>
-        <span>${semPreco ? '<span class="r-aviso">sem preço: toque para digitar</span>' : ref || (editavel && st.aberto !== i.id ? '<span class="r-dica">mudar</span>' : '')}</span></div>`;
+        <span>${semPreco ? '<span class="r-aviso">sem preço: toque para digitar</span>' : ref || (editavel && st.aberto !== i.id ? '<span class="r-dica">mudar</span>' : '')}${editavel ? ` · <button type="button" class="r-tirar" data-tirar="${esc(i.id)}" aria-label="Tirar ${esc(i.nome)} do pedido">tirar</button>` : ''}</span></div>`;
     if(!editavel) return `<li>${linhas}</li>`;
     const aberta = st.aberto === i.id || semPreco;
     return `<li class="editavel${aberta ? ' aberta' : ''}" data-item="${esc(i.id)}">${linhas}
@@ -2374,7 +2387,7 @@ function resumoHTML(itens, editavel){
 }
 // Tocar num item do resumo abre (ou fecha) os campos de preço e desconto dele.
 document.addEventListener('click', e => {
-  const li = e.target.closest('.resumo li.editavel'); if(!li || e.target.closest('input, label')) return;
+  const li = e.target.closest('.resumo li.editavel'); if(!li || e.target.closest('input, label, [data-tirar]')) return;
   st.aberto = st.aberto === li.dataset.item ? null : li.dataset.item;
   const its = itensAtuais();
   if($('#painel-itens').contains(li)) $('#painel-itens').innerHTML = resumoHTML(its, true); else atualizarRevisao();
