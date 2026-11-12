@@ -853,7 +853,11 @@ select:disabled option{color:var(--muted)}
   #v-relatorios .rel-mes-nav .rel-seta{flex:none;width:34px;height:36px;min-height:0;padding:0}
   #v-relatorios .rel-barra .field{padding:3px 10px 3px}
   #v-relatorios .rel-barra select{min-height:24px;height:24px;width:100%}
-  #v-relatorios .rel-quadro .tabela-wrap{overflow-x:hidden !important;overflow-y:auto;max-height:560px}
+  #v-relatorios .rel-quadro{display:flex;flex-direction:column}
+  #v-relatorios .rel-quadro .rel-sec{display:flex;flex-direction:column;flex:1;min-height:0}
+  #v-relatorios .rel-quadro .tabela-wrap{flex:1;min-height:260px;overflow-x:hidden !important;overflow-y:auto;max-height:640px}
+  #v-relatorios .rel-quadro table.mat{height:100%}
+  table.mat tr.mat-fill{height:100%;cursor:default}table.mat tr.mat-fill td{padding:0}table.mat tr.mat-fill:hover td{filter:none}
   table.mat{table-layout:fixed;width:100%;min-width:0 !important}
   table.mat th:first-child,table.mat td:first-child{width:21%;min-width:0}
   table.mat th,table.mat td{padding:6px 5px;font-size:13px;white-space:normal;overflow-wrap:anywhere}
@@ -3236,7 +3240,8 @@ function matrizHTML(mx, titulo, cab){
         <tr>${[...mx.meses, 0].map(() => '<th class="n qh">quant</th><th class="n tkh">ticket (R$)</th>').join('')}</tr></thead>
       <tbody>${mx.linhas.map(x => `<tr data-q="${esc(norm(x.produto + ' ' + x.codigo))}" data-det="${esc(x.empresaId + '|' + x.codigo)}"><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)}</div></td>${mx.meses.map(m => {
         const c = x.por[m.chave]; return `<td class="n${c ? '' : ' zero'}"${c ? ` style="background:rgba(61,123,255,${(0.08 + 0.32 * c.q / maxQ).toFixed(2)})"` : ''}>${c ? c.q.toLocaleString('pt-BR') : '·'}</td><td class="n${c ? '' : ' zero'}"${c ? ' style="background:rgba(47,163,107,.10)"' : ''}>${c ? tk(c) : '·'}</td>`; }).join('')}
-        <td class="n"><b>${x.q.toLocaleString('pt-BR')}</b></td><td class="n"><b>${tk(x)}</b></td></tr>`).join('')}</tbody>
+        <td class="n"><b>${x.q.toLocaleString('pt-BR')}</b></td><td class="n"><b>${tk(x)}</b></td></tr>`).join('')}
+        <tr class="mat-fill" aria-hidden="true">${'<td></td>'.repeat(3 + mx.meses.length * 2)}</tr></tbody>
     </table></div><p class="meta">quant = unidades · ticket (R$) = valor pago ÷ unidades do produto no mês. Cor mais forte = mais unidades. (·) = não comprou. Clique num produto para ver os detalhes.</p></section>`;
 }
 // Detalhes do produto (toque na linha da tabela por mês): considera só os 4 meses da tela.
@@ -3423,21 +3428,23 @@ function renderRelatorio(){
       <tbody>${d.porRede.map(x => `<tr ${dq(x.rede)}><td>${x.ehRede ? '🏢 <b>' + esc(x.rede) + '</b>' : esc(x.rede) + '<div class="sub">loja sem rede</div>'}</td><td data-l="CNPJs" class="n">${x.cnpjs}</td><td data-l="Pedidos" class="n">${x.pedidos}</td><td data-l="Itens" class="n">${nBR(x.q)}</td><td data-l="Valor" class="n">${brl(x.total)}</td></tr>`).join('')}</tbody>
     </table></div></section>` : ''}`;
 
-  const comissaoHTML = !d.linhas.length ? vazio : `<div class="rel-cards">
-      <div class="rel-card"><small>Comissão a receber (marcas)</small><strong>${brl(d.totais.comissaoMarcas)}</strong></div>
-      <div class="rel-card"><small>Comissão a pagar (vendedores)</small><strong>${brl(d.totais.comissaoVendedores)}</strong></div>
-    </div>
-    <div class="rel-duas">
-      <section class="rel-sec"><h2>Comissão por marca</h2><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
-        <thead><tr><th>Marca</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
-        <tbody>${d.comissao.marcas.map(x => `<tr><td>${esc(x.nome)}</td><td data-l="Pedidos" class="n">${x.pedidos}</td><td data-l="Vendas" class="n">${brl(x.vendas)}</td><td data-l="%" class="n">${pctTxt(x)}</td><td data-l="Comissão" class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
-      </table></div></section>
-      <section class="rel-sec"><h2>Comissão por vendedor</h2><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
-        <thead><tr><th>Vendedor</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
-        <tbody>${d.comissao.vendedores.map(x => `<tr><td>${esc(x.nome)}</td><td data-l="Pedidos" class="n">${x.pedidos}</td><td data-l="Vendas" class="n">${brl(x.vendas)}</td><td data-l="%" class="n">${pctTxt(x)}</td><td data-l="Comissão" class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody>
-      </table></div></section>
-    </div>
-    ${d.comissao.marcas.some(x => !x.pct) || d.comissao.vendedores.some(x => !x.pct) ? '<p class="note">Onde aparece "definir", falta o percentual na planilha: coluna <b>Comissão %</b> da aba Empresas (marcas) ou da aba Usuarios (vendedores).</p>' : ''}`;
+  // Aba Comissão compacta: comissão por mês da marca + cartões ao lado. Comissão por vendedor só aparece se algum vendedor tiver % cadastrado.
+  const marcasC = d.comissao.marcas, vendComPct = d.comissao.vendedores.some(x => x.pct);
+  const pctMarca = marcasC.length === 1 ? pctTxt(marcasC[0]) : '';
+  const comissaoHTML = !d.linhas.length ? vazio : `<section class="rel-sec"><h2>Comissão da marca</h2><div class="rel-2c"><div>
+      <div class="tabela-wrap cartoes"><table class="tabela compacta">
+        <thead><tr><th>Mês</th><th class="n">Vendas</th><th class="n">% da marca</th><th class="n">Comissão a receber</th></tr></thead>
+        <tbody>${d.porMes.map(m => `<tr><td>${m.rot}</td><td data-l="Vendas" class="n">${brl(m.vendas)}</td><td data-l="% da marca" class="n">${pctMarca || '·'}</td><td data-l="Comissão a receber" class="n"><b>${brl(m.comissao)}</b></td></tr>`).join('')}
+        <tr style="font-weight:600"><td>Total</td><td class="n">${brl(d.porMes.reduce((s, m) => s + m.vendas, 0))}</td><td></td><td class="n">${brl(d.porMes.reduce((s, m) => s + m.comissao, 0))}</td></tr></tbody>
+      </table></div>
+      ${marcasC.length > 1 ? `<h3 class="sub-h">Por marca</h3><div class="tabela-wrap cartoes"><table class="tabela compacta"><thead><tr><th>Marca</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
+        <tbody>${marcasC.map(x => `<tr><td>${esc(x.nome)}</td><td class="n">${x.pedidos}</td><td class="n">${brl(x.vendas)}</td><td class="n">${pctTxt(x)}</td><td class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody></table></div>` : ''}
+      ${vendComPct ? `<h3 class="sub-h">Por vendedor</h3><div class="tabela-wrap cartoes"><table class="tabela compacta"><thead><tr><th>Vendedor</th><th class="n">Pedidos</th><th class="n">Vendas</th><th class="n">%</th><th class="n">Comissão</th></tr></thead>
+        <tbody>${d.comissao.vendedores.map(x => `<tr><td>${esc(x.nome)}</td><td class="n">${x.pedidos}</td><td class="n">${brl(x.vendas)}</td><td class="n">${pctTxt(x)}</td><td class="n"><b>${brl(x.comissao)}</b></td></tr>`).join('')}</tbody></table></div>` : ''}
+      ${marcasC.some(x => !x.pct) ? '<p class="meta">Onde aparecer "definir", falta o percentual na planilha (coluna <b>Comissão %</b> da aba Empresas).</p>' : ''}</div>
+    <div class="rel-lado"><div class="rel-mini"><small>Comissão a receber</small><b style="font-size:16px">${brl(d.totais.comissaoMarcas)}</b></div>
+      <div class="rel-mini"><small>Vendas no período</small><b style="font-size:16px">${brl(d.totais.valor)}</b></div>
+      ${vendComPct ? `<div class="rel-mini"><small>Comissão a pagar (vendedores)</small><b style="font-size:16px">${brl(d.totais.comissaoVendedores)}</b></div>` : ''}</div></div></section>`;
 
   const detalheHTML = !d.linhas.length ? vazio : `<section class="rel-sec"><h2>Histórico detalhado</h2><div class="tabela-wrap rel-scroll cartoes"><table class="tabela" style="min-width:860px">
       <thead><tr><th>Produto</th><th class="n">Quantidade</th><th class="n">Ticket médio</th><th class="n">Total</th><th>Data</th><th>Pedido</th><th>Loja</th><th>Vendedor</th><th>Situação</th></tr></thead>
