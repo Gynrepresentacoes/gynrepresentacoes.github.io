@@ -307,6 +307,12 @@ input[type=date],input[type=month],input[type=number]{width:100%;background:var(
 .sheet.open .sheet-bg{opacity:1}
 .sheet.open .sheet-panel{transform:none}
 .sheet-in{max-width:560px;margin:0 auto}
+@media(min-width:1000px){
+  .sheet-panel{left:auto;top:0;max-height:none;width:480px;border-radius:0;transform:translateX(100%);padding:22px 22px 30px}
+  .sheet.open .sheet-panel{transform:none}
+  .sheet.larga .sheet-panel{width:760px}
+  .sheet-in{max-width:none}
+}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .x{width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);font-size:24px;cursor:pointer}
 .meta{color:var(--muted);margin:0 0 14px;font-size:15px}
@@ -570,7 +576,8 @@ body{font-variant-numeric:tabular-nums}
   #v-relatorios .rel-barra{min-width:0;width:240px}
   #v-relatorios .rel-mes-nav{flex:none;width:100%;display:flex;gap:4px}
   #v-relatorios .rel-mes-nav input{min-width:0;flex:1}
-  #v-relatorios #rel-resultado{min-width:0}
+  #v-relatorios #rel-resultado,#v-relatorios .rel-centro{min-width:0}
+  .rel-topo{display:flex;gap:10px;margin-bottom:12px}.rel-topo .field{margin:0;flex:0 1 240px}
   #v-relatorios #rel-emp{display:none}
   #v-relatorios .rel-mais-box .field:first-child{display:none}
   .rel-mes-nav{flex:0 0 auto}
@@ -686,7 +693,9 @@ html[data-estilo="suave"] .tema-op{border-width:1px}
     background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px}
   #v-novo .np-rail .field{margin-bottom:12px}
   #v-novo .np-rail .field:last-child{margin-bottom:0}
-  #v-novo .painel{grid-column:3;grid-row:1 / span 8;padding:16px;border-radius:14px}
+  #v-novo .painel{grid-column:3;grid-row:1 / span 8;padding:16px;border-radius:14px;max-height:none;overflow:visible;align-self:start}
+  #v-novo .painel .fechar-p{position:static;margin:14px 0 0;padding:12px 0 0}
+  #v-novo .painel .painel-hd{flex-wrap:wrap}
   #v-novo .prod-list{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
   #v-novo .prod-list .grupo{grid-column:1 / -1}
   #v-novo .np-rail .cat-chips{flex-direction:column;flex-wrap:nowrap;overflow:visible;gap:2px}
@@ -710,7 +719,32 @@ html[data-estilo="suave"] .tema-op{border-width:1px}
 .lj-col h3{margin:0 0 4px;font-size:14px;display:flex;justify-content:space-between}
 .lj-mini{display:flex;flex-direction:column;text-align:left;gap:2px;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:inherit;font:inherit;cursor:pointer}
 .lj-mini small{opacity:.7}
-.lj-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+#v-catalogo #catalogo{display:block}
+.cat-lay{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start}
+.cat-lista{display:flex;flex-direction:column;gap:2px;position:sticky;top:12px;max-height:calc(100vh - 40px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px}
+.cat-lista button{display:flex;justify-content:space-between;gap:8px;text-align:left;border:0;background:none;color:inherit;font:inherit;padding:8px 10px;border-radius:8px;cursor:pointer}
+.cat-lista button[aria-pressed="true"]{background:var(--suave-tint,rgba(77,141,255,.18));font-weight:700}
+.cat-lista small{opacity:.7}
+.cat-prod{display:flex;gap:10px;align-items:center}
+.cat-sel-m{display:none;margin-bottom:10px}
+@media(max-width:699px){.cat-lay{grid-template-columns:1fr}.cat-lista{display:none}.cat-sel-m{display:block}}
+.form-6 .bloco{border:1px solid var(--line);border-radius:12px;padding:6px 14px 10px;margin-bottom:12px}
+.form-6 .bloco h3{margin:8px 0}
+.erro-campo{border-color:#d9534f !important;box-shadow:0 0 0 2px rgba(217,83,79,.25)}
+.form-6 .rodape-form{position:sticky;bottom:-22px;background:var(--paper);padding:12px 0 6px;border-top:1px solid var(--line)}
+@media(min-width:1000px){.form-6{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}.form-6 .rodape-form{grid-column:1/-1}}
+.lj-aguard,.lj-tab{grid-column:1/-1}
+.lj-aguard{background:rgba(245,180,40,.15);border-radius:10px;padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lj-soma{opacity:.7;margin-bottom:4px}
+.lj-bem{border-top:3px solid #2fa36b}.lj-esfriando{border-top:3px solid #e0a020}.lj-parado{border-top:3px solid #d9534f}.lj-nunca{border-top:3px solid #8a94a6}
+#lista-lojas.lj-quadro{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:999px){#lista-lojas.lj-quadro{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){#lista-lojas.lj-quadro{grid-template-columns:1fr}}
+.lj-sel{max-width:260px;margin-bottom:10px}
+.lj-cards{margin:8px 0}.lj-cards .rel-card{cursor:pointer;text-align:left}.lj-cards .rel-card[aria-pressed="true"]{outline:2px solid var(--acc-text,#4d8dff)}
+.lig-wrap{position:relative;display:inline-block}.lig-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:30;min-width:240px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.lig-menu[hidden]{display:none}.lig-menu button,.lig-menu a{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 11px;border-radius:8px;font-weight:600;cursor:pointer;color:inherit;text-decoration:none;font:inherit}
+.lj-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
 .lj-kpis>div{background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}
 .lj-kpis small{opacity:.7;font-size:12px}
 .vd-exp{position:relative}
@@ -886,7 +920,8 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
       </div>
       <div hidden><input type="date" id="rel-de"><input type="date" id="rel-ate"></div>
     </div>
-    <div id="rel-resultado"><p class="empty">Escolha o mês e o cliente.</p></div>
+    <div class="rel-centro"><div class="rel-topo" id="rel-topo"></div>
+    <div id="rel-resultado"><p class="empty">Escolha o mês e o cliente.</p></div></div>
   </section>
 
   <section id="v-aprovar" class="view" hidden>
@@ -2321,40 +2356,42 @@ function abrirNovaLoja(depois, base, editar){
     <div class="sheet-head"><h2>${editar ? 'Editar cadastro' : base ? 'Nova filial (outro CNPJ)' : 'Nova loja'}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${novo && !ehAdmin() ? '<p class="note">A loja entra na hora para você fazer o pedido; o administrador confere o cadastro.</p>' : ''}
     ${base && novo ? `<p class="meta">Filial da rede <b>${esc(grupoDe(base))}</b>. Os dados abaixo vieram de ${esc(base.nome)}: troque o que for diferente.</p>` : ''}
-    <form class="form-loja" id="form-loja" novalidate>
-      <h3>Empresa</h3>
+    <form class="form-loja form-6" id="form-loja" novalidate>
+      <section class="bloco"><h3>Identificação</h3>
       <label class="field"><span class="lbl">CNPJ ou CPF</span>
         <span class="cnpj-linha"><input id="nl-cnpj" inputmode="numeric" placeholder="só números" value="${editar ? v('cnpj') : ''}" autocomplete="off">
         <button class="mini" type="button" id="nl-consultar">Consultar</button></span>
         <span class="cnpj-info" id="nl-cnpj-info">Digitando o CNPJ, o app busca razão social, nome fantasia e endereço.</span></label>
       <label class="field"><span class="lbl">Nome fantasia *</span><input id="nl-nome" autocomplete="organization" required value="${v('nome')}"></label>
       <label class="field"><span class="lbl">Razão social</span><input id="nl-razao" value="${editar ? v('razao') : ''}"></label>
-      <div class="duas">
-        <label class="field"><span class="lbl">Inscrição estadual</span><input id="nl-ie" inputmode="numeric" value="${editar ? v('ie') : ''}" placeholder="ou ISENTO"></label>
-        <label class="field"><span class="lbl">Rede / grupo</span><input id="nl-grupo" list="dl-grupos" placeholder="se tiver filiais" value="${esc(grupoDe(o))}">
-          <datalist id="dl-grupos">${nomesGrupos().map(g => `<option value="${esc(g)}">`).join('')}</datalist></label>
-      </div>
-      <h3>Endereço e contato</h3>
-      <label class="field"><span class="lbl">Endereço</span><input id="nl-end" autocomplete="street-address" value="${editar ? v('endereco') : ''}"></label>
-      <label class="field"><span class="lbl">Cidade / UF</span><input id="nl-cidade" autocomplete="address-level2" value="${v('cidade')}"></label>
+      <label class="field"><span class="lbl">Inscrição estadual</span><input id="nl-ie" inputmode="numeric" value="${editar ? v('ie') : ''}" placeholder="ou ISENTO"></label></section>
+      <section class="bloco"><h3>Contato</h3>
       <div class="duas">
         <label class="field"><span class="lbl">Contato</span><input id="nl-contato" value="${v('contato')}"></label>
         <label class="field"><span class="lbl">Telefone / WhatsApp</span><input id="nl-tel" type="tel" inputmode="tel" placeholder="(62) 99999-9999" value="${v('telefone')}"></label>
       </div>
-      <h3>E-mails</h3>
       <label class="field"><span class="lbl">E-mail de compra</span><input id="nl-em-compra" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailCompra') : ''}"></label>
       <label class="field"><span class="lbl">E-mail financeiro</span><input id="nl-em-fin" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailFinanceiro') : ''}"></label>
-      <label class="field"><span class="lbl">E-mail para envio de notas</span><input id="nl-em-nf" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailNotas') : ''}"></label>
-      <h3>Condições</h3>
+      <label class="field"><span class="lbl">E-mail para envio de notas</span><input id="nl-em-nf" type="email" inputmode="email" autocomplete="off" value="${editar ? v('emailNotas') : ''}"></label></section>
+      <section class="bloco"><h3>Endereço</h3>
+      <label class="field"><span class="lbl">Endereço</span><input id="nl-end" autocomplete="street-address" value="${editar ? v('endereco') : ''}"></label>
+      <label class="field"><span class="lbl">Cidade / UF</span><input id="nl-cidade" autocomplete="address-level2" value="${v('cidade')}"></label></section>
+      <section class="bloco"><h3>Condições de venda</h3>
       <label class="field"><span class="lbl">Forma de pagamento <small>(atualiza sozinha com a última usada)</small></span>
         <input id="nl-pag" list="dl-pags" value="${v('pagamento')}"><datalist id="dl-pags">${pags.map(p => `<option value="${esc(p)}">`).join('')}</datalist></label>
       <div class="duas">
         <label class="field"><span class="lbl">Prazo</span><input id="nl-prazo" placeholder="ex.: 30/60/90 dias" value="${v('prazo')}"></label>
         <label class="field"><span class="lbl">Frete</span><input id="nl-frete" list="dl-fretes" value="${v('frete')}"><datalist id="dl-fretes">${FRETES.map(f => `<option value="${esc(f)}">`).join('')}</datalist></label>
       </div>
-      <label class="field"><span class="lbl">Observação</span><textarea id="nl-obs" rows="2">${editar ? v('obs') : ''}</textarea></label>
-      <button class="btn primary" id="nl-salvar" type="submit">${editar ? 'Salvar cadastro' : base ? 'Cadastrar filial' : 'Cadastrar loja'}</button>
+</section>
+      <section class="bloco"><h3>Rede</h3>
+      <label class="field"><span class="lbl">Rede / grupo</span><input id="nl-grupo" list="dl-grupos" placeholder="se tiver filiais (escolha ou digite uma nova)" value="${esc(grupoDe(o))}">
+        <datalist id="dl-grupos">${nomesGrupos().map(g => `<option value="${esc(g)}">`).join('')}</datalist></label></section>
+      <section class="bloco"><h3>Observações</h3>
+      <label class="field"><textarea id="nl-obs" rows="3" aria-label="Observação">${editar ? v('obs') : ''}</textarea></label></section>
+      <div class="rodape-form"><button class="btn primary" id="nl-salvar" type="submit">${editar ? 'Salvar cadastro' : base ? 'Cadastrar filial' : 'Cadastrar loja'}</button></div>
     </form>`);
+  $('#sheet').classList.add('larga');
   setTimeout(() => (editar ? $('#nl-nome') : $('#nl-cnpj')).focus(), 80);
   // Consulta do CNPJ: preenche o que vier da Receita (nome fantasia só se estiver vazio ou igual ao da filial de origem).
   let consultado = '';
@@ -2394,9 +2431,15 @@ function abrirNovaLoja(depois, base, editar){
       endereco: val('#nl-end'), cidade: val('#nl-cidade'), contato: val('#nl-contato'), telefone: val('#nl-tel'),
       emailCompra: val('#nl-em-compra'), emailFinanceiro: val('#nl-em-fin'), emailNotas: val('#nl-em-nf'),
       pagamento: val('#nl-pag'), prazo: val('#nl-prazo'), frete: val('#nl-frete'), obs: val('#nl-obs')};
-    if(base && novo && !soDigitos(dados.cnpj)){ toast('Digite o CNPJ desta filial'); $('#nl-cnpj').focus(); return; }
     if(base && novo) dados.base = base.id;   // a loja de origem entra na mesma rede, se ainda não tiver uma
-    if(dados.nome.length < 2){ toast('Digite o nome fantasia'); $('#nl-nome').focus(); return; }
+    // Obrigatórios: CNPJ (14 números) e nome. O erro marca o campo em vermelho e avisa no rodapé.
+    document.querySelectorAll('#form-loja .erro-campo').forEach(x => x.classList.remove('erro-campo')); $('#nl-aviso')?.remove();
+    const faltas = []; if(novo && soDigitos(dados.cnpj).length !== 14) faltas.push(['#nl-cnpj', 'CNPJ com 14 números']); if(dados.nome.length < 2) faltas.push(['#nl-nome', 'nome da loja']);
+    if(faltas.length){
+      faltas.forEach(([id]) => $(id).classList.add('erro-campo'));
+      $('.rodape-form').insertAdjacentHTML('afterbegin', `<p class="cnpj-info erro" id="nl-aviso">Falta preencher: ${faltas.map(f => f[1]).join(' e ')}.</p>`);
+      $(faltas[0][0]).focus(); return;
+    }
     const emRuim = ['#nl-em-compra', '#nl-em-fin', '#nl-em-nf'].find(id => val(id) && val(id).split(/[;,\s]+/).filter(Boolean).some(x => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x)));
     if(emRuim){ toast('Confira o e-mail: ' + val(emRuim)); $(emRuim).focus(); return; }
     if(!navigator.onLine){ toast('Sem internet. O cadastro precisa de conexão.'); return; }
@@ -2436,7 +2479,48 @@ async function carregarLojas(){
   catch(e){ if(e.login) sessaoCaiu(e.message); }
 }
 const FILTROS_LOJAS = [['todas','Todas'],['esfriando','Esfriando ou paradas'],['redes','Por rede'],['30','Sem pedido há 30+ dias'],['60','60+ dias'],['90','90+ dias'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
+// Tela Lojas (v31): Quadro por situação (padrão) ou Lista, cartões que filtram, escolha de rede e faixa de cadastros aguardando.
+const total12 = id => { const r = resumoLojas[id] || {}, lim = Date.now() - 365 * 864e5; return r.hist ? r.hist.reduce((s, [d, t]) => new Date(d).getTime() >= lim ? s + (Number(t) || 0) : s, 0) : (r.total || 0); };
 function renderLojas(){
+  const lojas = (DATA?.clientes || []).map(c => { const r = resumoLojas[c.id] || {}; return Object.assign({}, c, {pedidos: r.pedidos || 0, total: r.total || 0, ultimo: r.ultimo || '', dias: diasDesde(r.ultimo), ritmo: r.pedidos ? ritmoDaLoja(c.id) : null, t12: total12(c.id)}); });
+  const sit = c => c.situacao === AGUARDANDO && !c.pedidos ? 'nunca' : !c.pedidos ? 'nunca' : c.ritmo && c.ritmo.st === 'parado' ? 'parado' : c.ritmo && c.ritmo.st === 'esfriando' ? 'esfriando' : 'bem';
+  const NOMES = {bem: 'Comprando bem', esfriando: 'Esfriando', parado: 'Paradas', nunca: 'Nunca compraram'};
+  const q = norm($('#lojas-busca').value || ''), qNum = soDigitos($('#lojas-busca').value), rede = $('#lojas-rede')?.value || redeLojas;
+  redeLojas = rede;
+  const base = lojas.filter(c => (!q || norm(`${c.nome} ${grupoDe(c)} ${c.cidade} ${c.cnpj || ''}`).includes(q) || (qNum.length >= 3 && soDigitos(c.cnpj).includes(qNum)))
+    && (!rede || (rede === '__sem' ? !grupoDe(c) : norm(grupoDe(c)) === norm(rede))));
+  const cont = k => base.filter(c => sit(c) === k).length;
+  const filtro = modoLojas === 'quadro' ? 'todas' : (filtroLojas in NOMES ? filtroLojas : 'todas');
+  const redes = nomesGrupos();
+  $('#lojas-filtros').innerHTML = `<select id="lojas-rede" aria-label="Rede" class="lj-sel"><option value="">Todas as redes</option><option value="__sem"${rede === '__sem' ? ' selected' : ''}>Sem rede</option>${redes.map(g => `<option value="${esc(g)}"${norm(g) === norm(rede) ? ' selected' : ''}>${esc(g)}</option>`).join('')}</select>` +
+    (modoLojas === 'lista' ? `<select id="lojas-ord" class="lj-sel" aria-label="Ordenar"><option value="dias"${ordLojas === 'dias' ? ' selected' : ''}>Mais tempo sem comprar</option><option value="valor"${ordLojas === 'valor' ? ' selected' : ''}>Maior valor (12 meses)</option><option value="nome"${ordLojas === 'nome' ? ' selected' : ''}>Nome</option></select>
+      <select id="lojas-dias" class="lj-sel" aria-label="Tempo sem pedido"><option value="">Qualquer tempo sem pedido</option>${[30, 60, 90].map(n => `<option value="${n}"${String(diasLojas) === String(n) ? ' selected' : ''}>${n}+ dias sem pedido</option>`).join('')}</select>
+      <label class="lj-grp-op"><input type="checkbox" id="lojas-grupo"${agruparLojas ? ' checked' : ''}> Agrupar por rede</label>` : '') +
+    (modoLojas === 'lista' ? `<div class="rel-cards lj-cards">${[['todas', 'Todas', base.length], ...Object.keys(NOMES).map(k => [k, NOMES[k], cont(k)])].map(([k, t, n]) => `<button class="rel-card" data-fl="${k}" aria-pressed="${filtro === k}"><small>${t}</small><strong>${n}</strong></button>`).join('')}</div>` : '');
+  $('#lojas-info').textContent = `${lojas.length} loja${lojas.length === 1 ? '' : 's'}` + (ehAdmin() ? '' : ' · contando os seus pedidos');
+  const ordem = (a, b) => (b.dias ?? -1) - (a.dias ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR');
+  const aguard = ehAdmin() ? base.filter(c => c.situacao === AGUARDANDO) : [];
+  const faixa = aguard.length ? `<li class="lj-aguard"><b>${aguard.length} cadastro${aguard.length > 1 ? 's' : ''} aguardando aprovação:</b> ${aguard.map(c => `<button class="mini" data-loja="${esc(c.id)}">${esc(c.nome)}</button>`).join(' ')}</li>` : '';
+  const dtxt = c => c.pedidos ? (c.dias === 0 ? 'hoje' : `há ${c.dias} dia${c.dias === 1 ? '' : 's'}`) : 'nunca comprou';
+  const ul = $('#lista-lojas'); ul.classList.toggle('lj-quadro', modoLojas === 'quadro');
+  if(modoLojas === 'quadro'){
+    ul.innerHTML = faixa + Object.keys(NOMES).map(k => { const ls = base.filter(c => sit(c) === k).sort(k === 'bem' ? (a, b) => (a.dias ?? 9999) - (b.dias ?? 9999) : ordem);
+      return `<li class="lj-col lj-${k}"><h3>${NOMES[k]} <span>${ls.length}</span></h3><small class="lj-soma">${brl(ls.reduce((s, c) => s + c.t12, 0))} em 12 meses</small>${ls.map(c => `<button class="lj-mini" data-loja="${esc(c.id)}"><b>${esc(c.nome)}</b><small>${[esc(c.cidade || ''), grupoDe(c) ? '🏢 ' + esc(grupoDe(c)) : ''].filter(Boolean).join(' · ')}</small><small>${dtxt(c)}${c.t12 ? ' · ' + brl(c.t12) : ''}</small></button>`).join('') || '<p class="meta">—</p>'}</li>`; }).join('');
+    return;
+  }
+  let ls = base.filter(c => (filtro === 'todas' || sit(c) === filtro) && (!diasLojas || (c.pedidos && c.dias >= Number(diasLojas))));
+  ls = ls.sort(ordLojas === 'valor' ? (a, b) => b.t12 - a.t12 || ordem(a, b) : ordLojas === 'nome' ? (a, b) => a.nome.localeCompare(b.nome, 'pt-BR') : ordem);
+  const linha = c => `<tr data-loja="${esc(c.id)}" style="cursor:pointer"><td><b>${esc(c.nome)}</b><div class="sub">${[esc(c.cidade || ''), !agruparLojas && grupoDe(c) ? '🏢 ' + esc(grupoDe(c)) : ''].filter(Boolean).join(' · ')}</div></td><td><span class="badge ${c.ritmo ? RITMO[c.ritmo.st][1] : 'env'}">${c.ritmo ? RITMO[c.ritmo.st][0] : 'Nunca comprou'}</span></td><td>${dtxt(c)}</td><td class="n">${c.t12 ? brl(c.t12) : '—'}</td></tr>`;
+  let corpo;
+  if(agruparLojas){
+    const gs = new Map(); ls.forEach(c => { const k = grupoDe(c) || ''; (gs.get(k) || gs.set(k, []).get(k)).push(c); });
+    corpo = [...gs.entries()].sort((a, b) => (a[0] === '') - (b[0] === '') || a[0].localeCompare(b[0], 'pt-BR')).map(([g, cs]) =>
+      `<tr class="lj-grp"><td colspan="4"><b>${g ? '🏢 ' + esc(g) : 'Lojas sem rede'}</b> · ${cs.length} CNPJ${cs.length > 1 ? 's' : ''} · ${brl(cs.reduce((s, c) => s + c.t12, 0))} em 12 meses</td></tr>` + cs.map(linha).join('')).join('');
+  }else corpo = ls.map(linha).join('');
+  ul.innerHTML = faixa + (ls.length ? `<li class="lj-tab"><table class="tabela"><thead><tr><th>Loja</th><th>Situação</th><th>Última compra</th><th class="n">12 meses</th></tr></thead><tbody>${corpo}</tbody></table></li>` : '<li class="empty">Nenhuma loja com esse filtro.</li>');
+}
+var redeLojas = '', ordLojas = 'dias', diasLojas = '', agruparLojas = false;
+function renderLojasAntigo(){
   $('#lojas-filtros').innerHTML = FILTROS_LOJAS.map(([v,t]) => `<button class="chip" data-fl="${v}" aria-pressed="${filtroLojas===v}">${t}</button>`).join('');
   const q = norm($('#lojas-busca').value || '');
   const todas = (DATA?.clientes || []).map(c => { const r = resumoLojas[c.id] || {}; return Object.assign({}, c, {pedidos: r.pedidos || 0, total: r.total || 0, ultimo: r.ultimo || '', ultimoNum: r.ultimoNum || '', dias: diasDesde(r.ultimo), ritmo: r.pedidos ? ritmoDaLoja(c.id) : null}); });
@@ -2508,8 +2592,12 @@ function abrirRede(nome){
   document.querySelectorAll('#sheet-body [data-loja]').forEach(b => b.addEventListener('click', () => abrirLoja(b.dataset.loja)));
 }
 $('#lojas-filtros').addEventListener('click', e => { const b = e.target.closest('[data-fl]'); if(b){ filtroLojas = b.dataset.fl; renderLojas(); } });
+$('#lojas-filtros').addEventListener('change', e => {
+  if(e.target.id === 'lojas-ord') ordLojas = e.target.value; else if(e.target.id === 'lojas-dias') diasLojas = e.target.value; else if(e.target.id === 'lojas-grupo') agruparLojas = e.target.checked;
+  if(/^lojas-/.test(e.target.id)) renderLojas();
+});
 $('#lojas-busca').addEventListener('input', renderLojas);
-var modoLojas = LS.get('modoLojas', 'lista');
+var modoLojas = LS.get('modoLojas', 'quadro');
 function marcarModoLojas(){ const b = $('#lj-modo'); b.textContent = modoLojas === 'quadro' ? 'Lista' : 'Quadro'; b.setAttribute('aria-pressed', modoLojas === 'quadro'); }
 $('#lj-modo').addEventListener('click', () => { modoLojas = modoLojas === 'quadro' ? 'lista' : 'quadro'; LS.set('modoLojas', modoLojas); marcarModoLojas(); renderLojas(); });
 $('#lj-nova-top').addEventListener('click', () => abrirNovaLoja(null));
@@ -2523,20 +2611,17 @@ function abrirLoja(id){
     <div class="sheet-head"><h2>${esc(c.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
     ${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} · ${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}
-    ${quadroRitmo(ritmoDaLoja(id))}
-    ${tel ? `<div class="contato-btns"><a class="btn sec" href="tel:${tel}">Ligar</a><a class="btn zap" href="https://wa.me/${zap}" target="_blank" rel="noopener">WhatsApp</a></div>` : ''}
     ${(() => { // Ficha do cadastro: só os campos preenchidos.
       const f = [['Razão social', c.razao], ['CNPJ/CPF', c.cnpj], ['Insc. estadual', c.ie], ['Endereço', c.endereco], ['Cidade', c.cidade],
         ['Contato', c.contato], ['Telefone', c.telefone], ['E-mail compra', c.emailCompra], ['E-mail financeiro', c.emailFinanceiro],
         ['E-mail notas', c.emailNotas], ['Pagamento', c.pagamento], ['Prazo', c.prazo], ['Frete', c.frete], ['Observação', c.obs]].filter(x => x[1]);
       return f.length ? `<dl class="ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Cadastro sem dados. Toque em <b>Editar cadastro</b> para completar.</p>';
     })()}
-    ${r.pedidos ? `<div class="lj-kpis"><div><small>Pedidos</small><b>${r.pedidos}</b></div><div><small>Total</small><b>${brl(r.total)}</b></div><div><small>Ticket médio</small><b>${brl(r.total / r.pedidos)}</b></div></div>` : ''}
-    <p class="meta">${r.pedidos ? `<b>${r.pedidos}</b> pedido${r.pedidos > 1 ? 's' : ''}, <b>${brl(r.total)}</b> no total. Último: ${new Date(r.ultimo).toLocaleDateString('pt-BR')} (${esc(r.ultimoNum)}).` : 'Ainda não tem pedido.'}</p>
-    ${recentes.length ? '<h2 class="sub-h">Pedidos recentes</h2><ul class="orders">' + recentes.map(cartaoPedido).join('') + '</ul>' : ''}
+    ${r.pedidos ? `<div class="lj-kpis"><div><small>12 meses</small><b>${brl(total12(id))}</b></div><div><small>Pedidos</small><b>${r.pedidos}</b></div><div><small>Ticket médio</small><b>${brl(r.total / r.pedidos)}</b></div></div>` : '<p class="meta">Ainda sem pedidos.</p>'}
     <div class="btns">
-      <button class="btn primary" id="lj-novo">Novo pedido para esta loja</button>
-      ${r.pedidos || recentes.length ? '<button class="btn sec" id="lj-repetir">Repetir último pedido</button>' : ''}
+      <button class="btn primary" id="lj-novo">Novo pedido</button>
+      <span class="lig-wrap"><button class="btn sec" id="lj-ligar" type="button"${tel ? '' : ' disabled title="Cadastre o telefone em Editar cadastro"'}>Ligar ▾</button>
+        <div class="lig-menu" id="lig-menu" hidden><a href="tel:${tel}">Ligar agora</a><a href="https://wa.me/${zap}" target="_blank" rel="noopener">Ligar pelo WhatsApp</a><button type="button" id="lig-copiar">Copiar número</button></div></span>
       ${ehAdmin() || c.cadastradoPor === sessao?.usuario ? '<button class="btn sec" id="lj-editar">Editar cadastro</button>' : ''}
       ${ehAdmin() ? '<button class="btn sec" id="lj-historico">Ver histórico completo</button>' : ''}
       <button class="btn sec" id="lj-filial">+ Adicionar filial (outro CNPJ)</button>
@@ -2548,7 +2633,9 @@ function abrirLoja(id){
   // Filial nova: se a loja ainda não tem rede, a rede ganha o nome da loja (dá para mudar no formulário).
   $('#lj-filial').addEventListener('click', () => abrirNovaLoja(null, grupoDe(c) ? c : Object.assign({}, c, {grupo: c.nome})));
   $('#lj-mudar-rede')?.addEventListener('click', () => mudarRedeLoja(id));
-  $('#lj-repetir')?.addEventListener('click', () => repetirUltimo(id, empAtiva() || ''));
+  $('#lj-ligar')?.addEventListener('click', e => { e.stopPropagation(); $('#lig-menu').hidden = !$('#lig-menu').hidden; });
+  $('#lig-copiar')?.addEventListener('click', async () => { try{ await navigator.clipboard.writeText(c.telefone || tel); toast('Número copiado: ' + (c.telefone || tel)); }catch(_){ toast('Número: ' + (c.telefone || tel), 6000); } $('#lig-menu').hidden = true; });
+  if(!tel) $('#lj-ligar')?.insertAdjacentHTML('afterend', '<small class="meta"> Cadastre o telefone em Editar cadastro.</small>');
   $('#lj-editar')?.addEventListener('click', () => abrirNovaLoja(null, null, c));
   // Histórico: Relatórios com este cliente e o período inteiro.
   $('#lj-historico')?.addEventListener('click', () => {
@@ -2611,14 +2698,16 @@ function texto(p){
 // Compartilhar o pedido (nunca o orçamento): Ver PDF, Baixar ou enviar PDF, Excel do pedido e e-mail ao cliente.
 function acoesHTML(p){
   if(p.tipo === 'orcamento' || situacaoDe(p) === ORCAMENTO) return '';   // orçamento nunca é enviado ao cliente
-  return `<div class="btns">
-    <button class="btn sec" id="btn-pdf-abrir" type="button">Ver PDF</button>
-    <button class="btn sec" id="btn-pdf" type="button">Baixar ou enviar PDF</button>
-    <button class="btn sec" id="btn-excel-ped" type="button">Excel do pedido</button>
-    <button class="btn sec" id="btn-email-ped" type="button">Enviar por e-mail ao cliente</button></div>`;
+  return `<div class="btns"><span class="lig-wrap"><button class="btn sec" id="btn-compartilhar" type="button">Compartilhar ▾</button>
+    <div class="lig-menu" id="comp-menu" hidden>
+    <button id="btn-pdf-abrir" type="button">Ver PDF</button>
+    <button id="btn-pdf" type="button">Baixar ou enviar PDF</button>
+    <button id="btn-excel-ped" type="button">Excel do pedido</button>
+    <button id="btn-email-ped" type="button">Enviar por e-mail ao cliente</button></div></span></div>`;
 }
 function ligarAcoes(p){
   if(!$('#btn-pdf-abrir')) return;
+  $('#btn-compartilhar').addEventListener('click', e => { e.stopPropagation(); $('#comp-menu').hidden = !$('#comp-menu').hidden; });
   $('#btn-pdf-abrir').addEventListener('click', () => abrirPdf(p));
   $('#btn-pdf').addEventListener('click', () => baixarPdf(p));
   $('#btn-excel-ped').addEventListener('click', () => baixarExcelPedido(p));
@@ -2773,6 +2862,8 @@ function prepararRelatorio(){
   else if(REL) renderRelatorio();
 }
 let relRestaurado = false;
+// Situação e Vendedor ficam no cabeçalho do painel central (os outros filtros, na coluna à esquerda).
+(() => { const t = $('#rel-topo'); if(!t) return; t.appendChild($('#rel-sit').closest('.field')); t.appendChild($('#rel-vend').closest('.field')); })();
 $('#rel-mes').addEventListener('change', () => { if(aplicarMes()) gerarRelatorio(); });
 
 async function gerarRelatorio(){
@@ -2914,6 +3005,7 @@ function matrizMeses(lista, filtro, nMeses){
 }
 function matrizHTML(mx, titulo){
   const tk = c => c && c.q ? brl(c.total / c.q) : '';
+  const maxQ = Math.max(1, ...mx.linhas.flatMap(x => mx.meses.map(m => (x.por[m.chave] || {q: 0}).q)));
   if(!mx.linhas.length) return `<section class="rel-sec"><h2>Histórico de compra por mês</h2><p class="empty">Nenhuma compra nestes meses com esses filtros.</p></section>`;
   return `<section class="rel-sec"><h2>Histórico de compra por mês</h2>
     <p class="meta">Últimos 4 meses: quantidade e ticket médio (valor pago ÷ unidades, já com desconto) de cada produto. Toque num produto para ver os detalhes.</p>
@@ -2921,9 +3013,9 @@ function matrizHTML(mx, titulo){
       <thead><tr><th rowspan="2">${esc(titulo)}</th>${mx.meses.map(m => `<th colspan="2" class="mes">${m.rot}</th>`).join('')}<th colspan="2" class="mes">Total</th></tr>
         <tr>${[...mx.meses, 0].map(() => '<th class="n">quant</th><th class="n">ticket médio</th>').join('')}</tr></thead>
       <tbody>${mx.linhas.map(x => `<tr data-q="${esc(norm(x.produto + ' ' + x.codigo))}" data-det="${esc(x.empresaId + '|' + x.codigo)}"><td>${esc(x.produto)}<div class="sub">${esc(x.empresa)}</div></td>${mx.meses.map(m => {
-        const c = x.por[m.chave]; return `<td class="n${c ? '' : ' zero'}">${c ? c.q.toLocaleString('pt-BR') : ''}</td><td class="n${c ? '' : ' zero'}">${tk(c)}</td>`; }).join('')}
+        const c = x.por[m.chave]; return `<td class="n${c ? '' : ' zero'}"${c ? ` style="background:rgba(61,123,255,${(0.08 + 0.32 * c.q / maxQ).toFixed(2)})"` : ''}>${c ? c.q.toLocaleString('pt-BR') : '·'}</td><td class="n${c ? '' : ' zero'}"${c ? ' style="background:rgba(47,163,107,.10)"' : ''}>${c ? tk(c) : '·'}</td>`; }).join('')}
         <td class="n"><b>${x.q.toLocaleString('pt-BR')}</b></td><td class="n"><b>${tk(x)}</b></td></tr>`).join('')}</tbody>
-    </table></div></section>`;
+    </table></div><p class="meta">Ponto (·) = não comprou no mês. Quanto mais azul, mais unidades. Ticket médio = valor pago ÷ unidades, já com o desconto do pedido.</p></section>`;
 }
 // Detalhes do produto (toque na linha da tabela por mês): considera só os 4 meses da tela.
 function abrirDetalheProduto(chave){
@@ -3006,7 +3098,7 @@ $('#rel-resultado').addEventListener('click', e => {
 /* Resultado do relatório: resumo no topo (com comparação ao mês anterior), busca e abas.
    Todas as abas são montadas de uma vez e só a escolhida aparece (trocar de aba é instantâneo). */
 const REL_ABAS_TXT = {cliente:'Cliente', itens:'Itens', mes:'Por mês', lojas:'Lojas', comissao:'Comissão', ritmo:'Ritmo', detalhe:'Detalhado'};
-let REL_ABA = LS.get('relAba', 'itens'), REL_BUSCA = '';
+let REL_ABA = LS.get('relAbaV31', 'mes'), REL_BUSCA = '';
 const varPct = (a, b) => b > 0 ? Math.round((a - b) / b * 100) : null;
 const varHTML = (a, b) => { const v = varPct(a, b);
   return v === null ? '' : `<small class="rel-var ${v > 0 ? 'up' : v < 0 ? 'down' : ''}">${v > 0 ? '↑' : v < 0 ? '↓' : '→'} ${Math.abs(v)}% vs mês anterior</small>`; };
@@ -3096,7 +3188,7 @@ function renderRelatorio(){
     </table></div></section>`;
 
   const paineis = {cliente: clienteHTML, itens: itensHTML, mes: mesHTML, lojas: lojasHTML, comissao: comissaoHTML, ritmo: ritmoHTML, detalhe: detalheHTML};
-  const abas = [...(c ? ['cliente'] : []), 'itens', 'mes', 'lojas', 'comissao', ...(c ? [] : ['ritmo']), 'detalhe'];
+  const abas = [...(c ? ['cliente'] : []), 'mes', 'itens', 'lojas', 'comissao', ...(c ? [] : ['ritmo']), 'detalhe'];
   if(!abas.includes(REL_ABA)) REL_ABA = abas[0];
 
   // Resumo da marca (sem cliente escolhido): números, caminho dos pedidos e lojas que pedem atenção. Blocos recolhem.
@@ -3138,7 +3230,7 @@ function renderRelatorio(){
 function rolarMatriz(){ const w = document.querySelector('#rel-resultado .rel-painel.on table.mat')?.closest('.tabela-wrap'); if(w) w.scrollLeft = w.scrollWidth; }
 $('#rel-resultado').addEventListener('click', e => {
   const b = e.target.closest('[data-aba]'); if(!b) return;
-  REL_ABA = b.dataset.aba; LS.set('relAba', REL_ABA); setTimeout(rolarMatriz, 0);
+  REL_ABA = b.dataset.aba; LS.set('relAbaV31', REL_ABA); setTimeout(rolarMatriz, 0);
   document.querySelectorAll('#rel-resultado [data-aba]').forEach(x => x.setAttribute('aria-pressed', x === b));
   document.querySelectorAll('#rel-resultado [data-painel]').forEach(p => p.classList.toggle('on', p.dataset.painel === REL_ABA));
 });
@@ -3690,18 +3782,19 @@ function renderCatalogo(){
   $('#cat-cards').innerHTML = cardsC.map(([k,t,n]) => `<button class="rel-card" data-cf="${k}" aria-pressed="${catFiltro === k}"><small>${t}</small><strong>${n}</strong></button>`).join('');
   const qC = norm($('#cat-busca').value || '');
   const passa = p => (!qC || norm(p.nome + ' ' + p.id).includes(qC)) && (catFiltro === 'todos' || (catFiltro === 'semfoto' && !p.foto) || (catFiltro === 'semprec' && !(p.preco > 0) && !p.livre) || (catFiltro === 'livre' && p.livre));
-  // Por empresa e, dentro dela, por categoria. Cada categoria abre e fecha; a lista só é montada ao abrir.
-  $('#catalogo').innerHTML = (DATA?.empresas || []).filter(e => !empAtiva() || e.id === empAtiva()).map(e => {
-    const ps = prodsDe(e.id).filter(passa);
-    if(!ps.length) return `<div class="cat-group"><h2>${esc(e.nome)}</h2><p class="empty">Sem produtos.</p></div>`;
-    const cc = {}; ps.forEach(p => { const c = catDe(p); cc[c] = (cc[c] || 0) + 1; });
-    const secoes = Object.keys(cc).sort((a, b) => (a === '') - (b === '') || a.localeCompare(b, 'pt-BR')).map(c => [c, cc[c]]);
-    return `<div class="cat-group"><h2>${esc(e.nome)} <small style="font-size:15px;color:var(--muted)">${ps.length} produtos</small></h2>` +
-      secoes.map(([c, n]) => `<details class="cat-sec" data-emp="${esc(e.id)}" data-cat="${esc(c)}"${secoes.length === 1 || qC || catFiltro !== 'todos' ? ' open' : ''}>
-        <summary>${esc(c || (secoes.length === 1 ? 'Produtos' : 'Sem categoria'))} <small>${n}</small></summary><ul class="prod-list"></ul></details>`).join('') + '</div>';
-  }).join('');
-  document.querySelectorAll('#catalogo details[open]').forEach(preencherSecao);
+  // Categorias numa lista à esquerda (com a quantidade); tabela de produtos ao centro.
+  const ps = baseP.filter(passa), cc = {}; ps.forEach(p => { const c = catDe(p); cc[c] = (cc[c] || 0) + 1; });
+  const cats = Object.keys(cc).sort((a, b) => (a === '') - (b === '') || a.localeCompare(b, 'pt-BR'));
+  if(catSel && !(catSel in cc)) catSel = '__todas';
+  const sel = catSel || '__todas', lista = sel === '__todas' ? ps : ps.filter(p => catDe(p) === sel), MAX = 300;
+  const optCat = [['__todas', 'Todas', ps.length], ...cats.map(c => [c, c || 'Sem categoria', cc[c]])];
+  $('#catalogo').innerHTML = `<div class="cat-lay"><nav class="cat-lista" aria-label="Categorias">${optCat.map(([k, t, n]) => `<button type="button" data-cat="${esc(k)}" aria-pressed="${k === sel}">${esc(t)} <small>${n}</small></button>`).join('')}</nav>
+    <div class="cat-tab"><select id="cat-sel-m" class="cat-sel-m" aria-label="Categoria">${optCat.map(([k, t, n]) => `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>${esc(t)} (${n})</option>`).join('')}</select>
+    ${lista.length ? `<table class="tabela"><thead><tr><th>Produto</th><th>Código</th><th>Un.</th><th class="n">Tabela</th></tr></thead><tbody>${lista.slice(0, MAX).map(p => `<tr><td><div class="cat-prod">${fotoHTML(p)}<div><b>${esc(p.nome)}</b><div class="sub">${esc(catDe(p) || 'Sem categoria')}</div></div></div></td><td>${esc(String(p.id).replace(/^[A-Z]{3}-/, ''))}</td><td>${esc(p.un || '')}</td><td class="n">${p.preco > 0 ? brl(p.preco) : p.livre ? '<span class="badge env">preço livre</span>' : '<span class="badge espera">sem preço</span>'}</td></tr>`).join('')}</tbody></table>${lista.length > MAX ? `<p class="meta">Mostrando ${MAX} de ${lista.length}. Use a busca para achar o resto.</p>` : ''}` : '<p class="empty">Nenhum produto com esse filtro.</p>'}</div></div>`;
 }
+var catSel = '__todas';
+$('#catalogo').addEventListener('click', e => { const b = e.target.closest('.cat-lista [data-cat]'); if(b){ catSel = b.dataset.cat; renderCatalogo(); } });
+$('#catalogo').addEventListener('change', e => { if(e.target.id === 'cat-sel-m'){ catSel = e.target.value; renderCatalogo(); } });
 function preencherSecao(d){
   const ul = d.querySelector('ul'); if(ul.childElementCount) return;
   const qC = norm($('#cat-busca').value || '');
@@ -3820,12 +3913,12 @@ function abrirImportarPrecos(){
 $('#btn-importar-precos').addEventListener('click', abrirImportarPrecos);
 
 /* ---------- Cadastrar produtos por planilha (administrador) ---------- */
-const COLS_PROD = ['Empresa', 'Código', 'Nome', 'Unidade', 'Categoria', 'Preço'];
+const COLS_PROD = ['Empresa', 'Código', 'Nome', 'Unidade', 'Categoria', 'Preço', 'Foto'];
 async function baixarModeloProdutos(){
   try{
     const X = await carregarXLSX(), emp = empAtiva() || (DATA?.empresas?.[0]?.id || 'JFA');
-    const ws = X.utils.aoa_to_sheet([COLS_PROD, [emp, 'ABC123', 'Produto de exemplo (apague esta linha)', 'UN', 'Categoria', 0]]);
-    ws['!cols'] = [{wch: 12}, {wch: 14}, {wch: 44}, {wch: 8}, {wch: 20}, {wch: 12}];
+    const ws = X.utils.aoa_to_sheet([COLS_PROD, [emp, 'ABC123', 'Produto de exemplo (apague esta linha)', 'UN', 'Categoria', 0, 'https://link-da-imagem.jpg']]);
+    ws['!cols'] = [{wch: 12}, {wch: 14}, {wch: 44}, {wch: 8}, {wch: 20}, {wch: 12}, {wch: 40}];
     const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Produtos');
     await entregarArquivo(new Blob([X.write(wb, {bookType: 'xlsx', type: 'array'})]), 'modelo-produtos.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Modelo de produtos');
   }catch(e){ console.error(e); toast('Não deu para gerar o modelo'); }
@@ -3835,10 +3928,10 @@ function lerPlanilhaProdutos(linhas){
   if(lim.length < 2) return [];
   const cab = lim[0].map(c => norm(String(c ?? '')).trim());
   const ix = ns => cab.findIndex(c => ns.some(n => c === n || c.startsWith(n)));
-  const [iE, iC, iN, iU, iG, iP] = [ix(['empresa', 'marca']), ix(['codigo', 'cod', 'sku']), ix(['nome', 'produto', 'descricao']), ix(['unidade', 'un']), ix(['categoria']), ix(['preco', 'valor'])];
+  const [iE, iC, iN, iU, iG, iP, iF] = [ix(['empresa', 'marca']), ix(['codigo', 'cod', 'sku']), ix(['nome', 'produto', 'descricao']), ix(['unidade', 'un']), ix(['categoria']), ix(['preco', 'valor']), ix(['foto', 'imagem', 'link'])];
   if(iC < 0 || iN < 0) return [];
   const g = (l, i) => i >= 0 ? String(l[i] ?? '').trim() : '';
-  return lim.slice(1).map(l => ({empresa: g(l, iE) || empAtiva() || '', codigo: g(l, iC), nome: g(l, iN), un: g(l, iU), categoria: g(l, iG), preco: iP >= 0 ? precoDoArquivo(l[iP]) : 0}));
+  return lim.slice(1).map(l => ({empresa: g(l, iE) || empAtiva() || '', codigo: g(l, iC), nome: g(l, iN), un: g(l, iU), categoria: g(l, iG), preco: iP >= 0 ? precoDoArquivo(l[iP]) : 0, foto: g(l, iF)}));
 }
 function abrirCadastrarProdutos(){
   let itens = [];
@@ -3846,7 +3939,13 @@ function abrirCadastrarProdutos(){
     <div class="sheet-head"><h2>Cadastrar produtos por planilha</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <p class="meta">Colunas: <b>Empresa, Código, Nome, Unidade, Categoria, Preço</b>. Só entram produtos novos; os que já existem são ignorados. Nada é gravado antes da sua confirmação. <a href="#" id="cp-modelo">Baixar modelo</a></p>
     <label class="field"><span class="lbl">Arquivo</span><input type="file" id="cp-arq" accept=".xlsx,.xls,.csv,text/csv"></label>
+    <div class="field"><span class="lbl">Se o código já existir</span>
+      <label class="imp-op"><input type="radio" name="cp-modo" value="novos" checked> <span><b>Só cadastrar os novos</b><small>Os que já existem ficam como estão.</small></span></label>
+      <label class="imp-op"><input type="radio" name="cp-modo" value="atualizar"> <span><b>Atualizar os existentes</b><small>Troca nome, unidade, categoria, preço e foto pelo que estiver no arquivo (campos vazios não apagam nada).</small></span></label></div>
+    <p class="meta">Produto novo sem preço fica como <b>preço livre</b>: o vendedor define o valor no pedido.</p>
     <button class="btn primary" id="cp-conferir" disabled>Conferir</button><div id="cp-previa"></div>`);
+  const cpModo = () => document.querySelector('input[name="cp-modo"]:checked').value;
+  document.querySelectorAll('input[name="cp-modo"]').forEach(r => r.addEventListener('change', () => { $('#cp-previa').innerHTML = ''; }));
   $('#cp-modelo').addEventListener('click', e => { e.preventDefault(); baixarModeloProdutos(); });
   $('#cp-arq').addEventListener('change', async e => {
     itens = []; $('#cp-previa').innerHTML = ''; $('#cp-conferir').disabled = true; const f = e.target.files[0]; if(!f) return;
@@ -3862,18 +3961,19 @@ function abrirCadastrarProdutos(){
   const mostrar = (r, gravado) => {
     const c = r.resumo, l = est => r.resultados.filter(x => x.estado === est).slice(0, 40);
     const bloco = (est, tit) => l(est).length ? `<h3 class="sub-h">${tit} (${c[est]})</h3><ul class="imp-lista">${l(est).map(x => `<li><span>${esc(x.nome || x.codigo)}</span><span>${esc(x.id || x.empresa || '')}</span></li>`).join('')}</ul>` : '';
-    $('#cp-previa').innerHTML = `<div class="rel-cards imp-cards"><div class="rel-card"><small>${gravado ? 'Cadastrados' : 'Serão cadastrados'}</small><strong>${c.novo}</strong></div><div class="rel-card"><small>Já existem</small><strong>${c.existe}</strong></div><div class="rel-card"><small>Com problema</small><strong>${c.invalido}</strong></div></div>
-      ${bloco('novo', gravado ? 'Cadastrados' : 'Serão cadastrados')}${bloco('invalido', 'Faltou empresa, código ou nome')}
-      ${gravado ? '<button class="btn ghost" data-close>Fechar</button>' : (c.novo ? `<button class="btn primary" id="cp-gravar" style="margin-top:10px">Cadastrar ${c.novo} produto${c.novo > 1 ? 's' : ''}</button>` : '<p class="meta">Nada novo para cadastrar.</p>')}`;
+    const fazer = c.novo + (c.atualizar || 0);
+    $('#cp-previa').innerHTML = `<div class="rel-cards imp-cards"><div class="rel-card"><small>${gravado ? 'Cadastrados' : 'Serão cadastrados'}</small><strong>${c.novo}</strong></div><div class="rel-card"><small>${gravado ? 'Atualizados' : 'Serão atualizados'}</small><strong>${c.atualizar || 0}</strong></div><div class="rel-card"><small>Já existem (ignorados)</small><strong>${c.existe}</strong></div><div class="rel-card"><small>Com problema</small><strong>${c.invalido}</strong></div></div>
+      ${bloco('novo', gravado ? 'Cadastrados' : 'Serão cadastrados')}${bloco('atualizar', gravado ? 'Atualizados' : 'Serão atualizados')}${bloco('invalido', 'Faltou empresa, código ou nome')}
+      ${gravado ? '<button class="btn ghost" data-close>Fechar</button>' : (fazer ? `<button class="btn primary" id="cp-gravar" style="margin-top:10px">Gravar ${fazer} produto${fazer > 1 ? 's' : ''}</button>` : '<p class="meta">Nada a gravar com este arquivo e esta opção.</p>')}`;
     $('#cp-gravar')?.addEventListener('click', async () => {
       const b = $('#cp-gravar'); b.disabled = true; b.textContent = 'Gravando…';
-      try{ const g = await api({acao: 'produtosImportar', itens, simular: false}); mostrar(g, true); toast('Produtos cadastrados'); carregarCatalogo(false); }
+      try{ const g = await api({acao: 'produtosImportar', itens, modo: cpModo(), simular: false}); mostrar(g, true); toast('Produtos cadastrados'); carregarCatalogo(false); }
       catch(err){ b.disabled = false; b.textContent = 'Tentar de novo'; if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para gravar', 5000); }
     });
   };
   $('#cp-conferir').addEventListener('click', async () => {
     const b = $('#cp-conferir'); b.disabled = true; b.textContent = 'Conferindo…';
-    try{ mostrar(await api({acao: 'produtosImportar', itens, simular: true}), false); }
+    try{ mostrar(await api({acao: 'produtosImportar', itens, modo: cpModo(), simular: true}), false); }
     catch(err){ if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para conferir', 5000); }
     finally{ b.disabled = false; b.textContent = 'Conferir'; }
   });
@@ -3898,6 +3998,7 @@ document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'visible' && Date.now() - pedidosEm > 30000) carregarPedidos(false);
 });
 function abrirSheet(html){
+  $('#sheet').classList.remove('larga');
   const s = $('#sheet'); $('#sheet-body').innerHTML = html; s.hidden = false;
   requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add('open')));
 }
