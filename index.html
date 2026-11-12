@@ -458,7 +458,7 @@ body{font-variant-numeric:tabular-nums}
 .resumo li.aberta .preco-item,.resumo li.aberta .desc-item{border-color:var(--ipe)}
 .fechar-fixo{position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom,0px));margin:16px -18px calc(-22px - env(safe-area-inset-bottom,0px));
   padding:12px 18px calc(16px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--line);z-index:2}
-.btn.fechar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.btn.fechar{display:flex;justify-content:center;align-items:center;gap:10px;text-align:center}
 /* Cores de situação: barra lateral nos cartões e etiquetas suaves */
 .order{position:relative;overflow:hidden;border:0;box-shadow:var(--sombra);padding:12px 14px 12px 18px}
 .order::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,var(--line))}
@@ -662,7 +662,9 @@ body{font-variant-numeric:tabular-nums}
   #produtos.prod-list{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
   #produtos.prod-list .grupo,#produtos.prod-list .empty{grid-column:1/-1}
   /* Lista compacta (Sua conta > Tamanho da lista de produtos): uma linha por produto, com todos os campos à vista. */
-  html[data-dens="compacto"] #produtos.prod-list{grid-template-columns:1fr;gap:6px}
+  html[data-dens="compacto"] #produtos.prod-list{grid-template-columns:minmax(0,1fr);gap:6px}
+  html[data-dens="compacto"] .pcard{min-width:0}
+  html[data-dens="compacto"] .pcard .prod-info{flex:1 1 0;min-width:0;overflow:hidden}
   html[data-dens="compacto"] .prod-list .prod.pcard{flex-wrap:nowrap;align-items:center;padding:6px 10px;gap:10px}
   html[data-dens="compacto"] .pcard > :first-child{flex:0 0 40px;width:40px;height:40px}
   html[data-dens="compacto"] .pcard > :first-child img{width:40px;height:40px;object-fit:contain}
@@ -670,10 +672,18 @@ body{font-variant-numeric:tabular-nums}
   html[data-dens="compacto"] .pcard .prod-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   html[data-dens="compacto"] .pcard .pc-hist{display:none}
   html[data-dens="compacto"] .pcard .pc-campos{flex:0 0 auto}
-  html[data-dens="compacto"] .pc-f span{display:none}
+  /* Rótulo (Qtd, Valor R$, Desc %) "pendurado" na borda de cada caixa: não ocupa espaço e continua visível ao rolar. */
+  html[data-dens="compacto"] .pc-f{position:relative}
+  html[data-dens="compacto"] .pc-f span{position:absolute;left:7px;top:-7px;z-index:1;background:var(--surface);padding:0 3px;font-size:10px;line-height:1.2;pointer-events:none}
+  html[data-dens="compacto"] .prod-list .prod.pcard{padding-top:12px}
   html[data-dens="compacto"] .pc-f input{height:34px}
   html[data-dens="compacto"] .pc-q{flex:0 0 56px}html[data-dens="compacto"] .pc-d{flex:0 0 56px}html[data-dens="compacto"] .pc-v{flex:0 0 92px}
   html[data-dens="compacto"] .pc-add{height:34px;padding:0 12px}
+  /* Janela estreita (resumo + categorias ocupam os lados): os campos descem para uma segunda linha, em vez de vazar. */
+  @media (max-width: 1299px){
+    html[data-dens="compacto"] .prod-list .prod.pcard{flex-wrap:wrap;gap:4px 10px}
+    html[data-dens="compacto"] .pcard .pc-campos{flex:1 1 100%;justify-content:flex-end}
+  }
   .cat-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:6px}
   .cat-chips::-webkit-scrollbar{display:block;height:6px}
   .cat-chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
