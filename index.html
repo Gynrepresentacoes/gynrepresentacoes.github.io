@@ -839,6 +839,15 @@ table.mat th.qh,table.mat th.tkh{font-size:11px !important}
 table.mat th,table.mat td,table.mat th.n,table.mat td.n{text-align:center !important}
 table.mat tbody td:first-child,table.mat thead th:first-child{text-align:left !important}
 table.mat thead th:first-child{text-align:center !important}
+/* Processando: faixa no topo, botões travados e botão tocado girando */
+html.ocupado::before{content:'';position:fixed;left:0;top:0;height:3px;width:40%;background:var(--ipe,#2f7bff);z-index:200;animation:faixa 1.1s ease-in-out infinite}
+@keyframes faixa{0%{left:-40%}100%{left:100%}}
+html.ocupado{cursor:progress}
+html.ocupado #sheet button,html.ocupado main button,html.ocupado .nav button,html.ocupado .cart button{pointer-events:none}
+.btn-ocup{position:relative;color:transparent !important}
+.btn-ocup::after{content:'';position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:giro .7s linear infinite;color:#fff}
+.btn.sec.btn-ocup::after,.btn.ghost.btn-ocup::after{color:var(--ink,#0b1630)}
+@keyframes giro{to{transform:rotate(360deg)}}
 /* Legenda colorida do quadro (quebra de linha dentro do painel, nunca passa do limite dele) */
 .mat-leg{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:12px;color:var(--muted);margin-top:8px;max-width:100%;overflow:hidden}
 .ml-it{display:inline-flex;align-items:center;gap:6px;min-width:0}.ml-sw{display:inline-block;width:13px;height:13px;border-radius:3px;flex:none}
@@ -1034,7 +1043,7 @@ html[data-estilo="classico"] .mini.pri{background:var(--ipe);color:#fff;border-c
 .vd-tab .tabela tr.cancelado td{opacity:.7}
 .vd-tab .tabela td.ac{text-align:right;white-space:nowrap}
 .vd-acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.vd-card+.vd-acoes{margin:-2px 0 10px}
+.vd-card+.vd-acoes{margin:8px 0 12px;position:relative;z-index:2}
 .vd-bt{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 11px;font-weight:600;font-size:13px;cursor:pointer}
 .vd-bt.pri{background:var(--ipe);color:#fff;border-color:var(--ipe)}
 .vd-bt.perigo{color:var(--bad);border-color:var(--bad)}
@@ -1382,11 +1391,31 @@ const cli = id => (DATA?.clientes || []).find(c => c.id === id);
 const prodsDe = e => (DATA?.produtos || []).filter(p => p.empresa === e);
 
 /* ---------- Comunicação com a planilha ---------- */
+// Ações do usuário (enviar e-mail, aprovar, salvar…) mostram "Processando…", travam os botões e giram o botão tocado,
+// para ninguém clicar duas vezes. As buscas de fundo (catálogo, listas, relatório) não travam nada.
+const API_FUNDO = ['catalogo', 'pedidos', 'lojas', 'relatorio', 'ultimo', 'config', 'usuarios', 'rep', 'meusDados', 'login'];
+let ocupados = 0, botaoOcup = null, avisoOcup = null, fimOcup = null;
+function ocupar(on){
+  if(on){
+    if(ocupados++ > 0) return;
+    document.documentElement.classList.add('ocupado');
+    const b = document.activeElement; if(b && b.tagName === 'BUTTON' && !b.disabled){ botaoOcup = b; b.classList.add('btn-ocup'); }
+    avisoOcup = setTimeout(() => toast('Ainda processando… aguarde e não toque de novo.', 6000), 15000);
+  }else{
+    if(--ocupados > 0) return;
+    ocupados = 0; document.documentElement.classList.remove('ocupado'); clearTimeout(avisoOcup);
+    if(botaoOcup){ botaoOcup.classList.remove('btn-ocup'); botaoOcup = null; }
+  }
+}
 async function api(payload){
-  const r = await fetch(CFG.API_URL, {method:'POST', body: JSON.stringify({...payload, token: sessao?.token || ''})});
-  const j = await r.json();
-  if(!j.ok){ const err = new Error(j.erro || 'Erro'); err.login = !!j.login; throw err; }
-  return j;
+  const lento = !API_FUNDO.includes(payload.acao);
+  if(lento) ocupar(true);
+  try{
+    const r = await fetch(CFG.API_URL, {method:'POST', body: JSON.stringify({...payload, token: sessao?.token || ''})});
+    const j = await r.json();
+    if(!j.ok){ const err = new Error(j.erro || 'Erro'); err.login = !!j.login; throw err; }
+    return j;
+  }finally{ if(lento) ocupar(false); }
 }
 function sessaoCaiu(msg){
   sessao = null; LS.set('sessao', null); mostrarUsuario(); pedirLogin(msg);
