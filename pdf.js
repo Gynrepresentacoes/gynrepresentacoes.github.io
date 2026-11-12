@@ -28,7 +28,7 @@
     var p = {};
     for (var k in p0) p[k] = p0[k];
     ['num', 'empresaNome', 'clienteNome', 'clienteCidade', 'pagamento', 'obs'].forEach(function (k) { if (p[k] != null) p[k] = limpa(p[k]); });
-    p.itens = (p0.itens || []).map(function (i) { return { id: i.id, nome: limpa(i.nome), un: limpa(i.un), q: i.q, preco: i.preco }; });
+    p.itens = (p0.itens || []).map(function (i) { return { id: i.id, nome: limpa(i.nome), un: limpa(i.un), q: i.q, preco: i.preco, tabela: i.tabela }; });
     representante = limpa(representante);
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
     var W = 210, M = 15, marinho = [10, 24, 56], azul = [47, 123, 255], tinta = [11, 22, 48], cinza = [86, 98, 125];
@@ -78,26 +78,32 @@
     }
     var fimP = coluna(M, 84, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', p.empresaNome, [
       [pag],
-      [p0.entrega || p0.transportadora ? 'Entrega: ' + [dBR(p0.entrega), p0.transportadora].filter(Boolean).join(' - ') : '', true],
-      [p0.nf ? 'NF ' + p0.nf + (p0.dataFat ? ' de ' + dBR(p0.dataFat) : '') : '', true],
-      [enviado && (p0.marcaEmail || []).length ? 'Enviado para ' + p0.marcaEmail.join(', ') : '']
+      [p0.entrega ? 'Entrega desejada: ' + dBR(p0.entrega) : '', true],
+      [p0.nf ? 'NF ' + p0.nf + (p0.dataFat ? ' de ' + dBR(p0.dataFat) : '') : '', true]
     ]);
+    var doc_ = String(p.clienteCnpj || c.cnpj || '').replace(/\D/g, '');
     var fimC = coluna(M + 96, 84, 'CLIENTE', p.clienteNome, [
-      ['CNPJ ' + (p.clienteCnpj || c.cnpj || '-') + (c.ie ? '  -  IE ' + c.ie : ''), true],
+      [(doc_.length === 11 ? 'CPF ' : 'CNPJ ') + (p.clienteCnpj || c.cnpj || '-') + (c.ie ? '  -  IE ' + c.ie + (c.indicadorIe ? ' (' + c.indicadorIe + ')' : '') : ''), true],
       [[c.cidade || p.clienteCidade, [c.contato, c.telefone].filter(Boolean).join(' ')].filter(Boolean).join(' - ')],
-      [p0.enderecoEntrega ? 'Entregar em: ' + p0.enderecoEntrega : '', true]
+      [p0.enderecoEntrega ? 'Entregar em: ' + p0.enderecoEntrega : (c.endereco || c.cep ? [c.endereco, c.cep ? 'CEP ' + c.cep : ''].filter(Boolean).join(' - ') : ''), true]
     ]);
     y = Math.max(fimP, fimC) + 6;
 
-    // Tabela: Produto | Un. | Qtd | Preço | Subtotal
-    var col = { prod: M, un: 118, q: 140, preco: 168, sub: W - M };
+    // Tabela: Cód. | Produto | Un. | Qtd | (Desc.) | Preço | Subtotal  (Desc. só aparece se algum item tiver desconto)
+    var descItem = function (i) { var t = Number(i.tabela) || 0, v = Number(i.preco) || 0; return t > v + 0.004 ? Math.round((1 - v / t) * 1000) / 10 : 0; };
+    var temDesc = p.itens.some(function (i) { return descItem(i) > 0; });
+    var codigo = function (i) { return limpa(String(i.id || '').replace(/^[A-Za-z]{2,4}-/, '')); };
+    var col = { cod: M, prod: M + 20, un: 114, q: 130, desc: 146, preco: 170, sub: W - M };
+    if (!temDesc) { col.un = 118; col.q = 142; col.preco = 168; }
     function cabecalho() {
       doc.setDrawColor.apply(doc, marinho); doc.setLineWidth(0.4); doc.line(M, y, W - M, y);
       y += 5.5;
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc, cinza);
+      doc.text('CÓD.', col.cod, y);
       doc.text('PRODUTO', col.prod, y);
       doc.text('UN.', col.un, y);
       doc.text('QTD', col.q, y, { align: 'right' });
+      if (temDesc) doc.text('DESC.', col.desc, y, { align: 'right' });
       doc.text('PREÇO', col.preco, y, { align: 'right' });
       doc.text('SUBTOTAL', col.sub, y, { align: 'right' });
       y += 3; doc.setLineWidth(0.2); doc.setDrawColor(215, 223, 238); doc.line(M, y, W - M, y);
@@ -109,10 +115,12 @@
       var nome = doc.splitTextToSize(it.nome, col.un - col.prod - 4);
       var alt = nome.length * 4.6;
       if (y + alt > 262) { doc.addPage(); y = 22; cabecalho(); }
-      doc.setFont('helvetica', 'normal'); doc.setTextColor.apply(doc, tinta); doc.text(nome, col.prod, y);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor.apply(doc, cinza); doc.setFontSize(9); doc.text(doc.splitTextToSize(codigo(it), col.prod - col.cod - 2)[0] || '', col.cod, y); doc.setFontSize(10);
+      doc.setTextColor.apply(doc, tinta); doc.text(nome, col.prod, y);
       doc.setTextColor.apply(doc, cinza); doc.text(String(it.un || ''), col.un, y);
       doc.setTextColor.apply(doc, tinta);
       doc.setFont('helvetica', 'bold'); doc.text(String(it.q), col.q, y, { align: 'right' });
+      if (temDesc) { doc.setFont('helvetica', 'normal'); doc.setTextColor.apply(doc, cinza); doc.text(descItem(it) ? String(descItem(it)).replace('.', ',') + '%' : '', col.desc, y, { align: 'right' }); doc.setTextColor.apply(doc, tinta); }
       doc.setFont('helvetica', 'normal'); doc.text(brl(it.preco), col.preco, y, { align: 'right' });
       doc.setFont('helvetica', 'bold'); doc.text(brl(it.q * it.preco), col.sub, y, { align: 'right' });
       y += alt + 1.5;
@@ -157,11 +165,7 @@
       doc.text('Orçamento válido por 7 dias. Preços e disponibilidade sujeitos a confirmação do fornecedor.', M, y + 2);
       y += 10;
     } else y += 4;
-    doc.setDrawColor(150, 160, 180); doc.setLineWidth(0.3);
-    doc.line(M, y + 10, M + 95, y + 10); doc.line(M + 110, y + 10, W - M, y + 10);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
-    doc.text('Aceite do cliente (nome e assinatura)', M, y + 14.5);
-    doc.text('Data', M + 110, y + 14.5);
+    // (sem linhas de assinatura e data: o pedido segue por e-mail)
 
     // Rodapé
     var tot = doc.getNumberOfPages();
