@@ -1434,7 +1434,7 @@ async function carregarCatalogo(avisar){
   if(DEMO) return true;
   try{
     const j = await api({acao:'catalogo'});
-    DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes, grupos:j.grupos || [], rep: j.rep || {}};
+    DATA = {empresas:j.empresas, produtos:j.produtos, clientes:j.clientes, grupos:j.grupos || [], rep: j.rep || {}, desativados: j.desativados};
     LS.set('catalogo', DATA); LS.set('catalogoEm', new Date().toISOString());
     if(j.voce && sessao){ sessao.nome = j.voce.nome; sessao.perfil = j.voce.perfil || 'vendedor'; sessao.criador = !!j.voce.criador; sessao.email = j.voce.email || ''; sessao.telefone = j.voce.telefone || ''; LS.set('sessao', sessao); mostrarUsuario(); }
     if(!st.empresa) st.empresa = empAtiva();
