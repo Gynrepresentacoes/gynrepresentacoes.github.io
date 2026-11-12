@@ -589,6 +589,23 @@ body{font-variant-numeric:tabular-nums}
   #v-relatorios .rel-mes-nav input{min-width:0;flex:1}
   #v-relatorios #rel-resultado,#v-relatorios .rel-centro{min-width:0}
   .rel-topo{display:flex;gap:10px;margin-bottom:12px}.rel-topo .field{margin:0;flex:0 1 240px}
+  /* Quadro do relatório (3 painéis): filtros | quadro | detalhes */
+  #v-relatorios .rel-barra,#v-relatorios .rel-quadro,#v-relatorios .rel-det{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px}
+  #v-relatorios .rel-barra{gap:8px;width:auto}
+  #v-relatorios .rel-ft{margin-bottom:2px}
+  #v-relatorios .rel-barra .field{border:1.5px solid var(--line);border-radius:10px;padding:4px 10px 2px}
+  #v-relatorios .rel-barra .field .lbl{font-size:11px;margin:0;color:var(--muted)}
+  #v-relatorios .rel-barra select,#v-relatorios .rel-barra input[type=month]{border:0;padding:0;min-height:26px;background:transparent;font-weight:600;font-size:14px}
+  #v-relatorios .rel-mes-nav .rel-seta{min-height:34px}
+  #v-relatorios .rel-quadro{margin-bottom:14px}#v-relatorios .rel-quadro .rel-sec{margin:0}
+  .rel-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .rel-ctl{display:flex;gap:8px}.rel-ctl .field{margin:0;flex:none;width:130px;border:1.5px solid var(--line);border-radius:10px;padding:4px 10px 2px}
+  .rel-ctl .lbl{font-size:11px;margin:0;color:var(--muted)}.rel-ctl select{border:0;padding:0;min-height:26px;background:transparent;font-weight:600;font-size:14px;width:100%}
+  #v-relatorios .rel-det{padding:12px 14px}
+  #v-relatorios .rel-det h3{display:inline-block;background:var(--suave-tint,rgba(77,141,255,.15));color:var(--acc-text,#3d7bff);border-radius:8px;padding:5px 12px;margin:0 0 12px}
+  #v-relatorios .rel-det b{display:block;font-size:17px;margin-bottom:2px}
+  #v-relatorios .rel-det .ficha{display:grid;grid-template-columns:1fr auto;gap:6px 10px;margin:8px 0 0}
+  #v-relatorios .rel-det .ficha dt{color:var(--muted)}#v-relatorios .rel-det .ficha dd{margin:0;text-align:right;font-weight:600}
   #v-relatorios #rel-emp{display:none}
   #v-relatorios .rel-mais-box .field:first-child{display:none}
   .rel-mes-nav{flex:0 0 auto}
@@ -746,7 +763,12 @@ html[data-estilo="suave"] .tema-op{border-width:1px}
 .form-6 .bloco{border:1px solid var(--line);border-radius:12px;padding:6px 14px 10px;margin-bottom:12px}
 .esc-op{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;cursor:pointer}
 .esc-op small{display:block;opacity:.75}.esc-op:has(input:checked){border-color:var(--acc-text,#4d8dff);background:var(--suave-tint,rgba(77,141,255,.12))}
-.rel-ft,.rel-nota{display:none}
+.rel-rec summary{display:flex;align-items:center;gap:10px;list-style:none;cursor:pointer}.rel-rec summary::-webkit-details-marker{display:none}
+.rel-rec .chev::after{content:'▾';font-size:12px;opacity:.7}.rel-rec[open] .chev::after{content:'▴'}
+.rel-rec summary .sub{margin-left:auto;opacity:.75;font-size:14px}.rel-rec[open] summary .sub{display:none}
+.lm-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 2px;border-bottom:1px solid var(--line)}.lm-row:last-child{border-bottom:0}
+.lm-row[data-ritmo-cli]{cursor:pointer}.lm-v{display:flex;align-items:center;gap:10px;white-space:nowrap}.lm-v i{display:inline-block;height:8px;border-radius:6px;background:#4a6a96}
+.rel-ft,.rel-nota,.rel-det{display:none}
 @media(min-width:1200px){
   #v-relatorios:not([hidden]){grid-template-columns:230px minmax(0,1fr) 290px !important}
   #v-relatorios .rel-det{display:block;position:sticky;top:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px}
@@ -765,6 +787,21 @@ th.mes{color:#3d7bff;background:rgba(61,123,255,.10)}th.qh{background:rgba(61,12
   .vd-painel{display:block;position:sticky;top:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px;min-height:160px}
   .vd-painel .x{display:none}
   .vd-sel{background:var(--suave-tint,rgba(77,141,255,.15))}
+}
+/* Cadastro compacto: 3 colunas, sem rolagem, campos do mesmo tamanho e alinhados */
+@media(min-width:1000px){
+  .sheet.larga .sheet-panel{width:min(1060px,96vw);max-height:96vh;padding:14px 20px 12px;overflow:visible}
+  .sheet.larga .sheet-head{margin-bottom:8px}.sheet.larga .sheet-head h2{font-size:18px;margin:0}
+  .form-6{grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:10px 12px !important;align-items:stretch !important}
+  .form-6 .bloco{margin:0 !important;padding:6px 12px 8px !important}
+  .form-6 .bloco h3{font-size:11px;letter-spacing:.07em;text-transform:uppercase;opacity:.7;margin:4px 0 6px}
+  .form-6 .field{margin:0 0 6px}.form-6 .lbl{font-size:12px;margin:0 0 2px}
+  .form-6 input,.form-6 select{height:34px;min-height:0;padding:4px 10px;font-size:14px}
+  .form-6 textarea{min-height:0;height:96px;padding:6px 10px;font-size:14px}
+  .form-6 .cnpj-linha{display:flex;gap:6px}.form-6 .cnpj-linha .mini{height:34px}
+  .form-6 .cnpj-info{font-size:11px;margin-top:2px}
+  .form-6 .duas{display:grid;grid-template-columns:1fr 1fr;gap:8px}.form-6 .duas .field{margin-bottom:6px}
+  .form-6 .rodape-form{position:static !important;grid-column:1/-1;padding:8px 0 0 !important;margin:0;border-top:0 !important}
 }
 .form-6 .bloco h3{margin:8px 0}
 .form-6 .rodape-form{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -798,7 +835,10 @@ th.mes{color:#3d7bff;background:rgba(61,123,255,.10)}th.qh{background:rgba(61,12
 .lig-wrap{position:relative;display:inline-block}.lig-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:30;min-width:240px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .lig-menu[hidden]{display:none}.lig-menu button,.lig-menu a{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 11px;border-radius:8px;font-weight:600;cursor:pointer;color:inherit;text-decoration:none;font:inherit}
 .lj-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
-.lj-kpis>div{text-align:center;padding:10px 6px}.lj-kpis b{display:block;font-size:17px}
+.lj-kpis>div{text-align:center;padding:8px 6px;border:1px solid var(--line);border-radius:10px;background:rgba(127,140,170,.08)}.lj-kpis b{display:block;font-size:17px}.lj-kpis small{display:block;opacity:.75;font-size:12px}
+.lj-sec{font-size:12px;letter-spacing:.06em;opacity:.7;margin:14px 0 6px}
+.lj-ficha{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0}.lj-ficha dt{color:var(--muted)}.lj-ficha dd{margin:0;text-align:right;font-weight:500}
+.lj-acoes .btn{min-height:44px}
 .lj-etqs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
 .lj-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.lj-acoes .btn{width:100%}.lj-acoes .lig-wrap{display:block}
 .lj-links{display:flex;gap:8px;flex-wrap:wrap}
@@ -2685,9 +2725,9 @@ function abrirLoja(id){
     <div class="sheet-head"><div><h2>${esc(c.nome)}</h2><small class="meta">${[c.cidade, c.cnpj && 'CNPJ ' + c.cnpj].filter(Boolean).map(esc).join(' · ')}</small></div><button class="x" data-close aria-label="Fechar">×</button></div>
     ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
     <div class="lj-etqs">${r.pedidos ? (() => { const rt = ritmoDaLoja(id); return rt ? `<span class="badge ${RITMO[rt.st][1]}">${RITMO[rt.st][0]}</span>` : ''; })() : '<span class="badge env">Nunca comprou</span>'}${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} · ${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}</div>
-    ${r.pedidos ? `<div class="lj-kpis"><div><b>${brlK(total12(id))}</b><small>12 meses</small></div><div><b>${r.pedidos}</b><small>Pedidos</small></div><div><b>${brl(r.total / r.pedidos)}</b><small>Ticket</small></div></div>` : '<p class="meta">Ainda sem pedidos.</p>'}
+    ${r.pedidos ? `<div class="lj-kpis"><div><small>12 meses</small><b>${brlK(total12(id))}</b></div><div><small>Pedidos</small><b>${r.pedidos}</b></div><div><small>Ticket</small><b>${brl(r.total / r.pedidos)}</b></div></div>` : '<p class="meta">Ainda sem pedidos.</p>'}
     ${(() => { const f = [['Contato', [c.contato, c.telefone].filter(Boolean).join(' · ')], ['E-mail', c.emailCompra], ['Pagamento', c.pagamento]].filter(x => x[1]);
-      return f.length ? `<h3 class="sub-h">Contato</h3><dl class="ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Sem contato cadastrado. Toque em <b>Editar cadastro</b>.</p>'; })()}
+      return f.length ? `<h3 class="sub-h lj-sec">CONTATO</h3><dl class="ficha lj-ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Sem contato cadastrado. Toque em <b>Editar cadastro</b>.</p>'; })()}
     <div class="lj-acoes"><button class="btn primary" id="lj-novo" style="grid-column:1/-1">Novo pedido</button>
       <span class="lig-wrap"><button class="btn sec" id="lj-ligar" type="button"${tel ? '' : ' disabled title="Cadastre o telefone em Editar cadastro"'}>Ligar ▾</button>
         <div class="lig-menu" id="lig-menu" hidden><a href="tel:${tel}">Ligar agora</a><a href="https://wa.me/${zap}" target="_blank" rel="noopener">Ligar pelo WhatsApp</a><button type="button" id="lig-copiar">Copiar número</button></div></span>
@@ -3160,11 +3200,20 @@ function dadosRelatorio(nMeses){
   const ritmo = ritmoClientes(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && okGrupo(p) && (!fCli || p.cliente === fCli));
   // Histórico de compra por mês: produto x mês (quantidade e ticket médio), histórico inteiro, mesmos filtros (sem o período).
   const matriz = matrizMeses(REL.todos || REL.pedidos, p => (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli), nMeses);
+  // Lojas que mais compram nos últimos 4 meses (rede com filiais aparece somada).
+  const topLojas = (() => {
+    const h = new Date(), ini = new Date(h.getFullYear(), h.getMonth() - 3, 1), m = new Map();
+    (REL.todos || REL.pedidos).filter(p => p.status !== ORCAMENTO && new Date(p.data) >= ini && (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli)).forEach(p => {
+      const g = redeDe(p), k = g ? 'R|' + norm(g) : 'L|' + p.cliente;
+      const x = m.get(k) || m.set(k, {nome: g || p.clienteNome, rede: !!g, ids: new Set(), id: g ? '' : p.cliente, total: 0}).get(k);
+      x.ids.add(p.cliente); x.total += Number(p.total) || 0; });
+    return [...m.values()].map(x => Object.assign(x, {filiais: x.ids.size})).sort((a, b) => b.total - a.total);
+  })();
   // Mês anterior (para as setas ↑ ↓ do resumo): mesmos filtros, histórico inteiro.
   const dIni = new Date(REL.de + 'T12:00:00'), ini = new Date(dIni.getFullYear(), dIni.getMonth() - 1, 1), fim = new Date(dIni.getFullYear(), dIni.getMonth(), 1);
   const pAnt = (REL.todos || REL.pedidos).filter(p => { const t = new Date(p.data); return t >= ini && t < fim && (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli); });
   const anterior = {pedidos: pAnt.length, valor: pAnt.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(pAnt.map(p => p.cliente)).size};
-  return {peds, linhas, porProduto, porLoja, porRede, temRede: porRede.some(r => r.ehRede), filtros, comissao, ritmo, matriz, anterior,
+  return {peds, linhas, porProduto, porLoja, porRede, temRede: porRede.some(r => r.ehRede), filtros, comissao, ritmo, matriz, anterior, topLojas,
     totais: {pedidos: peds.length, itens: linhas.reduce((s,l) => s + l.q, 0), valor: peds.reduce((s,p) => s + (Number(p.total) || 0), 0), lojas: new Set(peds.map(p => p.cliente)).size,
       comissaoMarcas: comissao.marcas.reduce((s,x) => s + x.comissao, 0), comissaoVendedores: comissao.vendedores.reduce((s,x) => s + x.comissao, 0)}};
 }
@@ -3233,7 +3282,7 @@ function renderRelatorio(){
 
   const fEmpR = $('#rel-emp').value, nomeMarca = fEmpR ? (emp(fEmpR)?.nome || fEmpR) : 'Todas as marcas';
   const rtC = c ? d.ritmo.find(s => s.id === fCli) : null;
-  const cabMat = `<div class="rel-tit"><h2>${esc(c ? c.nome : nomeMarca)}</h2>${rtC ? `<span class="badge ${RITMO[rtC.st][1]}">${RITMO[rtC.st][0]}</span>` : ''}</div><p class="meta">${esc(c ? nomeMarca : 'todas as lojas')} · últimos 4 meses</p>`;
+  const cabMat = `<div class="rel-cab"><div><div class="rel-tit"><h2>${esc(c ? c.nome : nomeMarca)}</h2>${rtC ? `<span class="badge ${RITMO[rtC.st][1]}">${RITMO[rtC.st][0]}</span>` : ''}</div><p class="meta">${esc(c ? nomeMarca : 'todas as lojas')} · últimos 4 meses</p></div><div class="rel-ctl" id="rel-ctl"></div></div>`;
   const mesHTML = matrizHTML(d.matriz, 'Produto', cabMat);
 
   const lojasHTML = !d.linhas.length ? vazio : `<section class="rel-sec"><h2>Por loja</h2><p class="meta">Toque numa loja para abrir a ficha.</p><div class="tabela-wrap cartoes"><table class="tabela" style="min-width:420px">
@@ -3268,7 +3317,7 @@ function renderRelatorio(){
     </table></div></section>`;
 
   const paineis = {cliente: clienteHTML, itens: itensHTML, mes: mesHTML, lojas: lojasHTML, comissao: comissaoHTML, ritmo: ritmoHTML, detalhe: detalheHTML};
-  const abas = [...(c ? ['cliente'] : []), 'mes', 'itens', 'lojas', 'comissao', ...(c ? [] : ['ritmo']), 'detalhe'];
+  const abas = [...(c ? ['cliente'] : []), 'itens', 'lojas', 'comissao', ...(c ? [] : ['ritmo']), 'detalhe'];
   if(!abas.includes(REL_ABA)) REL_ABA = abas[0];
 
   // Resumo da marca (sem cliente escolhido): números, caminho dos pedidos e lojas que pedem atenção. Blocos recolhem.
@@ -3281,7 +3330,7 @@ function renderRelatorio(){
     const vEnv = base.filter(p => [ENVIADO, FATURADO, ENTREGUE].includes(p.status)).reduce((s, p) => s + (Number(p.total) || 0), 0);
     const totV = d.porLoja.reduce((s, x) => s + x.total, 0) || 1;
     const aten = d.ritmo.filter(s => s.st === 'esfriando' || s.st === 'parado').slice(0, 8);
-    const bloco = (tit, previa, corpo) => `<details class="rel-rec"><summary><b>${tit}</b><span class="sub">${previa}</span></summary>${corpo}</details>`;
+    const bloco = (tit, previa, corpo) => `<details class="rel-rec"><summary><b>${tit}</b><span class="chev"></span><span class="sub">${previa}</span></summary>${corpo}</details>`;
     return `<section class="rel-sec rel-marca"><h2>Resumo da ${esc(nomeM)}</h2>
       <div class="rel-cards"><div class="rel-card"><small>Vendas (aprovados)</small><strong>${brl(d.totais.valor)}</strong></div><div class="rel-card"><small>Pedidos</small><strong>${d.totais.pedidos}</strong></div>
         ${admin ? `<div class="rel-card"><small>Comissão a receber da marca</small><strong>${brl(d.totais.comissaoMarcas)}</strong></div>` : ''}
@@ -3289,12 +3338,16 @@ function renderRelatorio(){
       <p class="meta rel-marca-ajuda">Clique no título para abrir ou fechar. Fechado, cada bloco já mostra o essencial.</p>
       ${bloco('Caminho dos pedidos e faturamento', `<span class="pill a">${etapa[0].n} em aprovação</span><span class="pill b">${etapa[1].n} aprovados</span><span class="pill c">${etapa[2].n} enviados</span><span class="pill d">${etapa[3].n} faturados</span><span class="barra-fat"><i style="width:${vEnv ? Math.min(100, Math.round(vFat / vEnv * 100)) : 0}%"></i></span> <b>${brl(Math.max(0, vEnv - vFat))} a faturar</b>`, `<table class="tabela"><tbody>${etapa.map(e => `<tr><td>${e.t}</td><td class="n">${e.n}</td><td class="n">${brl(e.v)}</td></tr>`).join('')}</tbody></table>
         <p class="meta">Faturamento da marca: enviado <b>${brl(vEnv)}</b> · faturado <b>${brl(vFat)}</b> · a faturar <b>${brl(Math.max(0, vEnv - vFat))}</b></p>`)}
-      ${bloco('Lojas que mais compram', d.porLoja.slice(0, 3).map(x => esc(x.loja)).join(', '), `<p class="meta">Quanto cada loja comprou no período e quanto isso representa do total. Clique numa loja para abrir a ficha.</p><table class="tabela"><tbody>${d.porLoja.slice(0, 10).map(x => `<tr ${x.id ? `data-ritmo-cli="${esc(x.id)}"` : ''}><td>${esc(x.loja)}</td><td><span class="barra-loja" style="width:${Math.max(6, Math.round(x.total / totV * 140))}px"></span></td><td class="n">${brl(x.total)} · ${Math.round(x.total / totV * 100)}%</td></tr>`).join('')}</tbody></table>`)}
+      ${(() => { const tl = d.topLojas, soma = tl.reduce((s, x) => s + x.total, 0) || 1, mx = tl[0]?.total || 1;
+        return bloco('Lojas que mais compram', tl.slice(0, 3).map(x => esc(x.nome)).join(', '), `<p class="meta">Quanto cada loja comprou nos últimos 4 meses e quanto isso representa do total. Rede com filiais aparece somada. Clique numa loja para abrir a ficha.</p>
+          <div class="lm">${tl.slice(0, 10).map(x => `<div class="lm-row"${x.id ? ` data-ritmo-cli="${esc(x.id)}"` : ''}><span>${esc(x.nome)}${x.rede ? ` (${x.filiais} filia${x.filiais > 1 ? 'is' : 'l'})` : ''}</span><span class="lm-v"><i style="width:${Math.max(8, Math.round(x.total / mx * 110))}px"></i>${brl(x.total)} · ${Math.round(x.total / soma * 100)}%</span></div>`).join('')}</div>`); })()}
       ${aten.length ? bloco('Lojas que pedem atenção', aten.length + ' loja' + (aten.length > 1 ? 's' : ''), `<table class="tabela"><tbody>${aten.map(s => `<tr data-ritmo-cli="${esc(s.id)}"><td>${esc(s.nome)}<div class="sub">${esc(s.cidade)}</div></td><td>${textoDias(s.dias)}</td><td>${textoRitmo(s)}</td></tr>`).join('')}</tbody></table>`) : ''}
     </section>`;
   })();
   const t = d.totais, a = d.anterior, tm = t.pedidos ? t.valor / t.pedidos : 0, tmA = a.pedidos ? a.valor / a.pedidos : 0;
+  { const t = $('#rel-topo'); t.appendChild($('#rel-sit').closest('.field')); t.appendChild($('#rel-vend').closest('.field')); }   // guarda os campos antes de refazer o quadro
   $('#rel-resultado').innerHTML = `
+    <div class="rel-quadro">${mesHTML}</div>
     <div class="rel-cards rel-resumo">
       <div class="rel-card"><small>Pedidos</small><strong>${t.pedidos}</strong>${varHTML(t.pedidos, a.pedidos)}</div>
       <div class="rel-card"><small>Valor total</small><strong>${brl(t.valor)}</strong>${varHTML(t.valor, a.valor)}</div>
@@ -3305,6 +3358,8 @@ function renderRelatorio(){
     <div class="rel-abas" role="tablist">${abas.map(k => `<button class="chip" type="button" role="tab" data-aba="${k}" aria-pressed="${k === REL_ABA}">${REL_ABAS_TXT[k]}</button>`).join('')}</div>
     ${abas.map(k => `<div class="rel-painel${k === REL_ABA ? ' on' : ''}" data-painel="${k}">${paineis[k]}</div>`).join('')}
     ${resumoMarca}`;
+  // Situação e Vendedor ficam no cabeçalho do quadro (os mesmos campos de antes, só mudam de lugar).
+  const ctl = $('#rel-ctl'); if(ctl){ ctl.appendChild($('#rel-sit').closest('.field')); ctl.appendChild($('#rel-vend').closest('.field')); }
   aplicarBuscaRel(); rolarMatriz();
 }
 // No celular a tabela por mês abre mostrando os meses mais recentes (à direita).
