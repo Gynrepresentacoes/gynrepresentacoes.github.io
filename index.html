@@ -650,6 +650,7 @@ body{font-variant-numeric:tabular-nums}
 .hs-resumo{margin:10px 0 14px}.hs-barras{display:grid;gap:5px;margin-bottom:14px}.hs-b{display:grid;grid-template-columns:44px minmax(40px,1fr) 118px 62px;align-items:center;gap:8px;font-size:13px}
 .hs-b i{display:block;height:12px;border-radius:6px;background:var(--ipe,#2F7BFF)}.hs-b b{text-align:right;font-weight:600}.hs-b small{color:var(--muted)}
 .hs-duas{display:grid;gap:16px}@media (min-width:1000px){.hs-duas{grid-template-columns:1fr 1fr}}
+.hs-ult{table-layout:fixed;width:100%;min-width:0!important}.hs-ult td{overflow:hidden;text-overflow:ellipsis;vertical-align:top}.hs-ult td.num{white-space:nowrap;overflow:visible}
 /* Lojas em cartões */
 #v-lojas.lj-cartoes .lj-lay{display:block}#v-lojas.lj-cartoes #lj-painel{display:none}
 #v-lojas.lj-cartoes #lista-lojas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;list-style:none;padding:0;margin:0}
@@ -1220,7 +1221,7 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
     <div class="vd-hd"><h1>Lojas <small class="meta" id="lojas-info"></small></h1>
       <div class="vd-btns"><input id="lojas-busca" class="busca-barra" type="search" placeholder="Buscar loja, cidade, CNPJ ou contato" aria-label="Buscar loja"><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
     <div class="lj-barra"><div class="lista-topo"><div class="chips" id="lojas-filtros"></div></div>
-      <div class="seg" id="lj-seg" role="group" aria-label="Visão"><button type="button" data-modo="cartoes">Cartões</button><button type="button" data-modo="quadro">Quadro</button><button type="button" data-modo="lista">Lista</button></div></div>
+      <div class="seg" id="lj-seg" role="group" aria-label="Visão"><button type="button" data-modo="cartoes">Cartões</button><button type="button" data-modo="lista">Lista</button></div></div>
     <div class="lj-lay"><ul id="lista-lojas" class="orders"></ul>
       <aside id="lj-painel" class="lj-painel" aria-live="polite"><p class="meta">Clique numa loja para ver o cartão dela aqui.</p></aside></div>
   </section>
@@ -3019,8 +3020,10 @@ function renderLojasCartoes(){
       ${ufs.length ? `<select id="lojas-uf" aria-label="Estado" class="lj-sel"><option value="">Todos os estados</option>${ufs.map(u => `<option${u === ufLojas ? ' selected' : ''}>${u}</option>`).join('')}</select>` : ''}
       <button class="chip" type="button" data-sg="" aria-pressed="${segLojas === ''}">Todas (${base.length})</button></div>
     <div class="lj-az"><button type="button" data-lt="" aria-pressed="${letraLojas === ''}">A–Z</button>${letras.map(x => `<button type="button" data-lt="${x}" aria-pressed="${letraLojas === x}">${x}</button>`).join('')}</div>`;
-  $('#lojas-info').textContent = `${lojas.length} loja${lojas.length === 1 ? '' : 's'}` + (ehAdmin() ? '' : ' · contando os seus pedidos');
-  const ls = base.filter(c => (!segLojas || c.st.seg === segLojas) && (!letraLojas || norm(c.nome)[0] === letraLojas.toLowerCase()))
+  $('#lojas-info').textContent = `${lojas.length} loja${lojas.length === 1 ? '' : 's'}` + (ehAdmin() ? '' : ' · contando os seus pedidos') + ((q || qNum.length >= 3) ? ' · busca em todas as lojas' : '');
+  // Com busca digitada, procura em TODAS as lojas (sem ficar presa na situação escolhida).
+  const buscando = !!(q || qNum.length >= 3);
+  const ls = base.filter(c => (buscando || !segLojas || c.st.seg === segLojas) && (!letraLojas || norm(c.nome)[0] === letraLojas.toLowerCase()))
     .sort((a, b) => b.st.v12 - a.st.v12 || (a.st.dias ?? 1e9) - (b.st.dias ?? 1e9) || a.nome.localeCompare(b.nome, 'pt-BR'));
   const P = 24, tot = Math.max(1, Math.ceil(ls.length / P)); if(pagLojas >= tot) pagLojas = 0;
   const aguard = ehAdmin() ? base.filter(c => c.situacao === AGUARDANDO) : [];
@@ -3176,7 +3179,7 @@ $('#lojas-filtros').addEventListener('change', e => {
   if(/^lojas-/.test(e.target.id)) renderLojas();
 });
 $('#lojas-busca').addEventListener('input', renderLojas);
-var modoLojas = LS.get('modoLojasV2', 'cartoes');
+var modoLojas = LS.get('modoLojasV2', 'cartoes'); if(modoLojas !== 'lista') modoLojas = 'cartoes';   // o Quadro saiu: só Cartões e Lista
 function marcarModoLojas(){ document.querySelectorAll('#lj-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.modo === modoLojas)); }
 $('#lj-seg').addEventListener('click', e => { const b = e.target.closest('[data-modo]'); if(!b) return; modoLojas = b.dataset.modo; LS.set('modoLojasV2', modoLojas); marcarModoLojas(); renderLojas(); });
 $('#lj-nova-top').addEventListener('click', () => abrirNovaLoja(null));
@@ -3197,7 +3200,7 @@ function abrirLoja(id){
     ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
     <div class="lj-etqs">${r.pedidos ? (() => { const rt = ritmoDaLoja(id); return rt ? `<span class="badge ${RITMO[rt.st][1]}">${RITMO[rt.st][0]}</span>` : ''; })() : '<span class="badge env">Nunca comprou</span>'}${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} · ${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}</div>
     ${(() => { const s = statsLoja(c); return s.tot ? `<h3 class="sub-h lj-sec">COMPRAS</h3><dl class="ficha lj-ficha"><dt>Última compra</dt><dd><b>${s.u ? s.u.split('-').reverse().join('/') : '—'}</b> (${diasLoja(s.dias)})</dd><dt>Últimos 12 meses</dt><dd><b>${brl(s.v12)}</b></dd><dt>Total de pedidos</dt><dd><b>${s.tot}</b>${s.pedidosApp && s.tot > s.pedidosApp ? ` (${s.pedidosApp} no app + ${s.tot - s.pedidosApp} do histórico)` : ''}</dd>${s.marcas.length ? `<dt>Marcas</dt><dd>${esc(s.marcas.join(', '))}</dd>` : ''}</dl>` : '<p class="meta">Ainda sem pedidos.</p>'; })()}
-    ${ehAdmin() && histLojas[soDigitos(c.cnpj)] ? '<h3 class="sub-h lj-sec">ÚLTIMOS PEDIDOS DO HISTÓRICO</h3><div id="lj-ult5" class="meta">Carregando…</div>' : ''}
+    ${ehAdmin() && histLojas[soDigitos(c.cnpj)] ? `<h3 class="sub-h lj-sec">ÚLTIMOS PEDIDOS DO HISTÓRICO</h3><div id="lj-ult5" class="meta" data-id="${esc(id)}">Carregando…</div>` : ''}
     ${(() => { const f = [['Contato', [c.contato, c.telefone].filter(Boolean).join(' · ')], ['E-mail', c.emailCompra], ['Pagamento', c.pagamento]].filter(x => x[1]);
       return f.length ? `<h3 class="sub-h lj-sec">CONTATO</h3><dl class="ficha lj-ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Sem contato cadastrado. Toque em <b>Editar cadastro</b>.</p>'; })()}
     ${tel ? '' : '<div class="lj-nota">Cadastre o telefone em Editar cadastro.</div>'}
@@ -3232,8 +3235,8 @@ function abrirLoja(id){
   if($('#lj-ult5')){
     api({acao: 'historico', ano: 'todos', doc: soDigitos(c.cnpj)}).then(j => {
       const l = (j.pedidos || []).filter(p => !p.canc).slice(0, 5);
-      const alvo = $('#lj-ult5'); if(!alvo) return;
-      alvo.innerHTML = l.length ? `<table class="tabela hs-tab"><tbody>${l.map(p => `<tr><td>${hsData(p.data)}</td><td>${esc(p.ind)}<small class="hs-cid">nº ${p.n}</small></td><td class="num">${hsBRL(p.total)}</td></tr>`).join('')}</tbody></table>` : 'Nenhum pedido antigo.';
+      const alvo = $('#lj-ult5'); if(!alvo || alvo.dataset.id !== String(id)) return;   // outra loja foi aberta enquanto isto carregava: descarta
+      alvo.innerHTML = l.length ? `<table class="tabela hs-tab hs-ult"><colgroup><col style="width:74px"><col><col style="width:98px"></colgroup><tbody>${l.map(p => `<tr><td>${hsData(p.data)}</td><td>${esc(p.ind)}<small class="hs-cid">nº ${p.n}</small></td><td class="num">${hsBRL(p.total)}</td></tr>`).join('')}</tbody></table>` : 'Nenhum pedido antigo.';
     }).catch(() => { const a = $('#lj-ult5'); if(a) a.textContent = ''; });
   }
   $('#lj-aprovar')?.addEventListener('click', () => mudarSituacaoLoja(id, 'Ativo'));
