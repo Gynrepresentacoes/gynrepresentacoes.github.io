@@ -1831,6 +1831,19 @@ function abrirEmpresaForm(e){
       </div>
       <label class="field"><span class="lbl">Pedido mínimo (R$)</span><input id="fe-min" inputmode="decimal" value="${nr(e?.pedidoMinimo)}" placeholder="0"></label>
       <label class="field"><span class="lbl">Formas de pagamento <small>(separe com ;)</small></span><input id="fe-pag" value="${esc((e?.pagamentos || []).join('; '))}" placeholder="À vista; 28 dias; 28/56 dias"></label>
+      <details class="lj-mais"${e && (e.cnpj || e.razao || e.contato) ? ' open' : ''}><summary>Dados da marca (opcional: razão social, CNPJ, endereço, contato)</summary>
+        <label class="field"><span class="lbl">Razão social</span><input id="fe-razao" value="${v('razao')}"></label>
+        <div class="duas"><label class="field"><span class="lbl">CNPJ</span><input id="fe-cnpj" inputmode="numeric" value="${v('cnpj')}"></label>
+          <label class="field"><span class="lbl">Inscrição estadual</span><input id="fe-ie" value="${v('ie')}"></label></div>
+        <label class="field"><span class="lbl">Endereço</span><input id="fe-end" value="${v('endereco')}"></label>
+        <div class="duas"><label class="field"><span class="lbl">Cidade/UF</span><input id="fe-cid" value="${v('cidade')}"></label>
+          <label class="field"><span class="lbl">CEP</span><input id="fe-cep" inputmode="numeric" value="${v('cep')}"></label></div>
+        <label class="field"><span class="lbl">Telefone</span><input id="fe-tel" type="tel" value="${v('telefone')}"></label>
+        <div class="duas"><label class="field"><span class="lbl">Contato (nome)</span><input id="fe-con" value="${v('contato')}"></label>
+          <label class="field"><span class="lbl">Telefone do contato</span><input id="fe-contel" type="tel" value="${v('contatoTel')}"></label></div>
+        <label class="field"><span class="lbl">E-mail do contato</span><input id="fe-conmail" type="email" inputmode="email" value="${v('contatoEmail')}"></label>
+        <label class="field"><span class="lbl">Observação</span><textarea id="fe-obs" rows="2">${v('obs')}</textarea></label>
+      </details>
       ${e ? `<p class="dica-preco">Código da empresa: <b>${esc(e.id)}</b> (não muda; os produtos usam este código na coluna Empresa).</p>` : '<p class="dica-preco">Depois de criar, cadastre os produtos na aba Produtos da planilha com o código que aparecer aqui.</p>'}
       <button class="btn primary" id="fe-salvar" type="submit">${e ? 'Salvar' : 'Criar empresa'}</button>
       <button class="btn ghost" type="button" id="fe-voltar">Voltar</button>
@@ -1842,7 +1855,9 @@ function abrirEmpresaForm(e){
     ev.preventDefault();
     const n = id => { const x = numBR($(id).value || '0'); return isNaN(x) ? 0 : x; };
     const dados = {id: e?.id || '', nome: $('#fe-nome').value.trim(), email: $('#fe-email').value, comissao: n('#fe-com'),
-      descontoMax: n('#fe-desc'), pedidoMinimo: n('#fe-min'), pagamentos: $('#fe-pag').value};
+      descontoMax: n('#fe-desc'), pedidoMinimo: n('#fe-min'), pagamentos: $('#fe-pag').value,
+      razao: $('#fe-razao').value, cnpj: $('#fe-cnpj').value, ie: $('#fe-ie').value, endereco: $('#fe-end').value, cidade: $('#fe-cid').value, cep: $('#fe-cep').value,
+      telefone: $('#fe-tel').value, contato: $('#fe-con').value, contatoTel: $('#fe-contel').value, contatoEmail: $('#fe-conmail').value, obs: $('#fe-obs').value};
     if(dados.nome.length < 2){ toast('Digite o nome'); return; }
     const b = $('#fe-salvar'); b.disabled = true;
     try{
