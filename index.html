@@ -1315,7 +1315,7 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
     <button class="btn" id="pin-btn" type="submit" style="width:100%">Entrar</button>
   </form>
   <form id="esq-form" novalidate hidden>
-    <p style="margin:8px 0">Enviamos um código de 6 números para o e-mail do seu cadastro.</p>
+    <p style="margin:8px 0"><b>1.</b> Toque em <b>Enviar código</b>: mandamos 6 números para o e-mail do seu cadastro (veja também o Spam).<br><b>2.</b> Digite o código e a nova senha abaixo.</p>
     <button class="btn" id="esq-pedir" type="button" style="width:100%;margin-bottom:10px">Enviar código por e-mail</button>
     <label for="esq-cod">Código recebido</label>
     <input id="esq-cod" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
@@ -1606,7 +1606,7 @@ $('#esq-pedir').addEventListener('click', async () => {
   if(!usuario){ $('#pin-erro').textContent = 'Digite o usuário (volte ao login e preencha).'; return; }
   if(!navigator.onLine){ $('#pin-erro').textContent = 'Conecte à internet.'; return; }
   $('#esq-pedir').disabled = true; $('#pin-erro').textContent = 'Enviando…';
-  try{ const j = await api({acao:'senhaPedirCodigo', usuario}); $('#pin-erro').textContent = j.aviso || 'Código enviado.'; $('#esq-cod').focus(); }
+  try{ const j = await api({acao:'senhaPedirCodigo', usuario}); $('#pin-erro').textContent = 'Pronto. Se o usuário tem e-mail cadastrado, o código chega em instantes (olhe também o Spam). Digite-o abaixo.'; $('#esq-cod').focus(); }
   catch(e){ $('#pin-erro').textContent = e.message; }
   setTimeout(() => { $('#esq-pedir').disabled = false; }, 30000);
 });
@@ -4291,7 +4291,7 @@ function abrirPedido(id){
     ${resumoHTML(p.itens)}
     ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
     <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${
-      p.entrega ? `<br>Entrega desejada: <b>${esc(diaBR(p.entrega))}</b>` : ''}${p.transportadora ? `<br>Transportadora: ${esc(p.transportadora)}` : ''}${
+      p.entrega ? `<br>Entrega desejada: <b>${esc(diaBR(p.entrega))}</b>` : ''}${p.frete ? `<br>Frete: <b>${esc(p.frete)}</b>` : ''}${
       p.enderecoEntrega ? `<br>Entregar em: ${esc(p.enderecoEntrega)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
     ${etapas}
     ${podeAprovar ? `<div class="btns">
@@ -4348,9 +4348,9 @@ function abrirConferencia(p, reenvio){
         <h3 class="conf-h">Entrega e pagamento</h3>
         <div class="conf-ed">
           <label class="field"><span class="lbl">Entrega desejada</span><input type="date" id="ce-entrega" value="${esc(p.entrega || '')}"></label>
-          <label class="field"><span class="lbl">Entregar em</span><input id="ce-end" value="${esc(endereco)}" placeholder="endereço de entrega"></label>
-          <div class="duas"><label class="field"><span class="lbl">Frete</span><input id="ce-frete" list="ce-frete-op" value="${esc(p.frete || c.frete || '')}" placeholder="ex.: CIF, FOB"><datalist id="ce-frete-op"><option value="CIF (por conta da marca)"><option value="FOB (por conta do cliente)"></datalist></label>
-          <label class="field"><span class="lbl">Pagamento</span><input id="ce-pag" list="ce-pag-op" value="${esc(p.pagamento || '')}"><datalist id="ce-pag-op">${(e.pagamentos || []).map(x => `<option value="${esc(x)}">`).join('')}</datalist></label></div>
+          <label class="field"><span class="lbl">Entregar em</span><input type="text" id="ce-end" value="${esc(endereco)}" placeholder="endereço de entrega"></label>
+          <div class="duas"><label class="field"><span class="lbl">Frete</span><input type="text" id="ce-frete" list="ce-frete-op" value="${esc(p.frete || c.frete || '')}" placeholder="ex.: CIF, FOB"><datalist id="ce-frete-op"><option value="CIF (por conta da marca)"><option value="FOB (por conta do cliente)"></datalist></label>
+          <label class="field"><span class="lbl">Pagamento</span><input type="text" id="ce-pag" list="ce-pag-op" value="${esc(p.pagamento || '')}"><datalist id="ce-pag-op">${(e.pagamentos || []).map(x => `<option value="${esc(x)}">`).join('')}</datalist></label></div>
           <label class="field"><span class="lbl">Observação</span><textarea id="ce-obs" rows="2">${esc(p.obs || '')}</textarea></label>
           <p class="dica-preco" style="margin:0">Pode corrigir aqui antes de enviar. Itens e valores não mudam nesta tela.</p>
         </div>
@@ -4361,7 +4361,7 @@ function abrirConferencia(p, reenvio){
     <div class="conf-bt"><button class="btn sec" id="cf-pdf" type="button">Ver PDF</button><button class="btn sec" id="cf-xls" type="button">Baixar Excel</button><button class="btn sec" id="cf-mail" type="button">Ver o e-mail</button></div>
     <div id="cf-prev" class="conf-prev" hidden><b>Para:</b> ${esc(emails.join(', ') || 'sem e-mail cadastrado')}<br><b>Assunto:</b> ${esc('Pedido ' + p.num + ' - ' + p.clienteNome + ' - GYN Representações')}<br><br>Olá! Segue o pedido abaixo (também em PDF anexo).<br><span class="sub">No corpo do e-mail: dados do cliente, pagamento e entrega, itens e total, só com os campos preenchidos.</span></div>
     <div class="conf-pe"><label class="conf-ok"><input type="checkbox" id="cf-ok"> Conferi os dados acima</label>
-      <span class="conf-acoes"><button class="btn ghost" id="cf-voltar" type="button">Voltar ao pedido</button>
+      <span class="conf-acoes"><button class="btn sec" id="cf-salvar" type="button">Salvar alterações</button><button class="btn ghost" id="cf-voltar" type="button">Voltar ao pedido</button>
       <button class="btn aprovar" id="cf-enviar" type="button" disabled>${reenvio ? 'Reenviar por e-mail' : 'Enviar por e-mail ao fornecedor'}</button></span></div>`);
   $('#sheet').classList.add('larga');
   $('#cf-xls').addEventListener('click', () => baixarExcelPedido(p));
@@ -4373,6 +4373,16 @@ function abrirConferencia(p, reenvio){
   const lerEdicao = () => ({entrega: $('#ce-entrega').value, enderecoEntrega: $('#ce-end').value.trim(), frete: $('#ce-frete').value.trim(), pagamento: $('#ce-pag').value.trim(), obs: $('#ce-obs').value.trim()});
   const aplicarEdicao = () => Object.assign(p, lerEdicao());
   ['#ce-entrega', '#ce-end', '#ce-frete', '#ce-pag', '#ce-obs'].forEach(s => $(s).addEventListener('change', aplicarEdicao));
+  // Salvar alterações: grava entrega, endereço, frete, pagamento e observação na planilha, sem enviar nada.
+  $('#cf-salvar').addEventListener('click', async () => {
+    const d = lerEdicao(), b = $('#cf-salvar'); b.disabled = true; b.textContent = 'Salvando…';
+    try{
+      await api({acao: 'pedidoEditar', id: p.id, dados: d}); Object.assign(p, d);
+      const r = remotos.find(x => x.id === p.id); if(r) Object.assign(r, d);
+      toast('Alterações salvas no pedido');
+    }catch(err){ if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para salvar', 5000); }
+    finally{ b.disabled = false; b.textContent = 'Salvar alterações'; }
+  });
   $('#cf-enviar').addEventListener('click', async () => {
     const d = lerEdicao(), mudou = d.entrega !== (p.entrega || '') || d.enderecoEntrega !== (p.enderecoEntrega || c.endereco || '') || d.frete !== (p.frete || c.frete || '') || d.pagamento !== (p.pagamento || '') || d.obs !== (p.obs || '');
     if(mudou){
