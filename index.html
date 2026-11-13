@@ -651,6 +651,9 @@ body{font-variant-numeric:tabular-nums}
 .hs-b i{display:block;height:12px;border-radius:6px;background:var(--ipe,#2F7BFF)}.hs-b b{text-align:right;font-weight:600}.hs-b small{color:var(--muted)}
 .hs-duas{display:grid;gap:16px}@media (min-width:1000px){.hs-duas{grid-template-columns:1fr 1fr}}
 .hs-ult{table-layout:fixed;width:100%;min-width:0!important}.hs-ult td{overflow:hidden;text-overflow:ellipsis;vertical-align:top}.hs-ult td.num{white-space:nowrap;overflow:visible}
+.lj-busca-linha{display:flex;gap:12px;align-items:flex-start;margin:6px 0 12px;flex-wrap:wrap}.lj-busca-linha .seg{flex:0 0 auto;margin-top:2px}
+.lj-busca-caixa{flex:1 1 360px;min-width:0}.lj-busca-caixa input,.lj-busca-caixa input.busca-barra{width:100%;height:46px;box-sizing:border-box;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:0 16px;font-size:16px;color:var(--ink)}
+.lj-dica{display:block;margin-top:5px;color:var(--muted);font-size:12.5px;line-height:1.4}.lj-dica b{color:var(--ink);font-weight:600}
 /* Lojas em cartões */
 #v-lojas.lj-cartoes .lj-lay{display:block}#v-lojas.lj-cartoes #lj-painel{display:none}
 #v-lojas.lj-cartoes #lista-lojas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;list-style:none;padding:0;margin:0}
@@ -1219,9 +1222,14 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
 
   <section id="v-lojas" class="view" hidden>
     <div class="vd-hd"><h1>Lojas <small class="meta" id="lojas-info"></small></h1>
-      <div class="vd-btns"><input id="lojas-busca" class="busca-barra" type="search" placeholder="Buscar loja, cidade, CNPJ ou contato" aria-label="Buscar loja"><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
+      <div class="vd-btns"><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
     <div class="lj-barra"><div class="lista-topo"><div class="chips" id="lojas-filtros"></div></div>
-      <div class="seg" id="lj-seg" role="group" aria-label="Visão"><button type="button" data-modo="cartoes">Cartões</button><button type="button" data-modo="lista">Lista</button></div></div>
+</div>
+    <div class="lj-busca-linha">
+      <div class="seg" id="lj-seg" role="group" aria-label="Visão"><button type="button" data-modo="cartoes">Cartões</button><button type="button" data-modo="lista">Lista</button></div>
+      <div class="lj-busca-caixa"><input id="lojas-busca" class="busca-barra" type="search" placeholder="Buscar loja…" aria-label="Buscar loja" autocomplete="off">
+        <small class="lj-dica">Procura em: <b>nome da loja</b> · razão social · cidade · CNPJ/CPF · <b>nome do contato</b> · rede. Vale para todas as lojas, mesmo as paradas ou sem compra.</small></div>
+    </div>
     <div class="lj-lay"><ul id="lista-lojas" class="orders"></ul>
       <aside id="lj-painel" class="lj-painel" aria-live="polite"><p class="meta">Clique numa loja para ver o cartão dela aqui.</p></aside></div>
   </section>
