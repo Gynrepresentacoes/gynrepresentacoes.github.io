@@ -650,6 +650,22 @@ body{font-variant-numeric:tabular-nums}
 .hs-resumo{margin:10px 0 14px}.hs-barras{display:grid;gap:5px;margin-bottom:14px}.hs-b{display:grid;grid-template-columns:44px minmax(40px,1fr) 118px 62px;align-items:center;gap:8px;font-size:13px}
 .hs-b i{display:block;height:12px;border-radius:6px;background:var(--ipe,#2F7BFF)}.hs-b b{text-align:right;font-weight:600}.hs-b small{color:var(--muted)}
 .hs-duas{display:grid;gap:16px}@media (min-width:1000px){.hs-duas{grid-template-columns:1fr 1fr}}
+/* Lojas em cartões */
+#v-lojas.lj-cartoes .lj-lay{display:block}#v-lojas.lj-cartoes #lj-painel{display:none}
+#v-lojas.lj-cartoes #lista-lojas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;list-style:none;padding:0;margin:0}
+#v-lojas.lj-cartoes #lista-lojas .lj-todo{grid-column:1/-1}
+.lj-kpis4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.lj-k{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;text-align:left;cursor:pointer;color:var(--ink)}.lj-k small{display:block;color:var(--muted)}.lj-k b{font-size:24px;display:block}
+.lj-k[aria-pressed="true"]{border-color:var(--ipe);background:color-mix(in srgb,var(--ipe) 9%,var(--surface))}
+.lj-k.ativa b{color:var(--ok,#1E8E4E)}.lj-k.esfriando b{color:#C98A00}.lj-k.parada b{color:var(--bad)}
+.lj-linha2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.lj-az{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}.lj-az button{min-width:30px;padding:5px 6px;border:1px solid var(--line);background:var(--surface);border-radius:7px;cursor:pointer;color:var(--ink)}.lj-az button[aria-pressed="true"]{background:var(--ipe);color:#fff;border-color:var(--ipe)}
+.lj-cart{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;color:var(--ink)}.lj-cart:hover,.lj-cart.sel{border-color:var(--ipe)}
+.lj-cart b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lj-cart small{color:var(--muted)}
+.lj-cart .lj-fim{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.lj-pil{font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--line)}.lj-pil.ativa{background:color-mix(in srgb,var(--ok,#1E8E4E) 16%,transparent);color:var(--ok,#1E8E4E)}.lj-pil.esfriando{background:#fbefcf;color:#C98A00}.lj-pil.parada{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.lj-pag{display:flex;gap:10px;align-items:center;justify-content:center;margin:8px 0}.lj-pag button{padding:7px 14px;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;color:var(--ink)}.lj-pag button:disabled{opacity:.4;cursor:default}
+@media (max-width:999px){.lj-kpis4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .conf-ed .field{margin-bottom:8px}.conf-ed input,.conf-ed textarea{width:100%}
 .cc-ac{display:flex;gap:10px;margin-top:4px}
 .cc-ac button{background:none;border:0;padding:0;font:inherit;font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer}
@@ -1202,9 +1218,9 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
 
   <section id="v-lojas" class="view" hidden>
     <div class="vd-hd"><h1>Lojas <small class="meta" id="lojas-info"></small></h1>
-      <div class="vd-btns"><input id="lojas-busca" class="busca-barra" type="search" placeholder="Buscar loja, rede, cidade ou CNPJ" aria-label="Buscar loja"><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
+      <div class="vd-btns"><input id="lojas-busca" class="busca-barra" type="search" placeholder="Buscar loja, cidade, CNPJ ou contato" aria-label="Buscar loja"><button class="chip lj-nova-desk" id="lj-nova-top" type="button">+ Nova loja</button></div></div>
     <div class="lj-barra"><div class="lista-topo"><div class="chips" id="lojas-filtros"></div></div>
-      <div class="seg" id="lj-seg" role="group" aria-label="Visão"><button type="button" data-modo="quadro">Quadro</button><button type="button" data-modo="lista">Lista</button></div></div>
+      <div class="seg" id="lj-seg" role="group" aria-label="Visão"><button type="button" data-modo="cartoes">Cartões</button><button type="button" data-modo="quadro">Quadro</button><button type="button" data-modo="lista">Lista</button></div></div>
     <div class="lj-lay"><ul id="lista-lojas" class="orders"></ul>
       <aside id="lj-painel" class="lj-painel" aria-live="polite"><p class="meta">Clique numa loja para ver o cartão dela aqui.</p></aside></div>
   </section>
@@ -2966,12 +2982,58 @@ async function carregarLojas(){
   if(DEMO || !sessao || !navigator.onLine) return;
   try{ const j = await api({acao:'lojas', empresa: empAtiva() || ''}); resumoLojas = j.lojas || {}; LS.set('resumoLojas', resumoLojas); renderLojas(); if(!$('#cli-tela').hidden) renderCliTela(); }
   catch(e){ if(e.login) sessaoCaiu(e.message); }
+  // Histórico antigo (SuasVendas) por loja: última compra e 12 meses, para a tela Lojas não dizer "nunca comprou" de quem comprou antes do app.
+  if(ehAdmin()){
+    try{ const h = await api({acao:'historicoLojas'}); histLojas = h.lojas || {}; LS.set('histLojas', histLojas); renderLojas(); }
+    catch(e){ /* sem histórico (planilha sem as abas ou script antigo): a tela segue só com os pedidos do app */ }
+  }
+}
+let histLojas = LS.get('histLojas', {});
+// Situação da loja juntando os pedidos do app com o histórico (pelo CNPJ/CPF, só números).
+function statsLoja(c){
+  const r = resumoLojas[c.id] || {}, h = histLojas[soDigitos(c.cnpj)] || null;
+  const uApp = r.ultimo ? String(r.ultimo).slice(0, 10) : '', u = [uApp, h?.u || ''].sort().pop();
+  const dias = u ? Math.floor((Date.now() - new Date(u + 'T12:00:00').getTime()) / 86400000) : null;
+  const seg = dias == null ? 'sem' : dias <= 365 ? 'ativa' : dias <= 730 ? 'esfriando' : 'parada';
+  return {u, dias, seg, v12: total12(c.id) + (h?.v || 0), pedidosApp: r.pedidos || 0, tot: (r.pedidos || 0) + (h?.t || 0), marcas: h?.m || []};
 }
 const FILTROS_LOJAS = [['todas','Todas'],['esfriando','Esfriando ou paradas'],['redes','Por rede'],['30','Sem pedido há 30+ dias'],['60','60+ dias'],['90','90+ dias'],['nunca','Nunca compraram'],['aguard','Aguardando aprovação']];
 // Tela Lojas (v31): Quadro por situação (padrão) ou Lista, cartões que filtram, escolha de rede e faixa de cadastros aguardando.
 const total12 = id => { const r = resumoLojas[id] || {}, lim = Date.now() - 365 * 864e5; return r.hist ? r.hist.reduce((s, [d, t]) => new Date(d).getTime() >= lim ? s + (Number(t) || 0) : s, 0) : (r.total || 0); };
+/* Lojas em cartões (v32): situação calculada com o histórico, filtros por estado/rede e A–Z, e a ficha abre numa gaveta pela direita. */
+var segLojas = 'ativa', ufLojas = '', letraLojas = '', pagLojas = 0;
+const ufDe = c => { const p = String(c.cidade || '').split('/'); const u = (p[p.length - 1] || '').trim().toUpperCase(); return p.length > 1 && /^[A-Z]{2}$/.test(u) ? u : ''; };
+const diasLoja = d => d == null ? 'sem compra' : d === 0 ? 'hoje' : d < 31 ? `há ${d} dias` : d < 365 ? `há ${Math.round(d / 30)} meses` : `há ${(d / 365).toFixed(1).replace('.', ',')} anos`;
+function renderLojasCartoes(){
+  $('#v-lojas').classList.add('lj-cartoes');
+  const NOMES = {ativa: 'Ativas', esfriando: 'Esfriando', parada: 'Paradas', sem: 'Sem compra'}, DESC = {ativa: 'compra há menos de 1 ano', esfriando: 'última compra entre 1 e 2 anos', parada: 'sem comprar há mais de 2 anos', sem: 'sem compra registrada'};
+  const lojas = (DATA?.clientes || []).map(c => Object.assign({}, c, {st: statsLoja(c), uf: ufDe(c)}));
+  const q = norm($('#lojas-busca').value || ''), qNum = soDigitos($('#lojas-busca').value), rede = $('#lojas-rede')?.value ?? redeLojas; redeLojas = rede;
+  const base = lojas.filter(c => (!q || norm(`${c.nome} ${c.razao || ''} ${grupoDe(c)} ${c.cidade} ${c.cnpj || ''} ${c.contato || ''}`).includes(q) || (qNum.length >= 3 && soDigitos(c.cnpj).includes(qNum)))
+    && (!ufLojas || c.uf === ufLojas) && (!rede || (rede === '__sem' ? !grupoDe(c) : norm(grupoDe(c)) === norm(rede))));
+  const cont = k => base.filter(c => c.st.seg === k).length;
+  const ufs = [...new Set(lojas.map(c => c.uf).filter(Boolean))].sort();
+  const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  $('#lojas-filtros').innerHTML = `<div class="lj-kpis4">${Object.keys(NOMES).map(k => `<button class="lj-k ${k}" type="button" data-sg="${k}" aria-pressed="${segLojas === k}"><small>${NOMES[k]}</small><b>${cont(k)}</b><small>${DESC[k]}</small></button>`).join('')}</div>
+    <div class="lj-linha2"><select id="lojas-rede" aria-label="Rede" class="lj-sel"><option value="">Todas as redes</option><option value="__sem"${rede === '__sem' ? ' selected' : ''}>Sem rede</option>${nomesGrupos().map(g => `<option value="${esc(g)}"${norm(g) === norm(rede) ? ' selected' : ''}>${esc(g)}</option>`).join('')}</select>
+      ${ufs.length ? `<select id="lojas-uf" aria-label="Estado" class="lj-sel"><option value="">Todos os estados</option>${ufs.map(u => `<option${u === ufLojas ? ' selected' : ''}>${u}</option>`).join('')}</select>` : ''}
+      <button class="chip" type="button" data-sg="" aria-pressed="${segLojas === ''}">Todas (${base.length})</button></div>
+    <div class="lj-az"><button type="button" data-lt="" aria-pressed="${letraLojas === ''}">A–Z</button>${letras.map(x => `<button type="button" data-lt="${x}" aria-pressed="${letraLojas === x}">${x}</button>`).join('')}</div>`;
+  $('#lojas-info').textContent = `${lojas.length} loja${lojas.length === 1 ? '' : 's'}` + (ehAdmin() ? '' : ' · contando os seus pedidos');
+  const ls = base.filter(c => (!segLojas || c.st.seg === segLojas) && (!letraLojas || norm(c.nome)[0] === letraLojas.toLowerCase()))
+    .sort((a, b) => b.st.v12 - a.st.v12 || (a.st.dias ?? 1e9) - (b.st.dias ?? 1e9) || a.nome.localeCompare(b.nome, 'pt-BR'));
+  const P = 24, tot = Math.max(1, Math.ceil(ls.length / P)); if(pagLojas >= tot) pagLojas = 0;
+  const aguard = ehAdmin() ? base.filter(c => c.situacao === AGUARDANDO) : [];
+  const faixa = aguard.map(c => `<li class="lj-aguard lj-todo"><span><b>Loja nova aguardando aprovação:</b> ${esc(c.nome)}</span><span class="lj-aguard-bt"><button class="btn aprovar" data-lj-ap="${esc(c.id)}" type="button">Aprovar</button><button class="btn sec" data-lj-rc="${esc(c.id)}" type="button">Recusar</button></span></li>`).join('');
+  const ul = $('#lista-lojas'); ul.classList.remove('lj-quadro');
+  ul.innerHTML = faixa + (ls.length ? ls.slice(pagLojas * P, pagLojas * P + P).map(c => `<li><button class="lj-cart" type="button" data-loja="${esc(c.id)}"><b>${esc(c.nome)}</b><small>${esc(c.cidade || '')}${c.contato ? ' · ' + esc(c.contato.split(/[;,(]/)[0].trim()) : ''}</small>${grupoDe(c) ? `<small class="lj-rede">🏢 ${esc(grupoDe(c))}</small>` : ''}<span class="lj-fim"><span class="lj-pil ${c.st.seg}">${diasLoja(c.st.dias)}</span><strong>${c.st.v12 ? brl(c.st.v12) : ''}</strong></span></button></li>`).join('')
+    + `<li class="lj-pag lj-todo"><button type="button" data-pg="-1"${pagLojas ? '' : ' disabled'}>‹ Anterior</button><span>Página ${pagLojas + 1} de ${tot} · ${ls.length} loja${ls.length === 1 ? '' : 's'}</span><button type="button" data-pg="1"${pagLojas + 1 < tot ? '' : ' disabled'}>Próxima ›</button></li>`
+    : '<li class="empty lj-todo">Nenhuma loja com esse filtro.</li>');
+}
 function renderLojas(){
   if(matchMedia('(max-width: 699px)').matches) return renderLojasCel();
+  if(modoLojas === 'cartoes') return renderLojasCartoes();
+  $('#v-lojas').classList.remove('lj-cartoes');
   const lojas = (DATA?.clientes || []).map(c => { const r = resumoLojas[c.id] || {}; return Object.assign({}, c, {pedidos: r.pedidos || 0, total: r.total || 0, ultimo: r.ultimo || '', dias: diasDesde(r.ultimo), ritmo: r.pedidos ? ritmoDaLoja(c.id) : null, t12: total12(c.id)}); });
   const sit = c => c.situacao === AGUARDANDO && !c.pedidos ? 'nunca' : !c.pedidos ? 'nunca' : c.ritmo && c.ritmo.st === 'parado' ? 'parado' : c.ritmo && c.ritmo.st === 'esfriando' ? 'esfriando' : 'bem';
   const NOMES = {bem: 'Comprando bem', esfriando: 'Esfriando', parado: 'Paradas', nunca: 'Nunca compraram'};
@@ -3103,20 +3165,25 @@ function abrirRede(nome){
 }
 $('#lojas-filtros').addEventListener('click', e => {
   if(e.target.closest('#lj-fbtn')){ $('#lj-fpanel').hidden = !$('#lj-fpanel').hidden; return; }
+  const sg = e.target.closest('[data-sg]'); if(sg){ segLojas = segLojas === sg.dataset.sg ? '' : sg.dataset.sg; pagLojas = 0; renderLojas(); return; }
+  const lt = e.target.closest('[data-lt]'); if(lt){ letraLojas = lt.dataset.lt; pagLojas = 0; renderLojas(); return; }
   const b = e.target.closest('[data-fl]'); if(b){ filtroLojas = b.dataset.fl; renderLojas(); } });
+$('#lista-lojas').addEventListener('click', e => { const pg = e.target.closest('[data-pg]'); if(pg && !pg.disabled){ pagLojas = Math.max(0, pagLojas + Number(pg.dataset.pg)); renderLojas(); $('#v-lojas').scrollIntoView(); } });
 $('#lojas-filtros').addEventListener('change', e => {
+  if(e.target.id === 'lojas-uf'){ ufLojas = e.target.value; pagLojas = 0; }
+  if(e.target.id === 'lojas-rede') pagLojas = 0;
   if(e.target.id === 'lojas-ord') ordLojas = e.target.value; else if(e.target.id === 'lojas-dias') diasLojas = e.target.value; else if(e.target.id === 'lojas-grupo') agruparLojas = e.target.checked;
   if(/^lojas-/.test(e.target.id)) renderLojas();
 });
 $('#lojas-busca').addEventListener('input', renderLojas);
-var modoLojas = LS.get('modoLojas', 'quadro');
+var modoLojas = LS.get('modoLojasV2', 'cartoes');
 function marcarModoLojas(){ document.querySelectorAll('#lj-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.modo === modoLojas)); }
-$('#lj-seg').addEventListener('click', e => { const b = e.target.closest('[data-modo]'); if(!b) return; modoLojas = b.dataset.modo; LS.set('modoLojas', modoLojas); marcarModoLojas(); renderLojas(); });
+$('#lj-seg').addEventListener('click', e => { const b = e.target.closest('[data-modo]'); if(!b) return; modoLojas = b.dataset.modo; LS.set('modoLojasV2', modoLojas); marcarModoLojas(); renderLojas(); });
 $('#lj-nova-top').addEventListener('click', () => abrirNovaLoja(null));
 marcarModoLojas();
 // Na tela Lojas (computador) o cartão da loja fica numa coluna ao lado do quadro; nas outras telas abre num painel pela direita.
 function noPainelLojas(html){
-  if(!$('#v-lojas').hidden && matchMedia('(min-width: 1000px)').matches){ fecharSheet(); $('#lj-painel').innerHTML = html; return; }
+  if(!$('#v-lojas').hidden && matchMedia('(min-width: 1000px)').matches && modoLojas !== 'cartoes'){ fecharSheet(); $('#lj-painel').innerHTML = html; return; }
   abrirSheet(html); $('#sheet').classList.add('ficha');
 }
 const brlK = v =>v >= 10000 ? 'R$ ' + Math.round(v / 1000) + ' mil' : brl(v);
@@ -3129,7 +3196,8 @@ function abrirLoja(id){
     <div class="sheet-head"><div><h2>${esc(c.nome)}</h2><small class="meta">${[c.cidade, c.cnpj && 'CNPJ ' + c.cnpj].filter(Boolean).map(esc).join(' · ')}</small></div><button class="x" data-close aria-label="Fechar">×</button></div>
     ${c.situacao === AGUARDANDO ? '<div class="situacao espera"><b>Aguardando aprovação do cadastro</b></div>' : ''}
     <div class="lj-etqs">${r.pedidos ? (() => { const rt = ritmoDaLoja(id); return rt ? `<span class="badge ${RITMO[rt.st][1]}">${RITMO[rt.st][0]}</span>` : ''; })() : '<span class="badge env">Nunca comprou</span>'}${grupoDe(c) ? `<button class="link-rede" id="lj-rede-ver">🏢 ${esc(grupoDe(c))} · ${lojasDoGrupo(grupoDe(c)).length} CNPJs ›</button>` : ''}</div>
-    ${r.pedidos ? `<div class="lj-kpis"><div><small>12 meses</small><b>${brlK(total12(id))}</b></div><div><small>Pedidos</small><b>${r.pedidos}</b></div><div><small>Ticket</small><b>${brl(r.total / r.pedidos)}</b></div></div>` : '<p class="meta">Ainda sem pedidos.</p>'}
+    ${(() => { const s = statsLoja(c); return s.tot ? `<h3 class="sub-h lj-sec">COMPRAS</h3><dl class="ficha lj-ficha"><dt>Última compra</dt><dd><b>${s.u ? s.u.split('-').reverse().join('/') : '—'}</b> (${diasLoja(s.dias)})</dd><dt>Últimos 12 meses</dt><dd><b>${brl(s.v12)}</b></dd><dt>Total de pedidos</dt><dd><b>${s.tot}</b>${s.pedidosApp && s.tot > s.pedidosApp ? ` (${s.pedidosApp} no app + ${s.tot - s.pedidosApp} do histórico)` : ''}</dd>${s.marcas.length ? `<dt>Marcas</dt><dd>${esc(s.marcas.join(', '))}</dd>` : ''}</dl>` : '<p class="meta">Ainda sem pedidos.</p>'; })()}
+    ${ehAdmin() && histLojas[soDigitos(c.cnpj)] ? '<h3 class="sub-h lj-sec">ÚLTIMOS PEDIDOS DO HISTÓRICO</h3><div id="lj-ult5" class="meta">Carregando…</div>' : ''}
     ${(() => { const f = [['Contato', [c.contato, c.telefone].filter(Boolean).join(' · ')], ['E-mail', c.emailCompra], ['Pagamento', c.pagamento]].filter(x => x[1]);
       return f.length ? `<h3 class="sub-h lj-sec">CONTATO</h3><dl class="ficha lj-ficha">${f.map(([k, x]) => `<dt>${k}</dt><dd>${esc(x)}</dd>`).join('')}</dl>` : '<p class="meta">Sem contato cadastrado. Toque em <b>Editar cadastro</b>.</p>'; })()}
     ${tel ? '' : '<div class="lj-nota">Cadastre o telefone em Editar cadastro.</div>'}
@@ -3155,9 +3223,19 @@ function abrirLoja(id){
   $('#lj-editar')?.addEventListener('click', () => abrirNovaLoja(null, null, c));
   // Histórico: Relatórios com este cliente e o período inteiro.
   $('#lj-historico')?.addEventListener('click', () => {
-    fecharSheet(); irPara('relatorios'); periodo('tudo'); $('#rel-sit').value = 'todos';
+    fecharSheet();
+    if(histLojas[soDigitos(c.cnpj)]){ hsDoc = soDigitos(c.cnpj); hsDocNome = c.nome; hsAnos = null; irPara('historico'); return; }   // pedidos antigos: tela Histórico, só desta loja
+    irPara('relatorios'); periodo('tudo'); $('#rel-sit').value = 'todos';
     $('#rel-cli').value = id; gerarRelatorio();
   });
+  // Últimos 5 pedidos do histórico antigo desta loja.
+  if($('#lj-ult5')){
+    api({acao: 'historico', ano: 'todos', doc: soDigitos(c.cnpj)}).then(j => {
+      const l = (j.pedidos || []).filter(p => !p.canc).slice(0, 5);
+      const alvo = $('#lj-ult5'); if(!alvo) return;
+      alvo.innerHTML = l.length ? `<table class="tabela hs-tab"><tbody>${l.map(p => `<tr><td>${hsData(p.data)}</td><td>${esc(p.ind)}<small class="hs-cid">nº ${p.n}</small></td><td class="num">${hsBRL(p.total)}</td></tr>`).join('')}</tbody></table>` : 'Nenhum pedido antigo.';
+    }).catch(() => { const a = $('#lj-ult5'); if(a) a.textContent = ''; });
+  }
   $('#lj-aprovar')?.addEventListener('click', () => mudarSituacaoLoja(id, 'Ativo'));
   $('#lj-recusar')?.addEventListener('click', () => { const m = prompt('Motivo da recusa (opcional):'); if(m !== null) mudarSituacaoLoja(id, RECUSADO, m); });
   document.querySelectorAll('#sheet-body [data-id]').forEach(b => b.addEventListener('click', () => abrirPedido(b.dataset.id)));
@@ -4742,7 +4820,7 @@ function irPara(view){
 }
 
 /* ---------- Histórico (pedidos antigos do SuasVendas, só consulta) ---------- */
-let hsAnos = null, hsTimer = null;
+let hsAnos = null, hsTimer = null, hsDoc = '', hsDocNome = '';
 const hsBRL = v => Number(v || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 const hsData = s => s ? s.split('-').reverse().join('/') : '';
 async function abrirHistorico(){
@@ -4750,10 +4828,10 @@ async function abrirHistorico(){
   else renderHistorico();
 }
 async function carregarHistorico(){
-  const ano = $('#hs-ano').value || (hsAnos?.[0]?.ano ? String(hsAnos[0].ano) : ''), q = $('#hs-q').value.trim();
+  const ano = (hsDoc && !hsAnos) ? 'todos' : ($('#hs-ano').value || (hsAnos?.[0]?.ano ? String(hsAnos[0].ano) : '')), q = $('#hs-q').value.trim();
   $('#hs-info').textContent = 'Carregando…';
   try{
-    const j = await api({acao:'historico', ano: ano || 'todos', q});
+    const j = await api({acao:'historico', ano: hsDoc ? (ano || 'todos') : (ano || 'todos'), q, doc: hsDoc});
     if(!hsAnos){
       hsAnos = j.anos || [];
       $('#hs-ano').innerHTML = '<option value="todos">Todos os anos</option>' + hsAnos.map(a => `<option value="${a.ano}">${a.ano} (${a.qtd})</option>`).join('');
@@ -4768,7 +4846,9 @@ async function carregarHistorico(){
 let hsLista = [], hsTotal = 0;
 function renderHistorico(){
   const l = hsLista, soma = l.filter(p => !p.canc && p.tipo === 'Pedido').reduce((s, p) => s + p.total, 0);
-  $('#hs-info').textContent = l.length ? `${hsTotal} pedido${hsTotal === 1 ? '' : 's'}${hsTotal > l.length ? ` (mostrando ${l.length}; refine a busca)` : ''} · soma sem cancelados: ${hsBRL(soma)}` : 'Nenhum pedido encontrado.';
+  $('#hs-info').innerHTML = (hsDoc ? `<b>Só a loja ${esc(hsDocNome)}</b> <button type="button" class="r-tirar" id="hs-limpar-loja">ver todas</button> · ` : '') +
+    (l.length ? `${hsTotal} pedido${hsTotal === 1 ? '' : 's'}${hsTotal > l.length ? ` (mostrando ${l.length}; refine a busca)` : ''} · soma sem cancelados: ${hsBRL(soma)}` : 'Nenhum pedido encontrado.');
+  $('#hs-limpar-loja')?.addEventListener('click', () => { hsDoc = ''; hsDocNome = ''; hsAnos = null; $('#hs-ano').innerHTML = ''; abrirHistorico(); });
   $('#hs-lista').innerHTML = l.length ? `<div class="rel-quadro"><table class="tabela hs-tab"><thead><tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Marca</th><th class="num">Total</th><th>Situação</th></tr></thead><tbody>${l.map(p =>
     `<tr data-hs="${p.n}"><td>${p.n}</td><td>${hsData(p.data)}</td><td>${esc(p.cliente)}<small class="hs-cid">${esc(p.cidade)}${p.uf ? '/' + esc(p.uf) : ''}</small></td><td>${esc(p.ind)}</td><td class="num">${hsBRL(p.total)}</td><td>${p.canc ? '<span class="hs-tag ruim">Cancelado</span>' : p.tipo !== 'Pedido' ? `<span class="hs-tag">${esc(p.tipo)}</span>` : p.fat ? `Faturado ${hsData(p.fat)}` : ''}${p.nf ? ` · NF ${esc(p.nf)}` : ''}</td></tr>`).join('')}</tbody></table></div>` : '';
 }
