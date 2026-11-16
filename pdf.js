@@ -30,8 +30,9 @@
     ['num', 'empresaNome', 'clienteNome', 'clienteCidade', 'pagamento', 'obs'].forEach(function (k) { if (p[k] != null) p[k] = limpa(p[k]); });
     p.itens = (p0.itens || []).map(function (i) { return { id: i.id, nome: limpa(i.nome), un: limpa(i.un), q: i.q, preco: i.preco, tabela: i.tabela, ipi: Number(i.ipi) || 0 }; });
     representante = limpa(representante);
-    var doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    var W = 210, M = 15, marinho = [10, 24, 56], azul = [47, 123, 255], tinta = [11, 22, 48], cinza = [86, 98, 125];
+    // Folha A4 deitada (horizontal): 297 x 210 mm.
+    var doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    var W = 297, H = 210, M = 15, marinho = [10, 24, 56], azul = [47, 123, 255], tinta = [11, 22, 48], cinza = [86, 98, 125];
     var verde = marinho; // cor de cabeçalhos e títulos da tabela
 
     // Faixa do topo
@@ -77,7 +78,7 @@
       });
       return yy;
     }
-    var fimP = coluna(M, 84, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', p.empresaNome, [
+    var fimP = coluna(M, 125, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', p.empresaNome, [
       [pag],
       [p0.natureza && p0.natureza !== 'Pedido' ? 'Tipo: ' + p0.natureza : '', true],
       [p0.ordemCompra ? 'Ordem de compra do cliente: ' + p0.ordemCompra : '', true],
@@ -86,7 +87,7 @@
       [p0.nf ? 'NF ' + p0.nf + (p0.dataFat ? ' de ' + dBR(p0.dataFat) : '') : '', true]
     ]);
     var doc_ = String(p.clienteCnpj || c.cnpj || '').replace(/\D/g, '');
-    var fimC = coluna(M + 96, 84, 'CLIENTE', p.clienteNome, [
+    var fimC = coluna(M + 142, 125, 'CLIENTE', p.clienteNome, [
       [(doc_.length === 11 ? 'CPF ' : 'CNPJ ') + (p.clienteCnpj || c.cnpj || '-') + (c.ie ? '  -  IE ' + c.ie + (c.indicadorIe ? ' (' + c.indicadorIe + ')' : '') : ''), true],
       [[c.cidade || p.clienteCidade, [c.contato, c.telefone].filter(Boolean).join(' ')].filter(Boolean).join(' - ')],
       [p0.enderecoEntrega ? 'Entregar em: ' + p0.enderecoEntrega : (c.endereco || c.cep ? [c.endereco, c.cep ? 'CEP ' + c.cep : ''].filter(Boolean).join(' - ') : ''), true]
@@ -98,14 +99,13 @@
     var temDesc = p.itens.some(function (i) { return descItem(i) > 0; });
     var codigo = function (i) { return limpa(String(i.id || '').replace(/^[A-Za-z]{2,4}-/, '')); };
     var temIpi = p.itens.some(function (i) { return i.ipi > 0; });
-    var col = { cod: M, prod: M + 20, un: 114, q: 130, desc: 146, preco: 170, sub: W - M };
-    if (!temDesc) { col.un = 118; col.q = 142; col.preco = 168; }
-    // Com IPI entra a coluna "IPI" entre Preço e Subtotal; as outras andam um pouco para a esquerda.
-    if (temIpi) {
-      if (temDesc) { col.un = 104; col.q = 120; col.desc = 135; col.preco = 156; }
-      else { col.un = 112; col.q = 132; col.preco = 156; }
-      col.ipi = 172;
-    }
+    // Colunas da direita para a esquerda (as de números alinham pela borda direita; Un. começa no x indicado).
+    var col = { cod: M, prod: M + 24, sub: W - M };
+    col.ipi = 250;
+    col.preco = temIpi ? 232 : 250;
+    col.desc = col.preco - 27;
+    col.q = (temDesc ? col.desc : col.preco) - 19;
+    col.un = col.q - 24;
     function cabecalho() {
       doc.setDrawColor.apply(doc, marinho); doc.setLineWidth(0.4); doc.line(M, y, W - M, y);
       y += 5.5;
@@ -126,7 +126,7 @@
       doc.setFontSize(10);
       var nome = doc.splitTextToSize(it.nome, col.un - col.prod - 4);
       var alt = nome.length * 4.6;
-      if (y + alt > 262) { doc.addPage(); y = 22; cabecalho(); }
+      if (y + alt > H - 22) { doc.addPage(); y = 22; cabecalho(); }
       doc.setFont('helvetica', 'normal'); doc.setTextColor.apply(doc, cinza); doc.setFontSize(9); doc.text(doc.splitTextToSize(codigo(it), col.prod - col.cod - 2)[0] || '', col.cod, y); doc.setFontSize(10);
       doc.setTextColor.apply(doc, tinta); doc.text(nome, col.prod, y);
       doc.setTextColor.apply(doc, cinza); doc.text(String(it.un || ''), col.un, y);
@@ -145,7 +145,7 @@
     // Subtotal e desconto (quando houver)
     var desc = Number(p0.desconto) || 0;
     if (desc) {
-      if (y > 240) { doc.addPage(); y = 22; }
+      if (y > H - 60) { doc.addPage(); y = 22; }
       var bruto = Number(p0.bruto) || p.itens.reduce(function (s, i) { return s + i.q * i.preco; }, 0);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor.apply(doc, cinza);
       doc.text('Subtotal', W - M - 75, y); doc.text(brl(bruto), W - M - 5, y, { align: 'right' }); y += 6;
@@ -155,13 +155,13 @@
     // Com IPI: "Total sem impostos" e "IPI" antes do total final.
     var ipiV = Number(p0.ipiValor) || 0;
     if (ipiV > 0) {
-      if (y > 236) { doc.addPage(); y = 22; }
+      if (y > H - 61) { doc.addPage(); y = 22; }
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor.apply(doc, cinza);
       doc.text('Total sem impostos', W - M - 75, y); doc.text(brl(p.total), W - M - 5, y, { align: 'right' }); y += 6;
       doc.text('IPI', W - M - 75, y); doc.text(brl(ipiV), W - M - 5, y, { align: 'right' }); y += 9;
     }
     // Total
-    if (y > 250) { doc.addPage(); y = 22; }
+    if (y > H - 47) { doc.addPage(); y = 22; }
     y += 2;
     doc.setFillColor.apply(doc, azul); doc.roundedRect(W - M - 80, y - 7, 80, 14, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
@@ -179,7 +179,8 @@
     }
     // Condições e aceite do cliente (assinatura), no fim do documento.
     // (só o orçamento leva a frase de validade; no pedido fica só o aceite)
-    if (y > 245) { doc.addPage(); y = 22; }
+    // (a frase do orçamento só precisa de espaço se for um orçamento; no pedido não vem nada depois, e não deve criar folha em branco)
+    if (tipo === 'Orçamento' && y > H - 30) { doc.addPage(); y = 22; }
     doc.setTextColor.apply(doc, cinza);
     if (tipo === 'Orçamento') {
       doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
@@ -194,9 +195,9 @@
       doc.setPage(i);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor.apply(doc, cinza);
       var repTxt = [rep.nome, rep.cnpj && 'CNPJ ' + rep.cnpj, rep.email, rep.telefone].filter(Boolean).join('  -  ');
-      if (repTxt) doc.text(limpa(repTxt), M, 287);
-      else doc.text(tipo + ' ' + p.num + ', ' + p.clienteNome, M, 287);
-      doc.text('Página ' + i + ' de ' + tot, W - M, 287, { align: 'right' });
+      if (repTxt) doc.text(limpa(repTxt), M, H - 8);
+      else doc.text(tipo + ' ' + p.num + ', ' + p.clienteNome, M, H - 8);
+      doc.text('Página ' + i + ' de ' + tot, W - M, H - 8, { align: 'right' });
     }
     return doc;
   }
