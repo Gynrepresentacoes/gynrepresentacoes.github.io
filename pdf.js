@@ -28,7 +28,7 @@
     var p = {};
     for (var k in p0) p[k] = p0[k];
     ['num', 'empresaNome', 'clienteNome', 'clienteCidade', 'pagamento', 'obs'].forEach(function (k) { if (p[k] != null) p[k] = limpa(p[k]); });
-    p.itens = (p0.itens || []).map(function (i) { return { id: i.id, nome: limpa(i.nome), un: limpa(i.un), q: i.q, preco: i.preco, tabela: i.tabela }; });
+    p.itens = (p0.itens || []).map(function (i) { return { id: i.id, nome: limpa(i.nome), un: limpa(i.un), q: i.q, preco: i.preco, tabela: i.tabela, ipi: Number(i.ipi) || 0 }; });
     representante = limpa(representante);
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
     var W = 210, M = 15, marinho = [10, 24, 56], azul = [47, 123, 255], tinta = [11, 22, 48], cinza = [86, 98, 125];
@@ -61,7 +61,8 @@
     var dBR = function (s) { return s ? String(s).split('-').reverse().join('/') : ''; };
     var curto = function (s) { return L(s).replace(/\s*\(.*\)\s*$/, ''); };   // "FOB (por conta do cliente)" -> "FOB"
     var enviado = ['Enviado ao fornecedor', 'Faturado', 'Entregue'].indexOf(p0.status) >= 0;
-    var pag = [L(p.pagamento), c.frete ? curto(c.frete) : ''].filter(Boolean).join(' - ');
+    var freteTxt = p0.frete || c.frete;   // o frete do pedido (conferido antes de enviar) vale mais que o do cadastro da loja
+    var pag = [L(p.pagamento), freteTxt ? curto(freteTxt) : ''].filter(Boolean).join(' - ');
     function coluna(x, w, titulo, nome, linhas) {
       var yy = y;
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, azul); doc.text(titulo, x, yy);
@@ -78,6 +79,9 @@
     }
     var fimP = coluna(M, 84, tipo === 'Orçamento' ? 'ORÇAMENTO' : 'PEDIDO', p.empresaNome, [
       [pag],
+      [p0.natureza && p0.natureza !== 'Pedido' ? 'Tipo: ' + p0.natureza : '', true],
+      [p0.ordemCompra ? 'Ordem de compra do cliente: ' + p0.ordemCompra : '', true],
+      [p0.comprador ? 'Comprador: ' + p0.comprador : ''],
       [p0.entrega ? 'Entrega desejada: ' + dBR(p0.entrega) : '', true],
       [p0.nf ? 'NF ' + p0.nf + (p0.dataFat ? ' de ' + dBR(p0.dataFat) : '') : '', true]
     ]);
@@ -93,8 +97,15 @@
     var descItem = function (i) { var t = Number(i.tabela) || 0, v = Number(i.preco) || 0; return t > v + 0.004 ? Math.round((1 - v / t) * 1000) / 10 : 0; };
     var temDesc = p.itens.some(function (i) { return descItem(i) > 0; });
     var codigo = function (i) { return limpa(String(i.id || '').replace(/^[A-Za-z]{2,4}-/, '')); };
+    var temIpi = p.itens.some(function (i) { return i.ipi > 0; });
     var col = { cod: M, prod: M + 20, un: 114, q: 130, desc: 146, preco: 170, sub: W - M };
     if (!temDesc) { col.un = 118; col.q = 142; col.preco = 168; }
+    // Com IPI entra a coluna "IPI" entre Preço e Subtotal; as outras andam um pouco para a esquerda.
+    if (temIpi) {
+      if (temDesc) { col.un = 104; col.q = 120; col.desc = 135; col.preco = 156; }
+      else { col.un = 112; col.q = 132; col.preco = 156; }
+      col.ipi = 172;
+    }
     function cabecalho() {
       doc.setDrawColor.apply(doc, marinho); doc.setLineWidth(0.4); doc.line(M, y, W - M, y);
       y += 5.5;
@@ -105,6 +116,7 @@
       doc.text('QTD', col.q, y, { align: 'right' });
       if (temDesc) doc.text('DESC.', col.desc, y, { align: 'right' });
       doc.text('PREÇO', col.preco, y, { align: 'right' });
+      if (temIpi) doc.text('IPI', col.ipi, y, { align: 'right' });
       doc.text('SUBTOTAL', col.sub, y, { align: 'right' });
       y += 3; doc.setLineWidth(0.2); doc.setDrawColor(215, 223, 238); doc.line(M, y, W - M, y);
       y += 6;
@@ -122,6 +134,7 @@
       doc.setFont('helvetica', 'bold'); doc.text(String(it.q), col.q, y, { align: 'right' });
       if (temDesc) { doc.setFont('helvetica', 'normal'); doc.setTextColor.apply(doc, cinza); doc.text(descItem(it) ? String(descItem(it)).replace('.', ',') + '%' : '', col.desc, y, { align: 'right' }); doc.setTextColor.apply(doc, tinta); }
       doc.setFont('helvetica', 'normal'); doc.text(brl(it.preco), col.preco, y, { align: 'right' });
+      if (temIpi) { doc.setTextColor.apply(doc, cinza); doc.text(it.ipi ? String(it.ipi).replace('.', ',') + '%' : '', col.ipi, y, { align: 'right' }); doc.setTextColor.apply(doc, tinta); }
       doc.setFont('helvetica', 'bold'); doc.text(brl(it.q * it.preco), col.sub, y, { align: 'right' });
       y += alt + 1.5;
       doc.setDrawColor(230, 235, 244); doc.setLineWidth(0.2); doc.line(M, y - 3.2, W - M, y - 3.2);
@@ -139,13 +152,21 @@
       doc.text('Desconto ' + String(desc).replace('.', ',') + '%', W - M - 75, y); doc.text('- ' + brl(bruto - p.total), W - M - 5, y, { align: 'right' }); y += 9;
     }
 
+    // Com IPI: "Total sem impostos" e "IPI" antes do total final.
+    var ipiV = Number(p0.ipiValor) || 0;
+    if (ipiV > 0) {
+      if (y > 236) { doc.addPage(); y = 22; }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor.apply(doc, cinza);
+      doc.text('Total sem impostos', W - M - 75, y); doc.text(brl(p.total), W - M - 5, y, { align: 'right' }); y += 6;
+      doc.text('IPI', W - M - 75, y); doc.text(brl(ipiV), W - M - 5, y, { align: 'right' }); y += 9;
+    }
     // Total
     if (y > 250) { doc.addPage(); y = 22; }
     y += 2;
     doc.setFillColor.apply(doc, azul); doc.roundedRect(W - M - 80, y - 7, 80, 14, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.text('Total', W - M - 75, y + 1.8);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text(brl(p.total), W - M - 5, y + 2.2, { align: 'right' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.text(ipiV > 0 ? 'Total final' : 'Total', W - M - 75, y + 1.8);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text(brl(ipiV > 0 ? (Number(p0.totalFinal) || p.total + ipiV) : p.total), W - M - 5, y + 2.2, { align: 'right' });
     y += 18;
 
     if (p.obs) {
