@@ -458,6 +458,7 @@ body{font-variant-numeric:tabular-nums}
 .acomp h3{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .acomp .duas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .acomp .duas>*{min-width:0}.acomp input,.acomp select,.acomp textarea{max-width:100%;box-sizing:border-box}
+.acomp .btn{display:block;width:100%;box-sizing:border-box;margin:12px 0 0}
 .acomp-com{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:14px}
 .acomp-com span:first-child{color:var(--muted)}
 .priv{border:1px dashed var(--warn);border-radius:10px;padding:8px 12px;margin:8px 0;background:var(--warn-soft);color:var(--ink);font-size:13.5px}
@@ -4480,11 +4481,11 @@ function acompHTML(p, pendente){
   const pct = Number(emp(p.empresa)?.comissao) || 0, semCom = SEM_COMISSAO.includes(p.natureza);
   const prev = Math.round(p.total * pct) / 100;
   return `<details class="acomp" id="acomp"${p.numMarca || p.previsao || p.rastreio || p.comissaoRecebida ? ' open' : ''}><summary><b>Acompanhamento e comissão</b></summary>
-    <div class="duas" style="margin-top:8px"><label class="field"><span class="lbl">Nº do pedido na marca</span><input id="ac-marca" value="${esc(p.numMarca || '')}" autocomplete="off"></label>
+    <div class="duas" style="margin-top:8px"><label class="field"><span class="lbl">Nº do pedido na marca</span><input id="ac-marca" type="text" value="${esc(p.numMarca || '')}" autocomplete="off"></label>
       <label class="field"><span class="lbl">Previsão de entrega</span><input id="ac-prev" type="date" value="${esc(p.previsao || '')}"></label></div>
-    <div class="duas"><label class="field"><span class="lbl">Código de rastreio</span><input id="ac-rast" value="${esc(p.rastreio || '')}" autocomplete="off"></label>
-      <label class="field"><span class="lbl">Ordem de compra do cliente</span><input id="ac-oc" value="${esc(p.ordemCompra || '')}" autocomplete="off"></label></div>
-    <div class="duas"><label class="field"><span class="lbl">Comprador</span><input id="ac-comp" value="${esc(p.comprador || '')}" autocomplete="off"></label>
+    <div class="duas"><label class="field"><span class="lbl">Código de rastreio</span><input id="ac-rast" type="text" value="${esc(p.rastreio || '')}" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Ordem de compra do cliente</span><input id="ac-oc" type="text" value="${esc(p.ordemCompra || '')}" autocomplete="off"></label></div>
+    <div class="duas"><label class="field"><span class="lbl">Comprador</span><input id="ac-comp" type="text" value="${esc(p.comprador || '')}" autocomplete="off"></label>
       <label class="field"><span class="lbl">Tipo do pedido</span><select id="ac-tipo">${NATUREZAS.map(n => `<option${n === (p.natureza || 'Pedido') ? ' selected' : ''}>${n}</option>`).join('')}</select></label></div>
     <label class="field"><span class="lbl">Observação privada <small>(só você vê)</small></span><textarea id="ac-priv" rows="2">${esc(p.obsPrivada || '')}</textarea></label>
     <h3 style="margin:12px 0 6px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">Comissão</h3>
