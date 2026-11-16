@@ -450,6 +450,17 @@ body{font-variant-numeric:tabular-nums}
 .r1 .v{white-space:nowrap}
 .r2{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:13px;margin-top:2px}
 .tag-desc{background:var(--ok-soft);color:var(--ok);font-weight:700;border-radius:6px;padding:0 6px;font-size:12px;margin-left:4px}
+.tag-ipi{background:var(--info-soft);color:var(--info);font-weight:700;border-radius:6px;padding:0 6px;font-size:12px;margin-left:4px;white-space:nowrap}
+.tag-promo{background:var(--warn-soft);color:var(--warn);font-weight:700;border-radius:6px;padding:0 6px;font-size:12px;margin-left:2px}
+.pc-cheio{color:var(--muted);font-size:12px}
+.tag-mult{background:var(--roxo-soft);color:var(--roxo);font-weight:700;border-radius:6px;padding:0 6px;font-size:12px;margin-left:4px;white-space:nowrap}
+.acomp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0;background:var(--leaf-soft)}
+.acomp h3{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.acomp .duas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acomp .duas>*{min-width:0}.acomp input,.acomp select,.acomp textarea{max-width:100%;box-sizing:border-box}
+.acomp-com{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:14px}
+.acomp-com span:first-child{color:var(--muted)}
+.priv{border:1px dashed var(--warn);border-radius:10px;padding:8px 12px;margin:8px 0;background:var(--warn-soft);color:var(--ink);font-size:13.5px}
 .r-aviso{color:var(--terra);font-weight:600}
 .resumo li.editavel{cursor:pointer}
 .resumo li.editavel .preco-linha{display:none;margin-top:8px}
@@ -1181,6 +1192,7 @@ html[data-estilo="suave"] .pcard.on .pc-add{background:color-mix(in srgb,var(--o
       <label class="field"><span class="lbl">Observação</span>
         <textarea id="obs-p" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
       <div id="entrega-p"></div>
+      <div id="mais-p"></div>
       <div class="fechar-p"><button class="btn primary fechar" id="btn-fechar-p" type="button">Fechar pedido</button>
         <button class="btn sec lote" id="btn-lote-p" type="button" hidden>Fechar para várias filiais da rede…</button>
         <div class="fp-sec"><button class="btn ghost" id="btn-orc-p" type="button">Salvar como orçamento</button>
@@ -2112,7 +2124,11 @@ document.addEventListener('click', e => {
   const info = p ? `<div class="foto-info">
       <div class="rw"><span>Código</span><b>${esc(p.id)}</b></div><div class="rw"><span>Unidade</span><b>${esc(p.un || '—')}</b></div>
       ${catDe(p) ? `<div class="rw"><span>Categoria</span><b>${esc(catDe(p))}</b></div>` : ''}
-      <div class="rw"><span>Preço de tabela</span><b>${p.preco > 0 ? brl(p.preco) : 'sem preço de tabela'}</b></div></div>` : '';
+      <div class="rw"><span>Preço de tabela</span><b>${p.preco > 0 ? brl(p.preco) : 'sem preço de tabela'}</b></div>
+      ${p.cheio > p.preco ? `<div class="rw"><span>Preço sem promoção</span><b>${brl(p.cheio)}</b></div>` : ''}
+      ${p.ipi > 0 ? `<div class="rw"><span>IPI</span><b>${String(p.ipi).replace('.', ',')}%</b></div>` : ''}
+      ${p.ncm ? `<div class="rw"><span>NCM</span><b>${esc(p.ncm)}</b></div>` : ''}${p.ean ? `<div class="rw"><span>EAN</span><b>${esc(p.ean)}</b></div>` : ''}
+      ${p.mult > 1 ? `<div class="rw"><span>Vende de</span><b>${p.mult} em ${p.mult}</b></div>` : ''}</div>` : '';
   abrirSheet(`<div class="sheet-head"><h2 style="font-size:18px">${esc(t.dataset.nome)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <img class="foto-grande" src="${esc(t.dataset.foto)}" alt="${esc(t.dataset.nome)}">${info}`);
 });
@@ -2148,7 +2164,7 @@ function linhaProduto(p){
   else if(livre) valor = p.preco;
   const f = v => v === '' ? '' : numFmt(v);
   return `<li class="prod pcard${n ? ' on' : ''}" data-pid="${id}">${fotoHTML(p)}<div class="prod-info"><div class="prod-nome">${esc(p.nome)}</div>
-    <div class="prod-sub">${esc(p.un)}${p.preco > 0 ? `, tabela <strong>${brl(p.preco)}</strong>${livre ? ' <span class="pc-hist">(preço livre: o último que você digitar vale para todos)</span>' : ''}` : ''}${dica ? ` · <span class="pc-hist">${esc(dica)}</span>` : ''}</div></div>
+    <div class="prod-sub">${esc(p.un)}${p.preco > 0 ? `, tabela <strong>${brl(p.preco)}</strong>` : ''}${p.ipi > 0 ? ` <span class="tag-ipi">+ IPI ${String(p.ipi).replace('.', ',')}%</span>` : ''}${p.preco > 0 && p.cheio > p.preco ? ` <span class="tag-promo">promoção</span> <s class="pc-cheio">${brl(p.cheio)}</s>` : ''}${p.mult > 1 ? ` <span class="tag-mult">de ${p.mult} em ${p.mult}</span>` : ''}${livre ? ' <span class="pc-hist">(preço livre: o último que você digitar vale para todos)</span>' : ''}${dica ? ` · <span class="pc-hist">${esc(dica)}</span>` : ''}</div></div>
     <div class="pc-campos">
       <label class="pc-f pc-q"><span>Qtd</span><input class="pc-qtd" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" value="${n || ''}" aria-label="Quantidade de ${esc(p.nome)}"></label>
       <label class="pc-f pc-v"><span>Valor R$</span><input class="pc-val" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${f(valor)}" aria-label="Valor de ${esc(p.nome)}"></label>
@@ -2217,9 +2233,11 @@ const semTabelaDe = p => !(p.preco > 0) || livreAdm(p);
 function itensAtuais(){
   return st.empresa ? prodsDe(st.empresa).filter(p => st.itens[p.id]).map(p => {
     const semTabela = semTabelaDe(p), tab = semTabela ? (st.base[p.id] || (livreAdm(p) ? p.preco : 0)) : p.preco;
-    return {id:p.id, nome:p.nome, un:p.un, preco: st.precos[p.id] ?? tab, tabela: tab, semTabela, q:st.itens[p.id]};
+    return {id:p.id, nome:p.nome, un:p.un, preco: st.precos[p.id] ?? tab, tabela: tab, semTabela, q:st.itens[p.id], ipi: p.ipi || 0, ncm: p.ncm || ''};
   }) : [];
 }
+// IPI do pedido antes do desconto do pedido: soma de quantidade × preço × IPI% de cada item.
+const ipiBrutoDe = its => its.reduce((s, i) => s + i.q * i.preco * (i.ipi || 0) / 100, 0);
 // Menor preço que o vendedor pode digitar: tabela menos o desconto máximo da marca (o administrador não tem limite).
 const precoMinimo = tabela => ehAdmin() ? 0.01 : Math.round(tabela * (1 - descontoMaxDe(st.empresa) / 100) * 100) / 100;
 const numFmt = v => Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -2305,14 +2323,21 @@ function renderPassos(its){
 }
 $('#fab-novo').addEventListener('click', () => { if($('#fab-novo').dataset.modo === 'loja') abrirNovaLoja(); else irPara('novo'); });
 // Totais com desconto: bruto, desconto e líquido.
-function contas(bruto, desc){
+// "ipiBruto": IPI calculado sobre os valores dos itens (antes do desconto do pedido). O IPI final acompanha o desconto do pedido.
+function contas(bruto, desc, ipiBruto){
   const d = Math.max(0, Math.min(100, Number(desc) || 0));
-  return {bruto, desc: d, total: Math.round(bruto * (1 - d/100) * 100) / 100};
+  const total = Math.round(bruto * (1 - d/100) * 100) / 100;
+  const ipi = Math.round((Number(ipiBruto) || 0) * (1 - d/100) * 100) / 100;
+  return {bruto, desc: d, total, ipi, final: Math.round((total + ipi) * 100) / 100};
 }
+// Com IPI: "Total sem impostos", "IPI" e "Total final". Sem IPI continua "Total".
 function totaisHTML(c){
   return (c.desc ? `<div class="tot-linha"><span>Subtotal</span><span>${brl(c.bruto)}</span></div>
     <div class="tot-linha"><span>Desconto ${String(c.desc).replace('.', ',')}%</span><span>− ${brl(c.bruto - c.total)}</span></div>` : '') +
-    `<div class="total-line"><span>Total</span><strong>${brl(c.total)}</strong></div>`;
+    (c.ipi > 0 ? `<div class="tot-linha"><span>Total sem impostos</span><span>${brl(c.total)}</span></div>
+      <div class="tot-linha"><span>IPI</span><span>${brl(c.ipi)}</span></div>
+      <div class="total-line"><span>Total final</span><strong>${brl(c.final)}</strong></div>`
+    : `<div class="total-line"><span>Total</span><strong>${brl(c.total)}</strong></div>`);
 }
 // Confere desconto e pedido mínimo. Devolve a mensagem de erro (vazia se estiver tudo certo).
 function conferirRegras(bruto, desc){
@@ -2375,7 +2400,7 @@ function renderPainel(its, tot){
   const max = descontoMaxDe(st.empresa);
   $('#desc-lbl-p').textContent = ehAdmin() || !st.empresa ? 'Desconto (%)' : (max ? `Desconto (%) · até ${String(max).replace('.', ',')}%` : 'Desconto (%) · esta marca não permite');
   const desc = numBR($('#desc-p').value || '0');
-  const cc = contas(tot, isNaN(desc) ? 0 : desc);
+  const cc = contas(tot, isNaN(desc) ? 0 : desc, ipiBrutoDe(its));
   $('#painel-totais').innerHTML = totaisHTML(cc);
   const min = minimoDe(st.empresa);
   const av = $('#aviso-min-p');
@@ -2383,7 +2408,7 @@ function renderPainel(its, tot){
   if(!av.hidden) av.textContent = `Pedido mínimo de ${e.nome}: ${brl(min)}. Faltam ${brl(min - tot)}.` + (ehAdmin() ? ' (Você pode fechar mesmo assim.)' : '');
   renderEntregaPainel();
   $('#btn-fechar-p').disabled = !its.length;
-  $('#btn-fechar-p').innerHTML = its.length ? `<span>Fechar pedido</span><span>${brl(cc.total)}</span>` : 'Fechar pedido';
+  $('#btn-fechar-p').innerHTML = its.length ? `<span>Fechar pedido</span><span>${brl(cc.final)}</span>` : 'Fechar pedido';
   $('#btn-lote-p').hidden = !its.length || !temFiliais();
   $('#btn-orc-p').disabled = !its.length;
   $('#btn-limpar-p').hidden = !its.length;
@@ -2450,6 +2475,8 @@ function aplicarCartao(id, qtdTxt, valTxt, descTxt){
   st.itens[id] = Math.min(q, 99999);
   if(semTab) st.base[id] = base;
   if(fin === base) delete st.precos[id]; else st.precos[id] = fin;
+  // Múltiplo de venda: avisa (sem travar) quando a quantidade não fecha a embalagem.
+  if(p.mult > 1 && q % p.mult) toast(`${p.nome}: este produto vende de ${p.mult} em ${p.mult}. Você pediu ${q}.`, 5000);
   return true;
 }
 function lerCartao(li){ return [li.querySelector('.pc-qtd').value, li.querySelector('.pc-val').value, li.querySelector('.pc-dsc').value]; }
@@ -2483,7 +2510,7 @@ function resumoHTML(itens, editavel){
     const pct = editavel ? pctItem(i) : '', semPreco = editavel && i.semTabela && !(i.tabela > 0);
     const ref = editavel && i.preco !== i.tabela && i.tabela > 0 ? `${i.semTabela ? 'cheio' : 'tabela'} ${brl(i.tabela)}` : '';
     const linhas = `<div class="r1"><span>${esc(i.nome)}</span><span class="v">${brl(i.q*i.preco)}</span></div>
-      <div class="r2"><span>${i.q} ${esc(i.un || '')} × ${brl(i.preco)}${pct ? `<span class="tag-desc">−${pct}%</span>` : ''}</span>
+      <div class="r2"><span>${i.q} ${esc(i.un || '')} × ${brl(i.preco)}${pct ? `<span class="tag-desc">−${pct}%</span>` : ''}${i.ipi > 0 ? `<span class="tag-ipi">+ IPI ${String(i.ipi).replace('.', ',')}%</span>` : ''}</span>
         <span>${semPreco ? '<span class="r-aviso">sem preço: toque para digitar</span>' : ref || (editavel && st.aberto !== i.id ? '<span class="r-dica">mudar</span>' : '')}${editavel ? ` · <button type="button" class="r-tirar" data-tirar="${esc(i.id)}" aria-label="Tirar ${esc(i.nome)} do pedido">tirar</button>` : ''}</span></div>`;
     if(!editavel) return `<li>${linhas}</li>`;
     const aberta = st.aberto === i.id || semPreco;
@@ -2506,9 +2533,9 @@ function atualizarRevisao(){
   const its = itensAtuais(), tot = its.reduce((s,i) => s + i.q*i.preco, 0), e = emp(st.empresa), min = minimoDe(st.empresa);
   $('#rev-itens').innerHTML = resumoHTML(its, true);
   const d = $('#desc') ? numBR($('#desc').value || '0') : 0;
-  const cc = contas(tot, isNaN(d) ? 0 : d);
+  const cc = contas(tot, isNaN(d) ? 0 : d, ipiBrutoDe(its));
   $('#rev-totais').innerHTML = totaisHTML(cc);
-  if($('#btn-fechar')) $('#btn-fechar').innerHTML = `<span>Fechar pedido</span><span>${brl(cc.total)}</span>`;
+  if($('#btn-fechar')) $('#btn-fechar').innerHTML = `<span>Fechar pedido</span><span>${brl(cc.final)}</span>`;
   $('#rev-min').innerHTML = min && tot < min ? `<p class="aviso-min">Pedido mínimo de ${esc(e.nome)}: ${brl(min)}. Faltam ${brl(min - tot)}.${ehAdmin() ? ' (Você pode fechar mesmo assim.)' : ''}</p>` : '';
 }
 function abrirRevisao(){
@@ -2529,6 +2556,7 @@ function abrirRevisao(){
     <label class="field"><span class="lbl">Observação</span>
       <textarea id="obs" rows="2" placeholder="Ex.: entregar na segunda pela manhã"></textarea></label>
     ${entregaHTML('')}
+    <div id="rev-mais">${maisHTML()}</div>
     ${temFiliais() ? '<button class="btn sec lote" id="btn-lote">Fechar para várias filiais da rede…</button>' : ''}
     <button class="btn ghost" id="btn-orc" style="margin-top:6px">Salvar como orçamento</button>
     <button class="btn ghost limpar" id="btn-limpar-rev">Limpar pedido</button>
@@ -2582,10 +2610,31 @@ function entregaHTML(suf){
 document.addEventListener('input', e => { const i = e.target.closest('.ent-campo'); if(i) st.entrega[i.dataset.ent] = i.value.trim(); });
 document.addEventListener('toggle', e => { if(e.target.matches?.('.entrega-det')) st.entregaAberta = e.target.open; }, true);
 function renderEntregaPainel(){
-  if(document.activeElement?.closest('#entrega-p')) return;   // não redesenha enquanto digita
-  $('#entrega-p').innerHTML = itensAtuais().length ? entregaHTML('p') : '';
+  if(document.activeElement?.closest('#entrega-p, #mais-p')) return;   // não redesenha enquanto digita
+  const tem = itensAtuais().length;
+  $('#entrega-p').innerHTML = tem ? entregaHTML('p') : '';
+  $('#mais-p').innerHTML = tem ? maisHTML() : '';
 }
-const limparEntrega = () => { st.entrega = {data: '', transp: '', endereco: ''}; st.entregaAberta = false; };
+// Mais dados do pedido (opcional): tipo (só administrador), comprador, ordem de compra do cliente e observação privada (só administrador, nunca vai à marca nem ao cliente).
+const NATUREZAS = ['Pedido', 'Bonificação', 'Amostra', 'Brinde', 'Troca'], SEM_COMISSAO = ['Bonificação', 'Amostra', 'Brinde'];
+st.extra = {natureza: 'Pedido', comprador: '', oc: '', obsPriv: ''};
+function maisHTML(){
+  const x = st.extra, aberto = st.maisAberto || x.natureza !== 'Pedido' || x.comprador || x.oc || x.obsPriv, adm = ehAdmin();
+  return `<details class="entrega-det mais-det"${aberto ? ' open' : ''}><summary>Mais dados do pedido (opcional)${aberto ? ' · preenchido' : ''}</summary>
+    ${adm ? `<label class="field"><span class="lbl">Tipo do pedido</span><select class="ex-campo" data-ex="natureza">${NATUREZAS.map(n => `<option${n === x.natureza ? ' selected' : ''}>${n}</option>`).join('')}</select>
+      ${SEM_COMISSAO.includes(x.natureza) ? '<span class="cnpj-info">Este tipo não gera comissão.</span>' : ''}</label>` : ''}
+    <label class="field"><span class="lbl">Comprador (quem pediu na loja)</span><input type="text" class="ex-campo" data-ex="comprador" value="${esc(x.comprador)}" placeholder="nome do contato" autocomplete="off"></label>
+    <label class="field"><span class="lbl">Nº da ordem de compra do cliente</span><input type="text" class="ex-campo" data-ex="oc" value="${esc(x.oc)}" autocomplete="off"></label>
+    ${adm ? `<label class="field"><span class="lbl">Observação privada <small>(só você vê; não vai à marca nem ao cliente)</small></span><textarea class="ex-campo" data-ex="obsPriv" rows="2">${esc(x.obsPriv)}</textarea></label>` : ''}
+  </details>`;
+}
+document.addEventListener('input', e => { const i = e.target.closest('.ex-campo'); if(i && i.dataset.ex !== 'natureza') st.extra[i.dataset.ex] = i.value.trim(); });
+document.addEventListener('change', e => { const i = e.target.closest('.ex-campo'); if(!i) return; st.extra[i.dataset.ex] = i.value.trim();
+  if(i.dataset.ex === 'natureza'){ st.maisAberto = true; renderCart(); abrirRevisaoSeAberta(); } });
+document.addEventListener('toggle', e => { if(e.target.matches?.('.mais-det')) st.maisAberto = e.target.open; }, true);
+// Na janela de revisão (celular) o bloco também aparece; ao trocar o tipo, desenha de novo só ele.
+function abrirRevisaoSeAberta(){ const el = $('#rev-mais'); if(el) el.innerHTML = maisHTML(); }
+const limparEntrega = () => { st.entrega = {data: '', transp: '', endereco: ''}; st.entregaAberta = false; st.extra = {natureza: 'Pedido', comprador: '', oc: '', obsPriv: ''}; st.maisAberto = false; };
 // Monta um pedido (com número novo) para um cliente e uma lista de itens.
 function montarPedido(c, its, pag, obs, desc){
   const e = emp(st.empresa);
@@ -2599,14 +2648,16 @@ function montarPedido(c, its, pag, obs, desc){
       else if(pr.livre && i.tabela > 0 && Math.abs(i.tabela - pr.preco) > 0.004){ pr.preco = Math.round(i.tabela * 100) / 100; mudou = true; } });
     if(mudou) LS.set('catalogo', DATA);
   }
-  const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
+  const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc, ipiBrutoDe(its));
   return {
     id: 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     num: proximoNumero(), data: new Date().toISOString(),
     empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
     clienteCnpj: c.cnpj || '', clienteGrupo: grupoDe(c),
     pagamento: pag, obs: (obs || '').trim(), itens: its,
-    bruto: cc.bruto, desconto: cc.desc, total: cc.total,
+    bruto: cc.bruto, desconto: cc.desc, total: cc.total, ipiValor: cc.ipi, totalFinal: cc.final,
+    natureza: ehAdmin() ? st.extra.natureza : 'Pedido', comprador: st.extra.comprador, ordemCompra: st.extra.oc,
+    obsPrivada: ehAdmin() ? st.extra.obsPriv : '',
     entrega: st.entrega.data, transportadora: st.entrega.transp, enderecoEntrega: st.entrega.endereco,
     usuario: DEMO ? '' : (sessao?.usuario || ''), representante: nomeAtual(),
     status: DEMO ? '' : AGUARDANDO,
@@ -2627,7 +2678,7 @@ function fecharPedido(pag, obs, desc, deOrcamento){
   abrirSheet(`
     <div class="ok"><div class="ok-mark" aria-hidden="true">✓</div>
       <h2>Pedido ${esc(p.num)} fechado</h2>
-      <p class="meta"><b>${esc(p.clienteNome)}</b><br>${brl(p.total)}, ${esc(p.pagamento)}<br>Ele está <b>Em aprovação</b>: assim que o cliente aprovar, marque na aba Vendas.</p></div>
+      <p class="meta"><b>${esc(p.clienteNome)}</b><br>${brl(p.ipiValor > 0 ? p.totalFinal : p.total)}${p.ipiValor > 0 ? ' (com IPI)' : ''}, ${esc(p.pagamento)}<br>Ele está <b>Em aprovação</b>: assim que o cliente aprovar, marque na aba Vendas.</p></div>
     ${acoesHTML(p, true)}
     <button class="btn ghost" data-close style="margin-top:8px">Começar outro pedido</button>`);
   ligarAcoes(p);
@@ -2710,7 +2761,7 @@ function salvarOrcamento(pag, obs, desc){
   const max = descontoMaxDe(st.empresa);
   const erroDesc = isNaN(desc) || desc < 0 || desc > max ? (conferirRegras(0, desc) || 'Desconto inválido.') : conferirRegras(Number.MAX_VALUE, desc);
   if(erroDesc){ toast(erroDesc, 6000); return; }
-  const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc);
+  const cc = contas(Math.round(its.reduce((s,i) => s + i.q*i.preco, 0) * 100) / 100, desc, ipiBrutoDe(its));
   const antigo = st.orcamento && listaOrcamentos().find(o => o.id === st.orcamento);
   // Número ORC-n: continua depois do maior que já existe (neste aparelho ou na planilha).
   const maiorOrc = Math.max(LS.get('ultimoOrc', 100), ...listaOrcamentos().map(x => +(/^ORC-(\d+)$/.exec(String(x.num)) || [0, 0])[1]));
@@ -2719,7 +2770,7 @@ function salvarOrcamento(pag, obs, desc){
     num: antigo ? antigo.num : 'ORC-' + (maiorOrc + 1),
     data: new Date().toISOString(), empresa: e.id, empresaNome: e.nome, cliente: c.id, clienteNome: c.nome, clienteCidade: c.cidade || '',
     clienteCnpj: c.cnpj || '', clienteGrupo: grupoDe(c),
-    pagamento: pag, obs: (obs || '').trim(), itens: its, bruto: cc.bruto, desconto: cc.desc, total: cc.total,
+    pagamento: pag, obs: (obs || '').trim(), itens: its, bruto: cc.bruto, desconto: cc.desc, total: cc.total, ipiValor: cc.ipi, totalFinal: cc.final,
     entrega: st.entrega.data, transportadora: st.entrega.transp, enderecoEntrega: st.entrega.endereco,
     usuario: sessao?.usuario || '', representante: nomeAtual()
   };
@@ -2771,7 +2822,7 @@ function abrirOrcamento(id){
     <div class="sheet-head"><h2>Orçamento ${esc(o.num)}</h2><button class="x" data-close aria-label="Fechar">×</button></div>
     <p class="meta"><b>${esc(o.clienteNome)}</b>${o.clienteCidade ? ', '+esc(o.clienteCidade) : ''}<br>${esc(o.empresaNome)}<br>${dataBR(o.data)}</p>
     ${resumoHTML(o.itens)}
-    ${totaisHTML({bruto:o.bruto ?? o.total, desc:o.desconto || 0, total:o.total})}
+    ${totaisHTML({bruto:o.bruto ?? o.total, desc:o.desconto || 0, total:o.total, ipi:o.ipiValor || 0, final:o.totalFinal ?? o.total})}
     <p class="meta">Pagamento: <b>${esc(o.pagamento)}</b>${o.obs ? `<br>Obs.: ${esc(o.obs)}` : ''}</p>
     <p class="dica-preco">Orçamento é só para você e o André: não dá para enviar ao cliente por WhatsApp, e-mail ou PDF. Para fechar, toque em <b>Transformar em pedido</b>.</p>
     <div class="btns"><button class="btn primary" id="btn-orc-virar">Transformar em pedido</button></div>
@@ -3293,7 +3344,8 @@ function texto(p){
   let t = `*${p.tipo === 'orcamento' ? 'Orçamento' : 'Pedido'} ${p.num}*\nEmpresa: ${p.empresaNome}\nCliente: ${p.clienteNome}${p.clienteCidade ? ' ('+p.clienteCidade+')' : ''}${p.clienteCnpj ? '\nCNPJ: ' + p.clienteCnpj : ''}\nData: ${dataBR(p.data)}\n\n`;
   t += p.itens.map(i => `${i.q}× ${i.nome} (${i.un}): ${brl(i.q*i.preco)}`).join('\n');
   if(p.desconto) t += `\n\nSubtotal: ${brl(p.bruto)}\nDesconto: ${String(p.desconto).replace('.', ',')}%`;
-  t += `\n\n*Total: ${brl(p.total)}*\nPagamento: ${p.pagamento}`;
+  if(p.ipiValor > 0) t += `\n\nTotal sem impostos: ${brl(p.total)}\nIPI: ${brl(p.ipiValor)}\n*Total final: ${brl(p.totalFinal)}*\nPagamento: ${p.pagamento}`;
+  else t += `\n\n*Total: ${brl(p.total)}*\nPagamento: ${p.pagamento}`;
   if(p.obs) t += `\nObs.: ${p.obs}`;
   if(p.entrega) t += `\nEntrega desejada: ${diaBR(p.entrega)}`;
   if(p.transportadora) t += `\nTransportadora: ${p.transportadora}`;
@@ -3358,10 +3410,11 @@ async function enviarEmailPedido(p, para, guardar, btn){
 async function baixarExcelPedido(p){
   try{
     const X = await carregarXLSX();
-    const linhas = (p.itens || []).map(i => [i.id, i.nome, i.un || '', Number(i.q) || 0, Number(i.preco) || 0, (Number(i.q) || 0) * (Number(i.preco) || 0)]);
+    const linhas = (p.itens || []).map(i => [i.id, i.nome, i.un || '', Number(i.q) || 0, Number(i.preco) || 0, (Number(i.q) || 0) * (Number(i.preco) || 0), Number(i.ipi) || 0]);
     const aoa = [['Pedido', String(p.num)], ['Cliente', p.clienteNome], ['Marca', p.empresaNome], ['Data', dataBR(p.data)], ['Pagamento', p.pagamento || ''], [],
-      ['Código', 'Produto', 'Un.', 'Qtd', 'Preço (R$)', 'Subtotal (R$)'], ...linhas, [], ['', '', '', '', 'Total (R$)', Number(p.total) || 0]];
-    const ws = X.utils.aoa_to_sheet(aoa); ws['!cols'] = [{wch: 14}, {wch: 46}, {wch: 6}, {wch: 8}, {wch: 12}, {wch: 14}];
+      ['Código', 'Produto', 'Un.', 'Qtd', 'Preço (R$)', 'Subtotal (R$)', 'IPI (%)'], ...linhas, [], ['', '', '', '', 'Total sem impostos (R$)', Number(p.total) || 0]];
+    if(p.ipiValor > 0) aoa.push(['', '', '', '', 'IPI (R$)', Number(p.ipiValor) || 0], ['', '', '', '', 'Total final (R$)', Number(p.totalFinal) || 0]);
+    const ws = X.utils.aoa_to_sheet(aoa); ws['!cols'] = [{wch: 14}, {wch: 46}, {wch: 6}, {wch: 8}, {wch: 22}, {wch: 14}, {wch: 8}];
     for(let r = 7; r < aoa.length; r++) [4, 5].forEach(c => { const cel = ws[X.utils.encode_cell({r, c})]; if(cel && typeof cel.v === 'number') cel.z = '"R$" #,##0.00'; });
     const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Pedido');
     await entregarArquivo(new Blob([X.write(wb, {bookType: 'xlsx', type: 'array'})]), `Pedido-${p.num}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Pedido ' + p.num);
@@ -3717,8 +3770,10 @@ function dadosRelatorio(nMeses){
   // Comissão: % da marca (o que a GYN recebe) e % do vendedor (o que a GYN paga), sobre o valor dos pedidos.
   const cm = REL.comissoes || {empresas:{}, vendedores:{}};
   const somaPor = (chave, nome, pct) => { const m = new Map();
-    peds.forEach(p => { const k = chave(p); const x = m.get(k) || {nome: nome(p), pct: Number(pct(p)) || 0, pedidos: 0, vendas: 0}; x.pedidos++; x.vendas += Number(p.total) || 0; m.set(k, x); });
-    return [...m.values()].map(x => Object.assign(x, {comissao: Math.round(x.vendas * x.pct) / 100})).sort((a,b) => b.vendas - a.vendas); };
+    // Bonificação, amostra e brinde entram nas vendas, mas não geram comissão (a comissão é sobre o total sem IPI).
+    peds.forEach(p => { const k = chave(p); const x = m.get(k) || {nome: nome(p), pct: Number(pct(p)) || 0, pedidos: 0, vendas: 0, base: 0}; x.pedidos++; x.vendas += Number(p.total) || 0;
+      if(!SEM_COMISSAO.includes(p.natureza)) x.base += Number(p.total) || 0; m.set(k, x); });
+    return [...m.values()].map(x => Object.assign(x, {comissao: Math.round(x.base * x.pct) / 100})).sort((a,b) => b.vendas - a.vendas); };
   const comissao = {
     marcas: somaPor(p => p.empresa, p => p.empresaNome, p => cm.empresas[p.empresa]),
     vendedores: somaPor(p => p.usuario, p => p.representante || p.usuario, p => cm.vendedores[p.usuario])
@@ -3754,7 +3809,7 @@ function dadosRelatorio(nMeses){
       const ini = new Date(h.getFullYear(), h.getMonth() - k, 1), fim = new Date(h.getFullYear(), h.getMonth() - k + 1, 1);
       const ps = (REL.todos || REL.pedidos).filter(p => p.status !== ORCAMENTO && new Date(p.data) >= ini && new Date(p.data) < fim && (!fEmp || p.empresa === fEmp) && (!vend || p.usuario === vend) && ok(p.status) && okGrupo(p) && (!fCli || p.cliente === fCli));
       arr.push({rot: `${MESES_ABREV[ini.getMonth()]}/${String(ini.getFullYear()).slice(2)}`, pedidos: ps.length, vendas: ps.reduce((s, p) => s + (Number(p.total) || 0), 0),
-        comissao: ps.reduce((s, p) => s + (Number(p.total) || 0) * (Number(cm.empresas[p.empresa]) || 0) / 100, 0)});
+        comissao: ps.filter(p => !SEM_COMISSAO.includes(p.natureza)).reduce((s, p) => s + (Number(p.total) || 0) * (Number(cm.empresas[p.empresa]) || 0) / 100, 0)});
     }
     return arr;
   })();
@@ -4378,10 +4433,15 @@ function abrirPedido(id){
     ${barraAndamento(p)}
     <p class="meta"><b>${esc(p.clienteNome)}</b>${p.clienteCidade ? ', '+esc(p.clienteCidade) : ''}${p.clienteCnpj ? `<br>CNPJ ${esc(p.clienteCnpj)}` : ''}${p.clienteGrupo ? ` · 🏢 ${esc(p.clienteGrupo)}` : ''}<br>${esc(p.empresaNome)}<br>${dataBR(p.data)}</p>
     ${resumoHTML(p.itens)}
-    ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total})}
+    ${totaisHTML({bruto: p.bruto ?? p.total, desc: p.desconto || 0, total: p.total, ipi: p.ipiValor || 0, final: p.totalFinal ?? p.total})}
     <p class="meta">Pagamento: <b>${esc(p.pagamento)}</b>${p.obs ? `<br>Obs.: ${esc(p.obs)}` : ''}${
+      p.natureza && p.natureza !== 'Pedido' ? `<br>Tipo: <b>${esc(p.natureza)}</b>` : ''}${p.comprador ? `<br>Comprador: <b>${esc(p.comprador)}</b>` : ''}${
+      p.ordemCompra ? `<br>Ordem de compra do cliente: <b>${esc(p.ordemCompra)}</b>` : ''}${
+      p.numMarca ? `<br>Nº do pedido na marca: <b>${esc(p.numMarca)}</b>` : ''}${p.previsao ? `<br>Previsão de entrega: <b>${esc(diaBR(p.previsao))}</b>` : ''}${p.rastreio ? `<br>Rastreio: <b>${esc(p.rastreio)}</b>` : ''}${
       p.entrega ? `<br>Entrega desejada: <b>${esc(diaBR(p.entrega))}</b>` : ''}${p.frete ? `<br>Frete: <b>${esc(p.frete)}</b>` : ''}${
       p.enderecoEntrega ? `<br>Entregar em: ${esc(p.enderecoEntrega)}` : ''}${p.representante ? `<br>Criado por: ${esc(p.representante)}` : ''}</p>
+    ${ehAdmin() && p.obsPrivada ? `<div class="priv"><b>Observação privada:</b> ${esc(p.obsPrivada)}</div>` : ''}
+    ${acompHTML(p, pendente)}
     ${etapas}
     ${podeAprovar ? `<div class="btns">
         <button class="btn aprovar" id="btn-aprovar">Cliente aprovou</button>
@@ -4401,6 +4461,7 @@ function abrirPedido(id){
   if(podeCancelar) $('#btn-cancelar').addEventListener('click', () => {
     if(confirm(`Cancelar o pedido ${p.num} de ${p.clienteNome}? Ele continua na planilha, marcado como cancelado.`)) mudarSituacao(p, CANCELADO);
   });
+  ligarAcomp(p);
   $('#ad-email')?.addEventListener('click', () => abrirConferencia(p));
   $('#ad-enviado')?.addEventListener('click', () => mudarSituacao(p, ENVIADO));
   $('#ad-reenviar')?.addEventListener('click', () => abrirConferencia(p, true));
@@ -4411,6 +4472,48 @@ function abrirPedido(id){
   $('#ad-copiar-chave')?.addEventListener('click', async () => { try{ await navigator.clipboard.writeText(p.chaveNf); toast('Chave copiada'); }catch(e){ toast('Não deu para copiar'); } });
 }
 
+// Acompanhamento e comissão do pedido (só administrador): nº do pedido na marca, previsão, rastreio, ordem de compra,
+// comprador, observação privada e se a comissão já foi recebida. A comissão é sobre o total SEM IPI.
+function acompHTML(p, pendente){
+  if(!ehAdmin() || DEMO || pendente) return '';
+  const s = situacaoDe(p); if([CANCELADO, RECUSADO].includes(s)) return '';
+  const pct = Number(emp(p.empresa)?.comissao) || 0, semCom = SEM_COMISSAO.includes(p.natureza);
+  const prev = Math.round(p.total * pct) / 100;
+  return `<details class="acomp" id="acomp"${p.numMarca || p.previsao || p.rastreio || p.comissaoRecebida ? ' open' : ''}><summary><b>Acompanhamento e comissão</b></summary>
+    <div class="duas" style="margin-top:8px"><label class="field"><span class="lbl">Nº do pedido na marca</span><input id="ac-marca" value="${esc(p.numMarca || '')}" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Previsão de entrega</span><input id="ac-prev" type="date" value="${esc(p.previsao || '')}"></label></div>
+    <div class="duas"><label class="field"><span class="lbl">Código de rastreio</span><input id="ac-rast" value="${esc(p.rastreio || '')}" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Ordem de compra do cliente</span><input id="ac-oc" value="${esc(p.ordemCompra || '')}" autocomplete="off"></label></div>
+    <div class="duas"><label class="field"><span class="lbl">Comprador</span><input id="ac-comp" value="${esc(p.comprador || '')}" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Tipo do pedido</span><select id="ac-tipo">${NATUREZAS.map(n => `<option${n === (p.natureza || 'Pedido') ? ' selected' : ''}>${n}</option>`).join('')}</select></label></div>
+    <label class="field"><span class="lbl">Observação privada <small>(só você vê)</small></span><textarea id="ac-priv" rows="2">${esc(p.obsPrivada || '')}</textarea></label>
+    <h3 style="margin:12px 0 6px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">Comissão</h3>
+    ${semCom ? '<p class="meta" style="margin:0">Este tipo de pedido não gera comissão.</p>' : `
+    <div class="acomp-com"><span>Base (sem IPI)</span><b>${brl(p.total)}</b></div>
+    <div class="acomp-com"><span>Percentual da marca</span><b>${pct ? String(pct).replace('.', ',') + '%' : 'não cadastrado'}</b></div>
+    <div class="acomp-com"><span>Comissão prevista</span><b>${pct ? brl(prev) : '·'}</b></div>
+    <label class="field" style="display:flex;gap:10px;align-items:center;margin-top:8px"><input type="checkbox" id="ac-rec" style="width:20px;height:20px"${p.comissaoRecebida ? ' checked' : ''}>
+      <span>Comissão recebida${p.dataComissao ? ' em ' + esc(diaBR(p.dataComissao)) : ''}</span></label>`}
+    <button class="btn sec" id="ac-salvar" type="button">Salvar acompanhamento</button></details>`;
+}
+function ligarAcomp(p){
+  const b = $('#ac-salvar'); if(!b) return;
+  b.addEventListener('click', async () => {
+    const dados = {numMarca: $('#ac-marca').value.trim(), previsao: $('#ac-prev').value, rastreio: $('#ac-rast').value.trim(), ordemCompra: $('#ac-oc').value.trim(),
+      comprador: $('#ac-comp').value.trim(), natureza: $('#ac-tipo').value, obsPrivada: $('#ac-priv').value.trim()};
+    if($('#ac-rec')){ const rec = $('#ac-rec').checked; if(rec !== !!p.comissaoRecebida){ dados.comissaoRecebida = rec; dados.dataComissao = isoDia(new Date()); } }
+    if(!navigator.onLine){ toast('Sem internet. Tente de novo quando tiver sinal.'); return; }
+    b.disabled = true; b.textContent = 'Salvando…';
+    try{
+      await api({acao: 'pedidoAcompanhar', id: p.id, dados});
+      Object.assign(p, {numMarca: dados.numMarca, previsao: dados.previsao, rastreio: dados.rastreio, ordemCompra: dados.ordemCompra, comprador: dados.comprador, natureza: dados.natureza, obsPrivada: dados.obsPrivada});
+      if('comissaoRecebida' in dados){ p.comissaoRecebida = dados.comissaoRecebida; p.dataComissao = dados.comissaoRecebida ? dados.dataComissao : ''; }
+      const r = remotos.find(x => x.id === p.id); if(r && r !== p) Object.assign(r, p);
+      LS.set('pedidosServidor', {usuario: sessao.usuario, lista: remotos});
+      toast('Acompanhamento salvo'); abrirPedido(p.id); renderPedidos();
+    }catch(err){ if(err.login) sessaoCaiu(err.message); else toast(err.message || 'Não deu para salvar', 5000); b.disabled = false; b.textContent = 'Salvar acompanhamento'; }
+  });
+}
 // Tela de conferência: o André confere os dados da marca, do cliente, da entrega e dos itens antes de o e-mail sair.
 function abrirConferencia(p, reenvio){
   const e = emp(p.empresa) || {}, c = cli(p.cliente) || {}, rep = DATA?.rep || {};
@@ -4438,12 +4541,13 @@ function abrirConferencia(p, reenvio){
         <div class="conf-ed">
           <label class="field"><span class="lbl">Entrega desejada</span><input type="date" id="ce-entrega" value="${esc(p.entrega || '')}"></label>
           <label class="field"><span class="lbl">Entregar em</span><input type="text" id="ce-end" value="${esc(endereco)}" placeholder="endereço de entrega"></label>
-          <div class="duas"><label class="field"><span class="lbl">Frete</span><input type="text" id="ce-frete" list="ce-frete-op" value="${esc(p.frete || c.frete || '')}" placeholder="ex.: CIF, FOB"><datalist id="ce-frete-op"><option value="CIF (por conta da marca)"><option value="FOB (por conta do cliente)"></datalist></label>
+          <div class="duas"><label class="field"><span class="lbl">Frete</span><input type="text" id="ce-frete" list="ce-frete-op" value="${esc(p.frete || c.frete || '')}" placeholder="ex.: CIF, FOB"><datalist id="ce-frete-op"><option value="CIF (por conta da marca)"><option value="FOB (por conta do cliente)"><option value="Redespacho"><option value="A retirar"><option value="Embutido na nota"></datalist></label>
           <label class="field"><span class="lbl">Pagamento</span><input type="text" id="ce-pag" list="ce-pag-op" value="${esc(p.pagamento || '')}"><datalist id="ce-pag-op">${(e.pagamentos || []).map(x => `<option value="${esc(x)}">`).join('')}</datalist></label></div>
           <label class="field"><span class="lbl">Observação</span><textarea id="ce-obs" rows="2">${esc(p.obs || '')}</textarea></label>
           <p class="dica-preco" style="margin:0">Pode corrigir aqui antes de enviar. Itens e valores não mudam nesta tela.</p>
         </div>
-        <div class="conf-tot"><span>Total (${p.itens.length} ${p.itens.length === 1 ? 'item' : 'itens'})</span><b>${brl(p.total)}</b></div>
+        <div class="conf-tot"><span>Total${p.ipiValor > 0 ? ' final' : ''} (${p.itens.length} ${p.itens.length === 1 ? 'item' : 'itens'})</span><b>${brl(p.ipiValor > 0 ? p.totalFinal : p.total)}</b></div>
+        ${p.ipiValor > 0 ? `<div class="meta" style="text-align:right">Sem impostos ${brl(p.total)} · IPI ${brl(p.ipiValor)}</div>` : ''}
         ${p.desconto ? `<div class="meta" style="text-align:right">Subtotal ${brl(p.bruto ?? p.total)} · desconto ${String(p.desconto).replace('.', ',')}%</div>` : ''}
       </div>
     </div>
@@ -4750,12 +4854,12 @@ function abrirImportarPrecos(){
 $('#btn-importar-precos').addEventListener('click', abrirImportarPrecos);
 
 /* ---------- Cadastrar produtos por planilha (administrador) ---------- */
-const COLS_PROD = ['Empresa', 'Código', 'Nome', 'Unidade', 'Categoria', 'Preço', 'Foto'];
+const COLS_PROD = ['Empresa', 'Código', 'Nome', 'Unidade', 'Categoria', 'Preço', 'Foto', 'IPI %', 'NCM', 'EAN', 'Preço promocional', 'Múltiplo'];
 async function baixarModeloProdutos(){
   try{
     const X = await carregarXLSX(), emp = empAtiva() || (DATA?.empresas?.[0]?.id || 'JFA');
-    const ws = X.utils.aoa_to_sheet([COLS_PROD, [emp, 'ABC123', 'Produto de exemplo (apague esta linha)', 'UN', 'Categoria', 0, 'https://link-da-imagem.jpg']]);
-    ws['!cols'] = [{wch: 12}, {wch: 14}, {wch: 44}, {wch: 8}, {wch: 20}, {wch: 12}, {wch: 40}];
+    const ws = X.utils.aoa_to_sheet([COLS_PROD, [emp, 'ABC123', 'Produto de exemplo (apague esta linha)', 'UN', 'Categoria', 0, 'https://link-da-imagem.jpg', 5, '85044010', '7898554809315', '', 6]]);
+    ws['!cols'] = [{wch: 12}, {wch: 14}, {wch: 44}, {wch: 8}, {wch: 20}, {wch: 12}, {wch: 40}, {wch: 8}, {wch: 12}, {wch: 16}, {wch: 18}, {wch: 10}];
     const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Produtos');
     await entregarArquivo(new Blob([X.write(wb, {bookType: 'xlsx', type: 'array'})]), 'modelo-produtos.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Modelo de produtos');
   }catch(e){ console.error(e); toast('Não deu para gerar o modelo'); }
@@ -4765,10 +4869,14 @@ function lerPlanilhaProdutos(linhas){
   if(lim.length < 2) return [];
   const cab = lim[0].map(c => norm(String(c ?? '')).trim());
   const ix = ns => cab.findIndex(c => ns.some(n => c === n || c.startsWith(n)));
-  const [iE, iC, iN, iU, iG, iP, iF] = [ix(['empresa', 'marca']), ix(['codigo', 'cod', 'sku']), ix(['nome', 'produto', 'descricao']), ix(['unidade', 'un']), ix(['categoria']), ix(['preco', 'valor']), ix(['foto', 'imagem', 'link'])];
+  // "Preço promocional" não pode ser confundido com "Preço": o preço normal é a coluna exata "preco" (ou "valor").
+  const iPre = cab.indexOf('preco') >= 0 ? cab.indexOf('preco') : cab.findIndex(c => c === 'valor' || c === 'price');
+  const [iE, iC, iN, iU, iG, iF] = [ix(['empresa', 'marca']), ix(['codigo', 'cod', 'sku']), ix(['nome', 'produto', 'descricao']), ix(['unidade', 'un']), ix(['categoria']), ix(['foto', 'imagem', 'link'])];
+  const iP = iPre, iIpi = ix(['ipi']), iNcm = ix(['ncm']), iEan = ix(['ean', 'codigo de barras', 'cod. de barras', 'cod de barras']), iPro = ix(['preco promocional', 'promocao', 'promo']), iMul = ix(['multiplo']);
   if(iC < 0 || iN < 0) return [];
   const g = (l, i) => i >= 0 ? String(l[i] ?? '').trim() : '';
-  return lim.slice(1).map(l => ({empresa: g(l, iE) || empAtiva() || '', codigo: g(l, iC), nome: g(l, iN), un: g(l, iU), categoria: g(l, iG), preco: iP >= 0 ? precoDoArquivo(l[iP]) : 0, foto: g(l, iF)}));
+  return lim.slice(1).map(l => ({empresa: g(l, iE) || empAtiva() || '', codigo: g(l, iC), nome: g(l, iN), un: g(l, iU), categoria: g(l, iG), preco: iP >= 0 ? precoDoArquivo(l[iP]) : 0, foto: g(l, iF),
+    ipi: g(l, iIpi), ncm: g(l, iNcm), ean: g(l, iEan), promo: iPro >= 0 ? precoDoArquivo(l[iPro]) : 0, mult: g(l, iMul)}));
 }
 function abrirCadastrarProdutos(){
   let itens = [];
